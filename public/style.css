@@ -1,0 +1,24 @@
+.home-Image {
+	background-position: top center;
+	margin-top: 0;
+	width: 100%;
+	overflow: hidden;
+	position: absolute;
+}
+
+.home-Image img {
+	width: 100%;
+	margin: -25% 0 0 0;
+}
+
+.home-button a {
+	height: 100%;
+	margin-left: 40%;
+	margin-right: auto;
+	margin-top: 4%
+}
+
+.brand-logo {
+	margin-left: 10px;
+}
+

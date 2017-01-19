@@ -6,8 +6,14 @@ import {connect, Provider} from 'react-redux'
 
 import store from './store'
 import Jokes from './components/Jokes'
-import Login from './components/Login'
+import LoginTheirs from './components/Login'
 import WhoAmI from './components/WhoAmI'
+import Global from './Global/component';
+import Home from './Home/component';
+import App from './app.jsx';
+import Signup from './Signup/component';
+import Login from './Login/component';
+import Account from './Account/component';
 
 const ExampleApp = connect(
   ({ auth }) => ({ user: auth })
@@ -24,9 +30,12 @@ const ExampleApp = connect(
 render (
   <Provider store={store}>
     <Router history={browserHistory}>
-      <Route path="/" component={ExampleApp}>
-        <IndexRedirect to="/jokes" />
-        <Route path="/jokes" component={Jokes} />
+      <Route path="/" component={App}>
+        <Route path="home" component={Home} />
+        <Route path="login" component={Login} />
+        <Route path="signup" component={Signup} />
+        <Route path="account" component={Account} />
+        <IndexRedirect to="/home" />
       </Route>
     </Router>
   </Provider>,

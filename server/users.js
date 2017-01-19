@@ -6,7 +6,7 @@ const User = db.model('users')
 const {mustBeLoggedIn, forbidden,} = require('./auth.filters')
 
 module.exports = require('express').Router()
-	.get('/', forbidden('only admins can list users'), (req, res, next) => 
+	.get('/', (req, res, next) => 
 		User.findAll()
 		.then(users => res.json(users))
 		.catch(next))
@@ -18,3 +18,4 @@ module.exports = require('express').Router()
 		User.findById(req.params.id)
 		.then(user => res.json(user))
 		.catch(next))
+	
