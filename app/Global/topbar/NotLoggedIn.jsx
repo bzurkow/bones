@@ -19,8 +19,8 @@ export default class NotLoggedIn extends Component {
 						 	  </div>
 						 	</form>
 					 	</li>
-				      	<li><a href="sass.html">Learn More</a></li>
-				      	<li><a href="badges.html">Our Story</a></li>
+				      	<li><Link to="/learnmore">Learn More</Link></li>
+				      	<li><Link to="/ourstory">Our Story</Link></li>
 				      	<li><Link to="/login" className="waves-effect waves-light btn">Login/Signup</Link></li>
 				    </ul>
 				  </div>

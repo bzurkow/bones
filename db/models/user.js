@@ -12,7 +12,13 @@ const User = db.define('users', {
 			notEmpty: true,
 		}
   },
-
+  photoUrl: {
+    type: Sequelize.STRING,
+    defaultValue: 'https://thebenclark.files.wordpress.com/2014/03/facebook-default-no-profile-pic.jpg',
+    validate: {
+      isUrl: true
+    }
+  },
   // We support oauth, so users may or may not have passwords.
   password_digest: Sequelize.STRING,
 	password: Sequelize.VIRTUAL,

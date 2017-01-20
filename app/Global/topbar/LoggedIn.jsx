@@ -20,9 +20,9 @@ export class LoggedIn extends Component {
 						 	  </div>
 						 	</form>
 					 	</li>
-				      	<li><a href="sass.html">Learn More</a></li>
-				      	<li><a href="badges.html">Our Story</a></li>
-				      	<li><a href="badges.html">Set up as link to account stuff</a></li>
+				      	<li><Link to="/learnmore">Learn More</Link></li>
+				      	<li><Link to="/ourstory">Our Story</Link></li>
+				      	<li><Link to="/account" className="waves-effect waves-light btn">Account</Link></li>
 				      	<li onClick={this.props.onLogout} >
 				      		<button className="waves-effect waves-light btn" type='click' name='action'>
 				      			Logout

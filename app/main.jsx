@@ -14,6 +14,8 @@ import App from './app.jsx';
 import Signup from './Signup/component';
 import Login from './Login/component';
 import Account from './Account/component';
+import LearnMore from './Static/learnmore';
+import OurStory from './Static/ourstory';
 
 const ExampleApp = connect(
   ({ auth }) => ({ user: auth })
@@ -35,6 +37,8 @@ render (
         <Route path="login" component={Login} />
         <Route path="signup" component={Signup} />
         <Route path="account" component={Account} />
+        <Route path="ourstory" component={OurStory} />
+        <Route path="learnmore" component={LearnMore} />
         <IndexRedirect to="/home" />
       </Route>
     </Router>
