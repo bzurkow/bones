@@ -1,6 +1,9 @@
 {
   "name": "find-a-roomate",
   "version": "0.0.1",
+  "engines": {
+    "node": "7.x"
+  },
   "description": "find-a-roomate",
   "main": "index.js",
   "scripts": {
