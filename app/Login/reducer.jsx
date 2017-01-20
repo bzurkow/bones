@@ -35,12 +35,14 @@ export const login = (username, password) =>
     axios.post('/api/auth/local/login',
       {username, password})
       .then(() => dispatch(whoami()))
+      .then(() => browserHistory.push('/account'))
       .catch(() => dispatch(whoami()))      
 
 export const logout = () =>
   dispatch =>
     axios.post('/api/auth/logout')
       .then(() => dispatch(whoami()))
+      .then(() => browserHistory.push('/home'))
       .catch(() => dispatch(whoami()))
 
 export const whoami = () =>

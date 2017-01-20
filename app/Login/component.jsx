@@ -27,6 +27,9 @@ export const Login = ({login}) => (
 	      <button className="btn waves-effect waves-light" type="submit" name="action">Log In</button>
 	    </form>
 	  </div>
+	    <div>
+	      <Link to="/signup" className="waves-effect waves-light btn" style={{"marginLeft": "11px" }}>Signup</Link>
+	  	</div>
 	</div>
 )
 
