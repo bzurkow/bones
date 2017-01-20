@@ -1,14 +1,10 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router';
 
-export default class Home extends Component {
-	constructor(props){
-		super(props)
-	}
+export const Home = (state) => (
+			<div>
+			{!!state.auth ? <h1>hitting home for logged in</h1> : (
 
-
-	render(){
-		return(
 			<div>
 
 				<div className='home-Image'>
@@ -20,7 +16,12 @@ export default class Home extends Component {
 					</Link>
 				</div>
 			</div>
-
+			)
+			}
+			</div>
 		)
-	}
-}
+
+
+import { connect } from 'react-redux';
+
+export default connect(state => ({auth: state.auth}))(Home)

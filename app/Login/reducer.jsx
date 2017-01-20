@@ -1,8 +1,7 @@
 
-import { browserHistory, Router } from 'react-router'
+import { browserHistory, Router } from 'react-router';
+import axios from 'axios'
 
-const UPDATE = 'UPDATE_USER'
-const update = user  => ({ type: UPDATE, user })
 
 
 // constants and their action creators:
@@ -18,7 +17,7 @@ export const logout_user =  user => ({
   type: LOGOUT_USER, user
 })
 
-import axios from 'axios'
+
 
 const reducer = (state=null, action) => {
   switch(action.type) {
@@ -28,14 +27,12 @@ const reducer = (state=null, action) => {
   return state
 }
 
-
-
 export const login = (username, password) =>
   dispatch =>
     axios.post('/api/auth/local/login',
       {username, password})
       .then(() => dispatch(whoami()))
-      .then(() => browserHistory.push('/account'))
+      .then(() => browserHistory.push('/home'))
       .catch(() => dispatch(whoami()))      
 
 export const logout = () =>

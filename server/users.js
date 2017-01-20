@@ -10,7 +10,7 @@ module.exports = require('express').Router()
 		User.findAll()
 		.then(users => res.json(users))
 		.catch(next))
-	.post('/', (req, res, next) =>
+	.post('/', (req, res, next) => 
 		User.create(req.body)
 		.then(user => res.status(201).json(user))
 		.catch(next))
