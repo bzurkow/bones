@@ -1,5 +1,5 @@
 echo 'Hello, I am the profile!'
 
-npm install --dev
+npm install --only=dev
 npm run build
 npm run seed
