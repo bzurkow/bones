@@ -24,8 +24,7 @@ export const Login = ({login}) => (
 	          <label htmlFor="icon_telephone"></label>
 	        </div>
 	      </div>
-	      <button className="btn waves-effect waves-light" type="submit" name="action">Log In
-	      </button>
+	      <button className="btn waves-effect waves-light" type="submit" name="action">Log In</button>
 	    </form>
 	  </div>
 	</div>

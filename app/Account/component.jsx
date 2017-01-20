@@ -1,28 +1,39 @@
 import React, { Component } from 'react';
 
-export class Account extends Component {
-	constructor(props){
-		super(props)
-	}
-
-	render(){
-		return(
+export const Account = (state) => (
 			<div>
 				<div>
-					{console.log('auth', this.props.auth)}
 					<h3>Account Information</h3>
 				<ul className="collection">
 				  <li className="collection-item">
 				    <label className="title">First Name</label>
-				    <p>First Name</p>
+				    <div>{ !!state.auth ? 
+						    	<p>
+						    	{state.auth.first_name}
+						    	</p>
+				    		: 'error'
+				    	}
+					</div>
 				  </li>
 				  <li className="collection-item">
 				    <label className="title">Last Name</label>
-				    <p>Last Name</p>
+			        <div>{ !!state.auth ? 
+			    		    	<p>
+			    		    	{state.auth.last_name}
+			    		    	</p>
+			        		: 'error'
+			        	}
+			    	</div>
 				  </li>
 				  <li className="collection-item">
 				    <label className="title">Email</label>
-				    <p>Email</p>
+			        <div>{ !!state.auth ? 
+			    		    	<p>
+			    		    	{state.auth.email}
+			    		    	</p>
+			        		: 'error'
+			        	}
+			    	</div>
 				  </li>
 				  <li className="collection-item">
 				    <label className="title">Password</label>
@@ -32,8 +43,6 @@ export class Account extends Component {
 				</div>
 			</div>
 		)
-	}
-}
 
 import {connect} from 'react-redux'
 
