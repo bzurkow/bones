@@ -30,7 +30,7 @@ const ExampleApp = connect(
 render (
   <Provider store={store}>
     <Router history={browserHistory}>
-      <Route path="/" component={App}>
+      <Route path="/" component={App} >
         <Route path="home" component={Home} />
         <Route path="login" component={Login} />
         <Route path="signup" component={Signup} />
