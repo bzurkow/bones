@@ -30,7 +30,7 @@ const reducer = (state=null, action) => {
 export const facebookLogin = () => {
   console.log("hitting pre dispatch")
   return dispatch => 
-    axios.post('/api/auth/facebook')
+    axios.get('/api/auth/facebook')
   
 }
 
