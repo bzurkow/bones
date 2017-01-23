@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router'
 
-export const Login = ({login}) => (
+export const Login = ({login, facebookLogin}) => (
 	<div className='Login'>
 	  <div className="row">
 	    <form className="col s12" onSubmit={evt=>{
@@ -9,8 +9,7 @@ export const Login = ({login}) => (
 	    	let email = evt.target.email.value
 	    	let password = evt.target.password.value
 	    	login(email, password)
-	    	}
-		}
+	    	}}
 	    >
 	      <div className="row">
 	        <div className="email input-field col s6">
@@ -29,14 +28,21 @@ export const Login = ({login}) => (
 	  </div>
 	    <div>
 	      <Link to="/signup" className="waves-effect waves-light btn" style={{"marginLeft": "11px" }}>Signup</Link>
+	      <button className="btn dark blue" style={{"marginLeft": "15px"}} 
+	      	onClick={evt => {
+	      		console.log('hitting facebook login onClick')
+	      		facebookLogin()
+	      	}}>
+	      	Login with Facebook
+	      </button>
 	  	</div>
 	</div>
 )
 
-import {login} from './reducer'
+import {login, facebookLogin} from './reducer'
 import {connect} from 'react-redux'
 
 export default connect (
   state => ({}),
-  { login }
+  { login, facebookLogin }
 ) (Login)

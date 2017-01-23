@@ -19,4 +19,3 @@ module.exports = require('express').Router()
 		.then(user => res.json(user))
 		.catch(next))
 	
-	

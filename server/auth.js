@@ -67,7 +67,7 @@ OAuth.setupStrategy({
   config: {
     clientID: env.GITHUB_CLIENT_ID,
     clientSecrets: env.GITHUB_CLIENT_SECRET,
-    callbackURL: `${app.rootUrl}/api/auth/login/github`,
+    callbackURL: `${app.rootUrl}/home`,
   },
   passport
 })
@@ -95,6 +95,10 @@ passport.deserializeUser(
   }
 )
 
+// auth.get('/facebook', passport.authenticate('facebook', {scope: 'read_stream'}))
+// auth.get('/facebook/callback', passport.authenticate('facebook', { successRedirect: '/home', failureRedirect: '/login'}))
+
+
 passport.use(new (require('passport-local').Strategy) (
   (email, password, done) => {
     debug('will authenticate user(email: "%s")', email)
@@ -118,12 +122,19 @@ passport.use(new (require('passport-local').Strategy) (
   }
 ))
 
+auth.get('/facebook', passport.authenticate('facebook'));
+auth.get('/facebook/callback',
+  passport.authenticate('facebook', { successRedirect: '/',
+                                      failureRedirect: '/login' }));
+
 auth.get('/whoami', (req, res) => res.send(req.user))
 
-auth.post('/:strategy/login', (req, res, next) =>
-  passport.authenticate(req.params.strategy, {
+auth.post('/:strategy/login', (req, res, next) => {
+  console.log(req.params.strategy)
+  return passport.authenticate(req.params.strategy, {
     successRedirect: '/'
   })(req, res, next)
+  }
 )
 
 auth.post('/logout', (req, res, next) => {

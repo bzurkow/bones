@@ -27,6 +27,13 @@ const reducer = (state=null, action) => {
   return state
 }
 
+export const facebookLogin = () => {
+  console.log("hitting pre dispatch")
+  return dispatch => 
+    axios.post('/api/auth/facebook')
+  
+}
+
 export const login = (username, password) =>
   dispatch =>
     axios.post('/api/auth/local/login',
@@ -50,5 +57,6 @@ export const whoami = () =>
         dispatch(authenticated(user))
       })
       .catch(failed => dispatch(authenticated(null)))
+
 
 export default reducer
