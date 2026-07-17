@@ -89,6 +89,7 @@ Supabase was bundling two separate decisions (Postgres host + Auth provider) int
 - **Railway** — pairs naturally with our Docker-based deployment; double-check current free-tier terms before relying on it, they've shifted pricing models before.
 - **Render** — free Postgres tier exists but historically expires free databases after 90 days (not just pauses).
 - **AWS RDS** — consistent with a possible Fargate/App Runner deployment (one vendor), no surprise pausing, but more ops burden (VPC/security groups/backups on us) and a time-limited free tier (12 months on a new AWS account).
+- **Amazon Aurora PostgreSQL** — AWS's PostgreSQL-compatible managed DB, same one-vendor consistency as RDS with better scalability/performance headroom, but priced above standard RDS Postgres and no meaningful free tier — likely overkill for this stage unless we're already committed to AWS and expect real load.
 - **Postgres in Docker** — run it as a container ourselves for dev, something ops-owned for prod. Full control, zero vendor lock-in, but we own backups/scaling/ops entirely.
 
 **Auth options considered:**
