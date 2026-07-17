@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "oxlint",
+    "lint": "oxlint && syncpack lint",
+    "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",
     "deps:fix": "syncpack fix"
   },

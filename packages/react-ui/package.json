@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "lint": "oxlint -c ../../.oxlintrc.json ."
+    "lint": "oxlint -c ../../.oxlintrc.json .",
+    "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
   },
   "peerDependencies": {
     "react": "^19.2.7",
