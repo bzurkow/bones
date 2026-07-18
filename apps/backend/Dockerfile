@@ -1,4 +1,4 @@
-ARG NODE_VERSION=26.5.0
+ARG NODE_VERSION
 FROM node:${NODE_VERSION}-slim AS base
 WORKDIR /app
 RUN npm install -g yarn@1.22.22
