@@ -1,0 +1,283 @@
+<title>Platypus — Service Map</title>
+<style>
+  :root {
+    --paper: #f4f5f2;
+    --ink: #14181a;
+    --mist: #6b7573;
+    --box-bg: #ffffff;
+    --box-border: #d7dcd9;
+    --line-color: #9aa39f;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+    --client: #2f6f6a;
+    --backend: #b5652f;
+    --data: #5b6b8c;
+    --external: #7a7466;
+    --fastify: #2a3b6b;
+    --docker: #2496ed;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #14181a; --ink: #eef0ee; --mist: #8b9694; --box-bg: #1d2224; --box-border: #333b3a; --line-color: #5c6664; }
+  }
+  :root[data-theme="dark"] { --paper: #14181a; --ink: #eef0ee; --mist: #8b9694; --box-bg: #1d2224; --box-border: #333b3a; --line-color: #5c6664; }
+  :root[data-theme="light"] { --paper: #f4f5f2; --ink: #14181a; --mist: #6b7573; --box-bg: #ffffff; --box-border: #d7dcd9; --line-color: #9aa39f; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 2rem) 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mist);
+    font-weight: 600;
+  }
+  h1 {
+    margin: 0.15rem 0 0;
+    font-size: clamp(1.6rem, 4vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .subtitle {
+    margin: 0.35rem 0 0;
+    max-width: 68ch;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--mist);
+  }
+  .subtitle b { color: var(--ink); font-weight: 600; }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--box-border);
+    border-radius: 6px;
+    background: var(--box-bg);
+  }
+  .diagram-wrap svg {
+    display: block;
+    min-width: 1120px;
+    width: 100%;
+    height: auto;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.82rem;
+    color: var(--mist);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .legend-line { width: 22px; height: 0; border-top: 2px solid var(--ink); flex-shrink: 0; }
+  .legend-line.dashed { border-top-style: dashed; opacity: 0.55; }
+
+  .shared-note {
+    border: 1px dashed var(--box-border);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--mist);
+  }
+  .shared-note code {
+    font-family: var(--font-mono);
+    color: var(--ink);
+    background: var(--paper);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.82em;
+  }
+</style>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">Architecture</p>
+    <h1>Platypus — Service Map</h1>
+    <p class="subtitle">
+      Updated as decisions landed: <b>Fastify + tRPC + Better Auth</b>, all dockerized from the
+      start, <b>PostgreSQL via Drizzle</b> (engine decided, hosting location still open — Neon,
+      RDS, or just Docker-forever). Solid lines are what v1 builds; dashed lines are the v2
+      webhook-relay path noted in NOTES.md, not yet built.
+    </p>
+  </header>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 1400 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Platypus service map">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 Z" fill="var(--line-color)" />
+        </marker>
+      </defs>
+
+      <!-- column headers -->
+      <text x="160" y="28" text-anchor="middle" font-family="var(--font-body)" font-weight="700" font-size="13" letter-spacing="0.08em" fill="var(--client)">CLIENT</text>
+      <rect x="40" y="36" width="240" height="3" fill="var(--client)" />
+
+      <text x="515" y="28" text-anchor="middle" font-family="var(--font-body)" font-weight="700" font-size="13" letter-spacing="0.08em" fill="var(--backend)">OUR BACKEND</text>
+      <rect x="378" y="36" width="274" height="3" fill="var(--backend)" />
+
+      <text x="880" y="28" text-anchor="middle" font-family="var(--font-body)" font-weight="700" font-size="13" letter-spacing="0.08em" fill="var(--data)">OUR DATA</text>
+      <rect x="760" y="36" width="240" height="3" fill="var(--data)" />
+
+      <text x="1240" y="28" text-anchor="middle" font-family="var(--font-body)" font-weight="700" font-size="13" letter-spacing="0.08em" fill="var(--external)">EXTERNAL SERVICES</text>
+      <rect x="1120" y="36" width="240" height="3" fill="var(--external)" />
+
+      <!-- connector lines (drawn before boxes so boxes sit on top) -->
+      <g stroke="var(--line-color)" fill="none" stroke-width="1.75">
+        <path d="M280 175 L390 130" marker-end="url(#arrow)" />
+        <path d="M280 175 L390 218" marker-end="url(#arrow)" />
+        <path d="M628 128 L760 108" marker-end="url(#arrow)" />
+        <path d="M628 218 L760 140" marker-end="url(#arrow)" />
+        <path d="M628 220 L628 500 L1075 500 L1075 82 L1120 82" marker-end="url(#arrow)" />
+        <path d="M280 350 L280 470 L1090 470 L1090 100 L1120 105" marker-end="url(#arrow)" />
+        <path d="M1090 100 L1090 175 L1120 175" marker-end="url(#arrow)" />
+        <path d="M1090 175 L1090 245 L1120 245" marker-end="url(#arrow)" />
+        <path d="M1090 245 L1090 315 L1120 315" marker-end="url(#arrow)" />
+      </g>
+      <g stroke="var(--line-color)" fill="none" stroke-width="1.75" stroke-dasharray="5 4" opacity="0.55">
+        <path d="M700 316 L628 316" marker-end="url(#arrow)" />
+        <path d="M390 316 L280 350" marker-end="url(#arrow)" />
+      </g>
+
+      <!-- line labels -->
+      <g font-family="var(--font-body)" font-size="11" fill="var(--mist)">
+        <text x="292" y="145">tRPC calls</text>
+        <text x="292" y="250">/auth/&lt;provider&gt;</text>
+        <text x="635" y="100">Drizzle queries</text>
+        <text x="635" y="260">sessions (Drizzle)</text>
+        <text x="900" y="497">OAuth handshake</text>
+        <text x="330" y="462">poll external REST APIs — v1, client-side, on a timer</text>
+        <text x="705" y="309" opacity="0.85">(v2) Slack / Discord webhooks</text>
+        <text x="292" y="336" opacity="0.85">(v2) relay via WS/SSE</text>
+      </g>
+
+      <!-- Column A: Client -->
+      <g>
+        <rect x="40" y="70" width="240" height="100" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="40" y="70" width="5" height="100" fill="var(--client)" />
+        <text x="60" y="94" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">apps/tauri</text>
+        <text x="60" y="114" font-family="var(--font-body)" font-size="11" fill="var(--mist)">packages/react-ui (mounted)</text>
+        <text x="60" y="132" font-family="var(--font-body)" font-size="11" fill="var(--mist)">desktop + iOS + Android targets</text>
+        <text x="60" y="150" font-family="var(--font-body)" font-size="11" fill="var(--mist)">OS keychain — session token</text>
+
+        <rect x="40" y="190" width="240" height="80" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="40" y="190" width="5" height="80" fill="var(--client)" />
+        <text x="60" y="214" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">apps/web</text>
+        <text x="60" y="234" font-family="var(--font-body)" font-size="11" fill="var(--mist)">packages/react-ui (mounted)</text>
+        <text x="60" y="252" font-family="var(--font-body)" font-size="11" fill="var(--mist)">cookie / localStorage — session</text>
+
+        <rect x="40" y="300" width="240" height="100" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="40" y="300" width="5" height="100" fill="var(--client)" />
+        <text x="60" y="324" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">packages/connectors</text>
+        <text x="60" y="342" font-family="var(--font-body)" font-size="11" fill="var(--mist)">v1: runs inside each client</text>
+        <text x="60" y="360" font-family="var(--font-body)" font-size="11" fill="var(--mist)">polls source REST APIs on a timer</text>
+        <text x="60" y="378" font-family="var(--font-body)" font-size="11" fill="var(--mist)">emit() → local store → UI</text>
+      </g>
+
+      <!-- Column B: Backend, Docker containing Fastify containing three routes -->
+      <g>
+        <rect x="378" y="44" width="274" height="350" rx="8" fill="none" stroke="var(--docker)" stroke-width="2" stroke-dasharray="2 4" />
+        <text x="655" y="58" text-anchor="end" font-family="var(--font-mono)" font-size="11" font-weight="700" letter-spacing="0.04em" fill="var(--docker)">DOCKER CONTAINER</text>
+
+        <rect x="390" y="66" width="250" height="318" rx="8" fill="none" stroke="var(--fastify)" stroke-width="2" stroke-dasharray="2 4" />
+        <text x="404" y="80" font-family="var(--font-mono)" font-size="11" font-weight="700" letter-spacing="0.04em" fill="var(--fastify)">FASTIFY SERVER</text>
+
+        <rect x="402" y="92" width="226" height="72" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="402" y="92" width="5" height="72" fill="var(--backend)" />
+        <text x="418" y="112" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">tRPC router</text>
+        <text x="418" y="132" font-family="var(--font-body)" font-size="11" fill="var(--mist)">typed: user data, prefs</text>
+        <text x="418" y="148" font-family="var(--font-body)" font-size="11" fill="var(--mist)">mounted as a Fastify plugin</text>
+
+        <rect x="402" y="180" width="226" height="80" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="402" y="180" width="5" height="80" fill="var(--backend)" />
+        <text x="418" y="200" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">Better Auth</text>
+        <text x="418" y="220" font-family="var(--font-body)" font-size="11" fill="var(--mist)">embedded — OAuth callback,</text>
+        <text x="418" y="236" font-family="var(--font-body)" font-size="11" fill="var(--mist)">session issuance</text>
+        <text x="418" y="252" font-family="var(--font-body)" font-size="11" fill="var(--mist)">Google first, more = config only</text>
+
+        <rect x="402" y="276" width="226" height="80" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" stroke-dasharray="5 4" opacity="0.6" />
+        <rect x="402" y="276" width="5" height="80" fill="var(--backend)" opacity="0.6" />
+        <text x="418" y="296" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)" opacity="0.75">webhook routes</text>
+        <text x="418" y="316" font-family="var(--font-body)" font-size="11" fill="var(--mist)">v2 — not yet built</text>
+        <text x="418" y="332" font-family="var(--font-body)" font-size="11" fill="var(--mist)">receives + relays source events</text>
+      </g>
+
+      <!-- Column C: Data -->
+      <g>
+        <rect x="760" y="70" width="240" height="140" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="760" y="70" width="5" height="140" fill="var(--data)" />
+        <text x="780" y="94" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">PostgreSQL</text>
+        <text x="780" y="114" font-family="var(--font-body)" font-size="11" fill="var(--mist)">app data + Better Auth sessions</text>
+        <text x="780" y="132" font-family="var(--font-body)" font-size="11" fill="var(--mist)">schema + queries via Drizzle</text>
+        <text x="780" y="150" font-family="var(--font-body)" font-size="11" fill="var(--mist)">hosting: TBD — Neon / RDS /</text>
+        <text x="780" y="166" font-family="var(--font-body)" font-size="11" fill="var(--mist)">Aurora / Docker-forever</text>
+      </g>
+
+      <!-- Column D: External -->
+      <g>
+        <rect x="1120" y="70" width="240" height="60" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="1120" y="70" width="5" height="60" fill="var(--external)" />
+        <text x="1140" y="94" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">Google</text>
+        <text x="1140" y="112" font-family="var(--font-body)" font-size="11" fill="var(--mist)">Sign-in identity + Gmail API</text>
+
+        <rect x="1120" y="150" width="240" height="50" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="1120" y="150" width="5" height="50" fill="var(--external)" />
+        <text x="1140" y="174" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">Slack API</text>
+        <text x="1140" y="192" font-family="var(--font-body)" font-size="11" fill="var(--mist)">notification source</text>
+
+        <rect x="1120" y="220" width="240" height="50" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="1120" y="220" width="5" height="50" fill="var(--external)" />
+        <text x="1140" y="244" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">Discord API</text>
+        <text x="1140" y="262" font-family="var(--font-body)" font-size="11" fill="var(--mist)">notification source</text>
+
+        <rect x="1120" y="290" width="240" height="50" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" />
+        <rect x="1120" y="290" width="5" height="50" fill="var(--external)" />
+        <text x="1140" y="314" font-family="var(--font-mono)" font-size="14" font-weight="700" fill="var(--ink)">Calendar API</text>
+        <text x="1140" y="332" font-family="var(--font-body)" font-size="11" fill="var(--mist)">notification source</text>
+
+        <rect x="1120" y="360" width="240" height="60" rx="6" fill="var(--box-bg)" stroke="var(--box-border)" stroke-dasharray="5 4" opacity="0.6" />
+        <rect x="1120" y="360" width="5" height="60" fill="var(--external)" opacity="0.6" />
+        <text x="1140" y="384" font-family="var(--font-mono)" font-size="13" font-weight="700" fill="var(--ink)" opacity="0.75">Microsoft / GitHub / Apple</text>
+        <text x="1140" y="402" font-family="var(--font-body)" font-size="11" fill="var(--mist)">future SSO providers, via Better Auth</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--client)"></span> Client</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--backend)"></span> Our backend</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--data)"></span> Our data</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--external)"></span> External services</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--docker)"></span> Docker boundary</div>
+    <div class="legend-item"><span class="legend-line"></span> v1 — building now</div>
+    <div class="legend-item"><span class="legend-line dashed"></span> v2 — planned, not built</div>
+  </div>
+
+  <p class="shared-note">
+    <code>packages/shared</code> underlies all three of client, connectors, and backend — it holds
+    the tRPC router types, the normalized notification schema, and the connector <code>emit()</code>
+    interface, so nothing above has to redeclare the shapes it agrees on with the others. Note
+    Google appears twice in External Services for two unrelated reasons: Better Auth's OAuth
+    handshake (identity) and the connectors' Gmail API polling (notification source) — same
+    vendor, two independent flows.
+  </p>
+</div>

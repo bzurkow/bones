@@ -71,3 +71,7 @@ yarn workspace tauri tauri android dev
 ## Backend
 
 _TBD — not yet scaffolded._
+
+## Docs
+
+- [`docs/dev/service-map.html`](docs/dev/service-map.html) — architecture diagram of the client/backend/data/external layers. Open it directly in a browser (GitHub won't render HTML inline); redeploy the matching Claude artifact to update it, then copy the file back here.

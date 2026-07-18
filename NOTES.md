@@ -77,8 +77,8 @@ Layered smoke checks, each isolating one piece so a failure points at exactly wh
 1. Container boots — `docker compose up`, Fastify logs it's listening.
 2. `/health` — plain Fastify route (not tRPC), proves the HTTP server is alive independent of tRPC/DB/auth.
 3. A trivial tRPC procedure (e.g. `health.ping`) — proves the tRPC adapter/router wiring specifically.
-4. A DB-touching procedure (`SELECT 1` via Drizzle) — proves the Supabase Postgres connection + Drizzle setup.
-5. An auth-gated procedure — once OAuth exists, proves Supabase Auth + our JWT verification end to end.
+4. A DB-touching procedure (`SELECT 1` via Drizzle) — proves the DB connection + Drizzle setup, independent of which host we land on.
+5. An auth-gated procedure — once OAuth exists, proves Better Auth + our session verification end to end.
 6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/tauri` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
 
 ## Data layer — DB hosting still under reconsideration; auth decided
@@ -99,14 +99,14 @@ Supabase was bundling two separate decisions (Postgres host + Auth provider) int
 - **Amazon Aurora PostgreSQL** — AWS's PostgreSQL-compatible managed DB, same one-vendor consistency as RDS with better scalability/performance headroom, but priced above standard RDS Postgres and no meaningful free tier — likely overkill for this stage unless we're already committed to AWS and expect real load.
 - **Postgres in Docker** — run it as a container ourselves for dev, something ops-owned for prod. Full control, zero vendor lock-in, but we own backups/scaling/ops entirely.
 
-**Leaning (not yet decided):** Auth.js + Neon (or Postgres-in-Docker) — most internally consistent with already going self-hosted/Docker-first for the backend, avoids the pause-on-inactivity surprise on the auth side entirely. Not locked in.
+**Leaning on the remaining open piece (DB host, not yet decided):** Neon or Postgres-in-Docker — either avoids the pause-on-inactivity surprise that started this reconsideration. Doesn't block backend work either way: local dev runs Postgres in Docker regardless of which host we land on for production, so this decision only matters at actual deploy time.
 
 ## Local dev tooling — viewing the DB
 **Drizzle Studio** (`drizzle-kit studio`) as the default — free, no extra install since `drizzle-kit` is already a dependency, browser-based so cross-platform, reads the actual Drizzle schema. **Supabase's own dashboard** as a complement (also shows Auth users/sessions). **DBeaver** as a free cross-platform fallback for raw SQL. Deliberately not Postico — Mac-only, conflicts with the cross-platform goal.
 
 ## Open / next decisions
 - [ ] NEXT UP: Scaffold `apps/backend` (Fastify/tRPC/Docker skeleton — doesn't block on the data layer decision below).
-- [ ] Decide data layer: DB host + auth provider (see "Data layer — under reconsideration" above).
+- [ ] Decide production DB host (auth provider already decided — Better Auth). Not blocking: local dev uses Postgres-in-Docker regardless.
 - [ ] **Revisit relational DB choice itself**: is PostgreSQL still the best/most current choice, or is there something newer worth considering? Deliberately deferred — come back to this as its own conversation rather than deciding inline.
 - Decide first 2-3 notification sources to build connectors against (e.g. Gmail, Slack, Discord, Calendar) to design the connector interface against real cases.
 - Decide on a formatter (Prettier or otherwise).
