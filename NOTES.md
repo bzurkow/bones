@@ -28,11 +28,11 @@ Connector logic lives in TypeScript (not Rust) — better SDKs for Gmail/Slack/D
 
 **API layer**: Fastify + tRPC. tRPC gives end-to-end type safety between the TS backend and TS/React client with minimal boilerplate (no hand-maintained REST schemas). Fastify handles the raw HTTP surface tRPC doesn't cover — OAuth callback redirects and incoming webhooks from third parties (Slack, Discord, etc.), since those are hit by external services, not our typed client.
 
-**Database**: under reconsideration — see "Data layer" below. (Was: PostgreSQL, hosted on Neon or Supabase.)
+**Database**: PostgreSQL, hosted on **AWS RDS** — see "Data layer" and "Hosting philosophy" below for the full reasoning.
 
 **ORM**: Drizzle — modern, lightweight, no separate query-engine binary (unlike Prisma), SQL-like syntax, strong TS type inference, `drizzle-kit` for migrations. (Prisma considered as the more turnkey/batteries-included alternative — bigger ecosystem, Prisma Studio GUI — but Drizzle is the more current pick.) Note: Drizzle itself is Postgres/SQL-oriented — if the relational-DB choice below changes to something non-Postgres, revisit whether Drizzle is still the right ORM too.
 
-**Auth provider**: **Better Auth**, embedded directly in `apps/backend` — a library, not a separate service, running inside the same Fastify process. Chosen over Auth.js for its more direct/actively-maintained Fastify integration story, and over standalone self-hosted IdPs (Authentik, Zitadel, Keycloak) to avoid running/operating a second service. No SaaS vendor, no free-tier pause risk, we own storing users/sessions in our own DB. (DB host itself is still under reconsideration — see "Data layer" below.)
+**Auth provider**: **Better Auth**, embedded directly in `apps/backend` — a library, not a separate service, running inside the same Fastify process. Chosen over Auth.js for its more direct/actively-maintained Fastify integration story, and over standalone self-hosted IdPs (Authentik, Zitadel, Keycloak) to avoid running/operating a second service. No SaaS vendor, no free-tier pause risk, we own storing users/sessions in our own DB. (DB host: AWS RDS — see "Data layer" below.)
 
 **Design system**: undecided. Candidates:
 - **shadcn/ui** — probably the current go-to/default in the React ecosystem, but ships as vendored source copied into the repo via CLI rather than a normal versioned npm package.
@@ -53,7 +53,7 @@ Single monorepo (yarn workspaces) so tRPC types can be shared end-to-end between
 - `packages/shared` — shared TS: tRPC router types, normalized notification schema, connector interface (the `emit()` contract).
 - `packages/connectors` — per-source connector implementations (Gmail, Slack, Discord, Calendar, …), each implementing the shared connector interface.
 
-Setup order: data layer decided (DB host + auth provider, currently under reconsideration) → `apps/backend` (ORM pointed at real DB, Fastify+tRPC skeleton, Google SSO) → wire `apps/tauri`/`apps/web` to backend tRPC client + real auth flow → first connector. Note: the Fastify/tRPC/Docker skeleton itself (health route, hot reload, etc.) doesn't depend on this decision and can be built in parallel — only the DB-touching and auth-gated validation steps do.
+Setup order: `apps/backend` skeleton (Fastify+tRPC, health route, Docker/hot reload — unblocked, no dependency on prod hosting) → Drizzle pointed at local Postgres-in-Docker → Better Auth wired up (Google) → wire `apps/tauri`/`apps/web` to backend tRPC client + real auth flow → first connector. Production AWS RDS deploy happens separately, at actual deploy time.
 
 ## Dependency management convention
 Shared deps used identically across workspaces (`react`, `react-dom`, `typescript`, `vite`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`, `oxlint`) are declared **once, at the root `package.json`**, and hoisted to every workspace via yarn workspaces rather than re-declared per app — avoids the version drift we hit when `apps/web`'s scaffold pulled a different `typescript` than `apps/tauri`. Only genuinely package-specific deps (e.g. `@tauri-apps/*` in `apps/tauri`) stay local. `syncpack` (`yarn deps:check` / `yarn deps:fix`) lints for any version mismatch that creeps back in across workspaces.
@@ -81,8 +81,11 @@ Layered smoke checks, each isolating one piece so a failure points at exactly wh
 5. An auth-gated procedure — once OAuth exists, proves Better Auth + our session verification end to end.
 6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/tauri` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
 
-## Data layer — DB hosting still under reconsideration; auth decided
-Supabase was bundling two separate decisions (Postgres host + Auth provider) into one vendor. Revisiting both, partly triggered by Supabase's free-tier auto-pause-on-inactivity behavior (projects pause after ~1 week idle, need a manual un-pause).
+## Hosting philosophy
+**Single cloud provider: AWS hosts everything.** Explicit preference — operational simplicity of one vendor/one bill/one console over chasing best-per-service pricing or features across multiple providers. Applies to anything actually *hosted* (compute, managed DB, container registry, static assets); doesn't apply to things that aren't hosted anywhere by nature — local dev tools (OrbStack, Drizzle Studio) run on your own machine, and Better Auth is code embedded in our own backend, not a separate vendor. Concrete implications: container images go to **ECR**, not Docker Hub; `apps/web` static hosting is S3 + CloudFront (already the plan); DB hosting below narrows to AWS-only options.
+
+## Data layer — DB hosting decided; auth decided
+Supabase was bundling two separate decisions (Postgres host + Auth provider) into one vendor. Revisited both, partly triggered by Supabase's free-tier auto-pause-on-inactivity behavior (projects pause after ~1 week idle, need a manual un-pause).
 
 **Auth: decided — Better Auth**, embedded in `apps/backend` (see "Chosen stack" above). Options considered along the way:
 - **Auth.js (NextAuth)** — self-hosted, no SaaS vendor, huge library of prebuilt provider configs, but no first-class official Fastify integration found — likely needs a small adapter bridging Fastify's req/res to its Fetch-based core.
@@ -91,22 +94,21 @@ Supabase was bundling two separate decisions (Postgres host + Auth provider) int
 - **Clerk / Auth0** — polished SaaS, but another usage-limited free tier and vendor dependency, same shape of risk as Supabase.
 - **Firebase Auth** — generous free tier, easy SSO, but pulls in Google's ecosystem and doesn't naturally pair with a self-hosted Postgres backend.
 
-**DB hosting options considered (still open):**
-- **Neon** — closest like-for-like swap for Supabase's Postgres, serverless, generous free tier. Also scales-to-zero on idle, so doesn't fully dodge the pause concern.
-- **Railway** — pairs naturally with our Docker-based deployment; double-check current free-tier terms before relying on it, they've shifted pricing models before.
-- **Render** — free Postgres tier exists but historically expires free databases after 90 days (not just pauses).
-- **AWS RDS** — consistent with a possible Fargate/App Runner deployment (one vendor), no surprise pausing, but more ops burden (VPC/security groups/backups on us) and a time-limited free tier (12 months on a new AWS account).
-- **Amazon Aurora PostgreSQL** — AWS's PostgreSQL-compatible managed DB, same one-vendor consistency as RDS with better scalability/performance headroom, but priced above standard RDS Postgres and no meaningful free tier — likely overkill for this stage unless we're already committed to AWS and expect real load.
-- **Postgres in Docker** — run it as a container ourselves for dev, something ops-owned for prod. Full control, zero vendor lock-in, but we own backups/scaling/ops entirely.
+**DB hosting: decided — AWS RDS PostgreSQL.** Given the "AWS hosts everything" preference above, Neon/Railway/Render are ruled out outright (all non-AWS vendors) without needing to weigh their individual tradeoffs further. Options considered along the way:
+- ~~Neon~~ / ~~Railway~~ / ~~Render~~ — all ruled out solely on the single-provider preference, not on their individual merits (which were otherwise reasonable).
+- **AWS RDS PostgreSQL** ✅ — the standard fully-managed AWS Postgres, has a genuine (if time-limited, 12 months) free tier, no surprise pausing. Chosen over Aurora specifically: Aurora's benefit is scale/performance headroom this project doesn't need yet, at a real price premium with no meaningful free tier. RDS fits the actual stated motivation (ease) better than Aurora does.
+- **Amazon Aurora PostgreSQL** — noted as the natural upgrade path later, not ruled out permanently. Wire-compatible with standard Postgres, so moving to it if/when scale demands it is a bigger instance type, not a migration.
+- **Postgres in Docker (self-hosted, forever)** — technically satisfies "one provider" if run on AWS compute, but ruled out because it works against the actual motivation: it trades away RDS's managed backups/HA for us owning that ops burden ourselves, which is the opposite of "easier."
 
-**Leaning on the remaining open piece (DB host, not yet decided):** Neon or Postgres-in-Docker — either avoids the pause-on-inactivity surprise that started this reconsideration. Doesn't block backend work either way: local dev runs Postgres in Docker regardless of which host we land on for production, so this decision only matters at actual deploy time.
+Doesn't block current backend work either way: local dev still runs Postgres in Docker regardless of the production host, so this only matters at actual deploy time.
 
 ## Local dev tooling — viewing the DB
 **Drizzle Studio** (`drizzle-kit studio`) as the default — free, no extra install since `drizzle-kit` is already a dependency, browser-based so cross-platform, reads the actual Drizzle schema. **Supabase's own dashboard** as a complement (also shows Auth users/sessions). **DBeaver** as a free cross-platform fallback for raw SQL. Deliberately not Postico — Mac-only, conflicts with the cross-platform goal.
 
 ## Open / next decisions
-- [ ] NEXT UP: Scaffold `apps/backend` (Fastify/tRPC/Docker skeleton — doesn't block on the data layer decision below).
-- [ ] Decide production DB host (auth provider already decided — Better Auth). Not blocking: local dev uses Postgres-in-Docker regardless.
-- [ ] **Revisit relational DB choice itself**: is PostgreSQL still the best/most current choice, or is there something newer worth considering? Deliberately deferred — come back to this as its own conversation rather than deciding inline.
+- [ ] NEXT UP: Scaffold `apps/backend` (Fastify/tRPC/Docker skeleton).
+- [x] ~~Decide production DB host~~ — AWS RDS PostgreSQL, per "Hosting philosophy" (single-provider preference) and "Data layer" above.
+- [x] ~~Revisit relational DB choice itself~~ — stays PostgreSQL; no newer alternative (CockroachDB, Turso, SurrealDB, Gel) offered a compelling reason to leave, given this project's actual scale/shape and Postgres's ecosystem/hosting flexibility.
+- [ ] Decide Fargate vs. App Runner for backend compute (both AWS, unaffected by anything above).
 - Decide first 2-3 notification sources to build connectors against (e.g. Gmail, Slack, Discord, Calendar) to design the connector interface against real cases.
 - Decide on a formatter (Prettier or otherwise).
