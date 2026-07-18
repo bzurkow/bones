@@ -61,6 +61,9 @@ Shared deps used identically across workspaces (`react`, `react-dom`, `typescrip
 ## Linting
 **Oxlint** (Rust-based, part of the Oxc toolchain) — dramatically faster than ESLint since it's a native binary, though fewer rules/smaller plugin ecosystem. Adopted because `create-vite`'s `react-ts` template defaults to it now; kept it and made it consistent across the whole monorepo rather than mixing linters per app. One shared `.oxlintrc.json` at repo root; each workspace has a `lint` script pointing at it (`oxlint -c ../../.oxlintrc.json .`).
 
+Rules on top of the defaults, in `.oxlintrc.json`:
+- `func-style: ["error", "declaration"]` — `function foo() {}` over `const foo = () => {}` for readability. Verified oxlint actually enforces it (not just a recognized-but-ignored name) before relying on it.
+
 ## TypeScript config convention
 Same single-source-of-truth idea as dependencies: a root `tsconfig.base.json` holds compiler options shared across every workspace (strict mode, `target`/`lib`, `jsx`, bundler module resolution, unused-locals/params checks). Each workspace's `tsconfig.json` (or `tsconfig.app.json`/`tsconfig.node.json` for split browser/Node contexts, e.g. app code vs. `vite.config.ts`) does `"extends": "../../tsconfig.base.json"` and only overrides what's genuinely different for that context (e.g. `types: ["node"]` + `module: "nodenext"` for the Node-context config that type-checks `vite.config.ts`, ambient `vite/client` types for app code). Fixes the drift we'd already gotten from two different scaffolders (`create-tauri-app` vs. `create-vite`) picking different `target`s and one of them silently missing `strict: true`.
 

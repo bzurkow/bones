@@ -15,6 +15,10 @@
     "lint": "oxlint -c ../../.oxlintrc.json .",
     "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
   },
+  "dependencies": {
+    "@trpc/client": "^11.18.0",
+    "backend": "0.1.0"
+  },
   "peerDependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
