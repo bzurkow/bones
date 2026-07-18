@@ -9,4 +9,4 @@ build/
 
 # Rust / Tauri
 target/
-apps/desktop/src-tauri/target/
+apps/tauri/src-tauri/target/

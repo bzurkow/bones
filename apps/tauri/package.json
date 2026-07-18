@@ -1,5 +1,5 @@
 {
-  "name": "desktop",
+  "name": "tauri",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "ios:init": "tauri ios init",
+    "android:init": "tauri android init",
     "lint": "oxlint -c ../../.oxlintrc.json .",
     "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
   },

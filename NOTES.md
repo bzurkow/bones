@@ -46,17 +46,17 @@ Mandatory auth means a backend exists from day one (for auth + user DB), but not
 
 ## Scaffolding plan
 Single monorepo (yarn workspaces) so tRPC types can be shared end-to-end between backend and clients without publishing packages:
-- `apps/desktop` — Tauri shell (the native/OS-level bits: window, system tray, OS keychain), thin wrapper that mounts `packages/react-ui`. **Scaffolded.**
+- `apps/tauri` — the Tauri shell (the native/OS-level bits: window, system tray, OS keychain), thin wrapper that mounts `packages/react-ui`. One project, multiple build targets — desktop **scaffolded**; iOS/Android are additional targets on this *same* project (`tauri ios init`/`tauri android init`), not separate apps. Renamed from `apps/desktop` once mobile made that name inaccurate.
 - `apps/web` — plain Vite + React web build, thin wrapper that mounts `packages/react-ui`. Exists so the same UI can run in a browser tab, no Tauri/native layer.
-- `packages/react-ui` — the actual shared React app (routes, screens, components) that both `apps/desktop` and `apps/web` import and render. Only the auth glue differs per-shell (system browser + OS keychain for desktop vs. standard redirect + cookie for web) — everything else lives here once.
+- `packages/react-ui` — the actual shared React app (routes, screens, components) that both `apps/tauri` and `apps/web` import and render. Only the auth glue differs per-shell (system browser + OS keychain for desktop vs. standard redirect + cookie for web) — everything else lives here once.
 - `apps/backend` — Fastify + tRPC API, Drizzle schema/migrations, OAuth callback + webhook HTTP routes.
 - `packages/shared` — shared TS: tRPC router types, normalized notification schema, connector interface (the `emit()` contract).
 - `packages/connectors` — per-source connector implementations (Gmail, Slack, Discord, Calendar, …), each implementing the shared connector interface.
 
-Setup order: data layer decided (DB host + auth provider, currently under reconsideration) → `apps/backend` (ORM pointed at real DB, Fastify+tRPC skeleton, Google SSO) → wire `apps/desktop`/`apps/web` to backend tRPC client + real auth flow → first connector. Note: the Fastify/tRPC/Docker skeleton itself (health route, hot reload, etc.) doesn't depend on this decision and can be built in parallel — only the DB-touching and auth-gated validation steps do.
+Setup order: data layer decided (DB host + auth provider, currently under reconsideration) → `apps/backend` (ORM pointed at real DB, Fastify+tRPC skeleton, Google SSO) → wire `apps/tauri`/`apps/web` to backend tRPC client + real auth flow → first connector. Note: the Fastify/tRPC/Docker skeleton itself (health route, hot reload, etc.) doesn't depend on this decision and can be built in parallel — only the DB-touching and auth-gated validation steps do.
 
 ## Dependency management convention
-Shared deps used identically across workspaces (`react`, `react-dom`, `typescript`, `vite`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`, `oxlint`) are declared **once, at the root `package.json`**, and hoisted to every workspace via yarn workspaces rather than re-declared per app — avoids the version drift we hit when `apps/web`'s scaffold pulled a different `typescript` than `apps/desktop`. Only genuinely package-specific deps (e.g. `@tauri-apps/*` in `apps/desktop`) stay local. `syncpack` (`yarn deps:check` / `yarn deps:fix`) lints for any version mismatch that creeps back in across workspaces.
+Shared deps used identically across workspaces (`react`, `react-dom`, `typescript`, `vite`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`, `oxlint`) are declared **once, at the root `package.json`**, and hoisted to every workspace via yarn workspaces rather than re-declared per app — avoids the version drift we hit when `apps/web`'s scaffold pulled a different `typescript` than `apps/tauri`. Only genuinely package-specific deps (e.g. `@tauri-apps/*` in `apps/tauri`) stay local. `syncpack` (`yarn deps:check` / `yarn deps:fix`) lints for any version mismatch that creeps back in across workspaces.
 
 ## Linting
 **Oxlint** (Rust-based, part of the Oxc toolchain) — dramatically faster than ESLint since it's a native binary, though fewer rules/smaller plugin ecosystem. Adopted because `create-vite`'s `react-ts` template defaults to it now; kept it and made it consistent across the whole monorepo rather than mixing linters per app. One shared `.oxlintrc.json` at repo root; each workspace has a `lint` script pointing at it (`oxlint -c ../../.oxlintrc.json .`).
@@ -79,7 +79,7 @@ Layered smoke checks, each isolating one piece so a failure points at exactly wh
 3. A trivial tRPC procedure (e.g. `health.ping`) — proves the tRPC adapter/router wiring specifically.
 4. A DB-touching procedure (`SELECT 1` via Drizzle) — proves the Supabase Postgres connection + Drizzle setup.
 5. An auth-gated procedure — once OAuth exists, proves Supabase Auth + our JWT verification end to end.
-6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/desktop` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
+6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/tauri` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
 
 ## Data layer — DB hosting still under reconsideration; auth decided
 Supabase was bundling two separate decisions (Postgres host + Auth provider) into one vendor. Revisiting both, partly triggered by Supabase's free-tier auto-pause-on-inactivity behavior (projects pause after ~1 week idle, need a manual un-pause).
