@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",
     "lint": "oxlint && syncpack lint",
     "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",

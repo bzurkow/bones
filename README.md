@@ -71,7 +71,7 @@ yarn workspace tauri tauri android dev
 ## Backend
 
 ```sh
-NODE_VERSION=$(cat .node-version) docker compose up
+yarn backend:dev
 ```
 
 Builds and starts `apps/backend` (Fastify + tRPC, hot reload via bind mount) alongside a local Postgres 18 container. Once running:
