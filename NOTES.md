@@ -32,7 +32,7 @@ Connector logic lives in TypeScript (not Rust) — better SDKs for Gmail/Slack/D
 
 **ORM**: Drizzle — modern, lightweight, no separate query-engine binary (unlike Prisma), SQL-like syntax, strong TS type inference, `drizzle-kit` for migrations. (Prisma considered as the more turnkey/batteries-included alternative — bigger ecosystem, Prisma Studio GUI — but Drizzle is the more current pick.) Note: Drizzle itself is Postgres/SQL-oriented — if the relational-DB choice below changes to something non-Postgres, revisit whether Drizzle is still the right ORM too.
 
-**Auth provider**: under reconsideration — see "Data layer" below. (Was: Supabase Auth.)
+**Auth provider**: **Better Auth**, embedded directly in `apps/backend` — a library, not a separate service, running inside the same Fastify process. Chosen over Auth.js for its more direct/actively-maintained Fastify integration story, and over standalone self-hosted IdPs (Authentik, Zitadel, Keycloak) to avoid running/operating a second service. No SaaS vendor, no free-tier pause risk, we own storing users/sessions in our own DB. (DB host itself is still under reconsideration — see "Data layer" below.)
 
 **Design system**: undecided. Candidates:
 - **shadcn/ui** — probably the current go-to/default in the React ecosystem, but ships as vendored source copied into the repo via CLI rather than a normal versioned npm package.
@@ -81,21 +81,23 @@ Layered smoke checks, each isolating one piece so a failure points at exactly wh
 5. An auth-gated procedure — once OAuth exists, proves Supabase Auth + our JWT verification end to end.
 6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/desktop` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
 
-## Data layer — under reconsideration
+## Data layer — DB hosting still under reconsideration; auth decided
 Supabase was bundling two separate decisions (Postgres host + Auth provider) into one vendor. Revisiting both, partly triggered by Supabase's free-tier auto-pause-on-inactivity behavior (projects pause after ~1 week idle, need a manual un-pause).
 
-**DB hosting options considered:**
+**Auth: decided — Better Auth**, embedded in `apps/backend` (see "Chosen stack" above). Options considered along the way:
+- **Auth.js (NextAuth)** — self-hosted, no SaaS vendor, huge library of prebuilt provider configs, but no first-class official Fastify integration found — likely needs a small adapter bridging Fastify's req/res to its Fetch-based core.
+- **Better Auth** ✅ — same self-hosted/no-vendor shape as Auth.js, chosen for its more direct Fastify integration story.
+- **Standalone self-hosted IdPs** (Authentik, Zitadel, Keycloak) — more built-in admin/user-management UI, but each is a separate service to run and operate on top of the DB decision below; ruled out to avoid that extra ops surface.
+- **Clerk / Auth0** — polished SaaS, but another usage-limited free tier and vendor dependency, same shape of risk as Supabase.
+- **Firebase Auth** — generous free tier, easy SSO, but pulls in Google's ecosystem and doesn't naturally pair with a self-hosted Postgres backend.
+
+**DB hosting options considered (still open):**
 - **Neon** — closest like-for-like swap for Supabase's Postgres, serverless, generous free tier. Also scales-to-zero on idle, so doesn't fully dodge the pause concern.
 - **Railway** — pairs naturally with our Docker-based deployment; double-check current free-tier terms before relying on it, they've shifted pricing models before.
 - **Render** — free Postgres tier exists but historically expires free databases after 90 days (not just pauses).
 - **AWS RDS** — consistent with a possible Fargate/App Runner deployment (one vendor), no surprise pausing, but more ops burden (VPC/security groups/backups on us) and a time-limited free tier (12 months on a new AWS account).
 - **Amazon Aurora PostgreSQL** — AWS's PostgreSQL-compatible managed DB, same one-vendor consistency as RDS with better scalability/performance headroom, but priced above standard RDS Postgres and no meaningful free tier — likely overkill for this stage unless we're already committed to AWS and expect real load.
 - **Postgres in Docker** — run it as a container ourselves for dev, something ops-owned for prod. Full control, zero vendor lock-in, but we own backups/scaling/ops entirely.
-
-**Auth options considered:**
-- **Auth.js (NextAuth)** — self-hosted, no SaaS vendor at all. Supports Google/GitHub/Microsoft/Apple etc. via prebuilt provider configs. We own storing users/sessions in our own DB (more setup than Supabase Auth), but no free-tier limits or pausing since nothing external is involved.
-- **Clerk** — polished auth SaaS with prebuilt UI components, but another usage-limited free tier and another vendor dependency, same shape of risk as Supabase.
-- **Firebase Auth** — generous free tier, easy SSO, but pulls in Google's ecosystem and doesn't naturally pair with a self-hosted Postgres backend.
 
 **Leaning (not yet decided):** Auth.js + Neon (or Postgres-in-Docker) — most internally consistent with already going self-hosted/Docker-first for the backend, avoids the pause-on-inactivity surprise on the auth side entirely. Not locked in.
 

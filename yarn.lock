@@ -531,7 +531,7 @@ nanoid@^3.3.12:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.16.tgz#a04d8ec4b1f10009d2d533947aefe4293737816c"
   integrity sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==
 
-oxlint@^1.71.0:
+oxlint@^1.74.0:
   version "1.74.0"
   resolved "https://registry.yarnpkg.com/oxlint/-/oxlint-1.74.0.tgz#c84d5fd55417f4b8fa10cec10d3354ca06a0ec6e"
   integrity sha512-odGl2s2x5IOJoj3A0v1k0PGBXVFBZeZ2+AK/+K2MJur7Ghi3bkyX5NuLUWHKqa4js1wjep3hJeuTQJOlr+4+dA==
