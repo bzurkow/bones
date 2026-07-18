@@ -106,7 +106,7 @@ Doesn't block current backend work either way: local dev still runs Postgres in 
 **Drizzle Studio** (`drizzle-kit studio`) as the default — free, no extra install since `drizzle-kit` is already a dependency, browser-based so cross-platform, reads the actual Drizzle schema. **Supabase's own dashboard** as a complement (also shows Auth users/sessions). **DBeaver** as a free cross-platform fallback for raw SQL. Deliberately not Postico — Mac-only, conflicts with the cross-platform goal.
 
 ## Open / next decisions
-- [ ] NEXT UP: Scaffold `apps/backend` (Fastify/tRPC/Docker skeleton).
+- [x] ~~Scaffold `apps/backend`~~ — Fastify + tRPC + Docker skeleton done, validated end to end (health route, tRPC round-trip, hot reload all confirmed working). **NEXT UP:** Drizzle schema against local Postgres + Better Auth wired up (Google), then the `/debug` route + tRPC client in `packages/react-ui`.
 - [x] ~~Decide production DB host~~ — AWS RDS PostgreSQL, per "Hosting philosophy" (single-provider preference) and "Data layer" above.
 - [x] ~~Revisit relational DB choice itself~~ — stays PostgreSQL; no newer alternative (CockroachDB, Turso, SurrealDB, Gel) offered a compelling reason to leave, given this project's actual scale/shape and Postgres's ecosystem/hosting flexibility.
 - [ ] Decide Fargate vs. App Runner for backend compute (both AWS, unaffected by anything above).

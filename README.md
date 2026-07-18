@@ -70,7 +70,16 @@ yarn workspace tauri tauri android dev
 
 ## Backend
 
-_TBD — not yet scaffolded._
+```sh
+NODE_VERSION=$(cat .node-version) docker compose up
+```
+
+Builds and starts `apps/backend` (Fastify + tRPC, hot reload via bind mount) alongside a local Postgres 18 container. Once running:
+
+- `curl http://localhost:3000/health` — plain HTTP health check
+- `curl http://localhost:3000/trpc/health.ping` — tRPC round-trip check
+
+Copy `apps/backend/.env.example` to `apps/backend/.env` first (gitignored, not committed).
 
 ## Docs
 
