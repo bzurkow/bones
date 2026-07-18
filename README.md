@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- **Node.js** — version pinned in [`.nvmrc`](.nvmrc). With [nvm](https://github.com/nvm-sh/nvm) installed, run `nvm install` from the repo root to pick it up automatically.
+- **Node.js** — version pinned in [`.node-version`](.node-version) (the broadly-supported convention — read natively by `fnm`, `nodenv`, and GitHub Actions' `setup-node`). With [nvm](https://github.com/nvm-sh/nvm), which doesn't read this file automatically, run `nvm install $(cat .node-version) && nvm use $(cat .node-version)` from the repo root instead of the usual bare `nvm use`.
 - **Yarn** (classic) — package manager for the whole workspace.
 - **Rust** — via [rustup](https://rustup.rs/). Required for `apps/tauri`, since desktop and mobile all build from the same Tauri project.
 
