@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "backend";
+import { BACKEND_URL } from "./config";
 
 const trpc = createTRPCClient<AppRouter>({
-  links: [httpBatchLink({ url: "http://localhost:3000/trpc" })],
+  links: [httpBatchLink({ url: `${BACKEND_URL}/trpc` })],
 });
 
 export function DbHealthCheck() {

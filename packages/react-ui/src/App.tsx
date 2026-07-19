@@ -1,6 +1,7 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { HealthCheck } from "./HealthCheck";
 import { DbHealthCheck } from "./DbHealthCheck";
+import { Login } from "./Login";
 
 function Home() {
   return (
@@ -12,6 +13,7 @@ function Home() {
           <DbHealthCheck />
         </div>
       )}
+      <Login />
     </div>
   );
 }
