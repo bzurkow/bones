@@ -1,5 +1,3 @@
-// Single source of truth for the backend's location. Hardcoded to local dev
-// for now since there's only one environment to point at -- once real
-// deployments exist (dev/staging/prod backends), this needs to become an
-// actual build-time env var instead.
-export const BACKEND_URL = "http://localhost:3000";
+// Sourced from the root .env (shared by apps/web and apps/tauri via each
+// app's vite.config.ts envDir), not hardcoded -- see VITE_BACKEND_URL.
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;

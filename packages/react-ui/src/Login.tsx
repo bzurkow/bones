@@ -1,17 +1,26 @@
 import { authClient } from "./auth-client";
+import { isTauri, signInWithDesktopFlow } from "./desktop-auth";
+import { setDesktopToken } from "./desktop-token";
 
 export function Login() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending, refetch } = authClient.useSession();
 
   async function handleSignIn() {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: window.location.origin,
-    });
+    if (isTauri()) {
+      await signInWithDesktopFlow();
+    } else {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: window.location.origin,
+      });
+    }
+    await refetch();
   }
 
   async function handleSignOut() {
     await authClient.signOut();
+    setDesktopToken(undefined);
+    await refetch();
   }
 
   if (isPending) {

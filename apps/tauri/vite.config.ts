@@ -8,6 +8,10 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [react()],
 
+  // Shared with apps/web so both read the same root .env instead of each
+  // needing their own copy of client-safe values like VITE_BACKEND_URL.
+  envDir: "../..",
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors
