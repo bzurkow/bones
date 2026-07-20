@@ -13,11 +13,14 @@
   },
   "scripts": {
     "lint": "oxlint -c ../../.oxlintrc.json .",
-    "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
+    "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@mantine/core": "^9.4.1",
     "@mantine/hooks": "^9.4.1",
+    "@tabler/icons-react": "^3.45.0",
     "@trpc/client": "^11.18.0",
     "backend": "0.1.0",
     "react-router-dom": "^7.18.1"
@@ -25,5 +28,9 @@
   "peerDependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@storybook/react-vite": "10.5.2",
+    "storybook": "10.5.2"
   }
 }

@@ -20,7 +20,7 @@ interface AccentSpec {
   dark: number;
 }
 
-const ACCENTS = {
+export const ACCENTS = {
   blue: { hue: 255, chroma: 0.13, light: 58, dark: 68 },
   green: { hue: 150, chroma: 0.13, light: 58, dark: 68 },
   purple: { hue: 300, chroma: 0.13, light: 58, dark: 68 },
