@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "backend";
-import { BACKEND_URL } from "../config";
+import { BACKEND_URL } from "../../config";
 
 const trpc = createTRPCClient<AppRouter>({
   links: [httpBatchLink({ url: `${BACKEND_URL}/trpc` })],
