@@ -1,8 +1,8 @@
 import { Center, MantineProvider, Paper, Stack, Text, Title } from "@mantine/core";
-import { authClient } from "./auth-client";
+import { authClient } from "./AuthHelpers/auth-client";
 import { Login } from "./Login";
 import { Logout } from "./Logout";
-import icon from "./assets/platypus-icon.svg";
+import icon from "../assets/platypus-icon.svg";
 
 export function Landing() {
   const { data: session, isPending } = authClient.useSession();

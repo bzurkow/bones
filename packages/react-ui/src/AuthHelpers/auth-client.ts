@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/react";
-import { BACKEND_URL } from "./config";
+import { BACKEND_URL } from "../../config";
 import { getDesktopToken } from "./desktop-token";
 
 export const authClient = createAuthClient({

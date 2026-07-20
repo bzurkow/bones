@@ -1,7 +1,7 @@
 import { Button } from "@mantine/core";
 import type React from "react";
-import { authClient } from "./auth-client";
-import { isTauri, signInWithDesktopFlow } from "./desktop-auth";
+import { authClient } from "./AuthHelpers/auth-client";
+import { isTauri, signInWithDesktopFlow } from "./AuthHelpers/desktop-auth";
 
 function GoogleIcon() {
   return (

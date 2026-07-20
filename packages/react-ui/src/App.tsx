@@ -2,8 +2,7 @@ import "@mantine/core/styles.css";
 import type { ReactNode } from "react";
 import { MantineProvider } from "@mantine/core";
 import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { authClient } from "./auth-client";
-import { Logout } from "./Logout";
+import { authClient } from "./AuthHelpers/auth-client";
 import { theme, cssVariablesResolver } from "./theme";
 import { Landing } from "./Landing";
 
@@ -28,7 +27,7 @@ export function App() {
       <HashRouter>
         <AuthGate>
           <Routes>
-            <Route path="/" element={<Logout />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Landing />} />
           </Routes>
         </AuthGate>

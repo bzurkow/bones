@@ -1,7 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
-import { BACKEND_URL } from "./config";
+import { BACKEND_URL } from "../../config";
 import { setDesktopToken } from "./desktop-token";
 
 export { isTauri };

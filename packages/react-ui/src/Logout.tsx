@@ -1,6 +1,6 @@
 import { Button, Stack, Text } from "@mantine/core";
-import { authClient } from "./auth-client";
-import { setDesktopToken } from "./desktop-token";
+import { authClient } from "./AuthHelpers/auth-client";
+import { setDesktopToken } from "./AuthHelpers/desktop-token";
 
 export function Logout() {
   const { data: session, isPending, refetch } = authClient.useSession();
