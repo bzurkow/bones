@@ -95,9 +95,63 @@ server.get("/auth/desktop-bridge", async (request, reply) => {
   reply.type("text/html").send(`<!doctype html>
 <meta charset="utf-8" />
 <title>Signed in</title>
-<body style="font-family: system-ui, sans-serif; text-align: center; padding: 4rem;">
-  <p>${session ? "You're signed in." : "Sign-in failed."} You can close this tab and return to Platypus.</p>
-  <p><a href="${redirectUrl}">Click here</a> if you're not returned automatically.</p>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: oklch(58% 0.13 255);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .card {
+    background: white;
+    border: 1px solid oklch(90% 0.008 260);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    padding: 2rem;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+  }
+  .card svg {
+    width: 72px;
+    height: 72px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0.75rem 0 0;
+    color: oklch(22% 0.012 260);
+  }
+  p {
+    color: oklch(50% 0.012 260);
+    font-size: 0.9rem;
+    margin: 1.5rem 0 0;
+  }
+  a {
+    color: oklch(45% 0.15 255);
+  }
+</style>
+<body>
+  <div class="card">
+    <svg viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="405" cy="455" rx="175" ry="120" fill="oklch(58% 0.13 255)" />
+      <ellipse cx="520" cy="490" rx="95" ry="48" fill="oklch(58% 0.13 150)" transform="rotate(18 520 490)" />
+      <ellipse cx="345" cy="560" rx="30" ry="16" fill="oklch(58% 0.13 150)" />
+      <ellipse cx="430" cy="565" rx="30" ry="16" fill="oklch(58% 0.13 150)" />
+      <ellipse cx="255" cy="345" rx="115" ry="100" fill="oklch(58% 0.13 255)" />
+      <ellipse cx="235" cy="365" rx="72" ry="56" fill="oklch(62% 0.13 350)" />
+      <path d="M 235 335 Q 130 300 60 330 Q 45 355 60 385 Q 130 415 245 385 Z" fill="oklch(58% 0.13 300)" />
+      <path d="M 235 375 Q 140 400 70 380 Q 65 392 78 400 Q 150 425 240 400 Z" fill="oklch(48% 0.13 300)" />
+      <circle cx="255" cy="295" r="13" fill="oklch(22% 0.012 260)" />
+      <circle cx="259" cy="291" r="4" fill="oklch(98% 0.006 260)" />
+    </svg>
+    <h1>Platypus</h1>
+    <p>${session ? "You're signed in." : "Sign-in failed."} You can close this tab and return to Platypus.</p>
+    <p><a href="${redirectUrl}">Click here</a> if you're not returned automatically.</p>
+  </div>
   <script>window.location.replace(${JSON.stringify(redirectUrl)});</script>
 </body>`);
 });

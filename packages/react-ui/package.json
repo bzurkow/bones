@@ -16,6 +16,8 @@
     "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
   },
   "dependencies": {
+    "@mantine/core": "^9.4.1",
+    "@mantine/hooks": "^9.4.1",
     "@trpc/client": "^11.18.0",
     "backend": "0.1.0",
     "react-router-dom": "^7.18.1"
