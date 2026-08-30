@@ -1,4 +1,4 @@
-# Platypus
+# Bones
 
 <!-- TODO: proper introduction -->
 

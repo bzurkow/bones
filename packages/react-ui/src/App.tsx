@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { MantineProvider } from "@mantine/core";
 import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import { theme, cssVariablesResolver } from "./theme";
 import { Landing } from "./Landing";
+import { AuthenticatedLayout } from "./AuthenticatedLayout";
+import { Home } from "./Home";
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { data: session, isPending } = authClient.useSession();
@@ -23,12 +24,14 @@ function AuthGate({ children }: { children: ReactNode }) {
 
 export function App() {
   return (
-    <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} defaultColorScheme="auto">
+    <MantineProvider forceColorScheme="light">
       <HashRouter>
         <AuthGate>
           <Routes>
-            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Landing />} />
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="/" element={<Home />} />
+            </Route>
           </Routes>
         </AuthGate>
       </HashRouter>

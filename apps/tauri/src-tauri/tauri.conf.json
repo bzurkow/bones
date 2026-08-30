@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Platypus",
+  "productName": "Bones",
   "version": "0.1.0",
-  "identifier": "com.platypus.app",
+  "identifier": "com.bones.app",
   "build": {
     "beforeDevCommand": "yarn dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Platypus",
+        "title": "Bones",
         "width": 800,
         "height": 600
       }
@@ -35,7 +35,7 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["platypus"]
+        "schemes": ["bones"]
       }
     }
   }

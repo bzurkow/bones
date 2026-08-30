@@ -70,11 +70,11 @@ server.get("/auth/desktop-signin", async (_request, reply) => {
 });
 
 // apps/tauri's desktop OAuth flow points its callbackURL here instead of
-// straight to platypus://, since the system browser (where this runs) and
+// straight to bones://, since the system browser (where this runs) and
 // the Tauri webview are separate cookie jars. This route reads the session
 // cookie Better Auth just set (same browser, same request chain) and does
 // the actual custom-scheme handoff itself -- Better Auth never needs to
-// know about platypus:// at all.
+// know about bones:// at all.
 server.get("/auth/desktop-bridge", async (request, reply) => {
   const headers = new Headers();
   for (const [key, value] of Object.entries(request.headers)) {
@@ -84,11 +84,11 @@ server.get("/auth/desktop-bridge", async (request, reply) => {
   const session = await auth.api.getSession({ headers });
 
   const redirectUrl = session
-    ? `platypus://callback?token=${encodeURIComponent(session.session.token)}`
-    : "platypus://callback?error=no_session";
+    ? `bones://callback?token=${encodeURIComponent(session.session.token)}`
+    : "bones://callback?error=no_session";
 
   // Redirecting a real browser tab straight to a non-web URL leaves it with
-  // nothing to actually display -- there's no page for platypus:// to land
+  // nothing to actually display -- there's no page for bones:// to land
   // on. Serving a small page that triggers the handoff via JS (with a
   // manual fallback link) instead gives the tab something to show
   // afterward, and lets the user close it deliberately.
@@ -148,8 +148,8 @@ server.get("/auth/desktop-bridge", async (request, reply) => {
       <circle cx="255" cy="295" r="13" fill="oklch(22% 0.012 260)" />
       <circle cx="259" cy="291" r="4" fill="oklch(98% 0.006 260)" />
     </svg>
-    <h1>Platypus</h1>
-    <p>${session ? "You're signed in." : "Sign-in failed."} You can close this tab and return to Platypus.</p>
+    <h1>Bones</h1>
+    <p>${session ? "You're signed in." : "Sign-in failed."} You can close this tab and return to Bones.</p>
     <p><a href="${redirectUrl}">Click here</a> if you're not returned automatically.</p>
   </div>
   <script>window.location.replace(${JSON.stringify(redirectUrl)});</script>

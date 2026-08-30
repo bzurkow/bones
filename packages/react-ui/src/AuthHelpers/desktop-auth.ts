@@ -18,7 +18,7 @@ export { isTauri };
 // from the first hop keeps it all in one place. The system browser and the
 // Tauri webview are still separate cookie jars for the *session* though, so
 // the backend's desktop-bridge route hands that back as a token via a
-// platypus:// deep link -- see apps/backend/src/index.ts.
+// bones:// deep link -- see apps/backend/src/index.ts.
 export async function signInWithDesktopFlow(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     let unlisten: (() => void) | undefined;
@@ -26,7 +26,7 @@ export async function signInWithDesktopFlow(): Promise<void> {
     onOpenUrl((urls) => {
       for (const url of urls) {
         const parsed = new URL(url);
-        if (parsed.protocol !== "platypus:") continue;
+        if (parsed.protocol !== "bones:") continue;
         unlisten?.();
         const token = parsed.searchParams.get("token");
         if (token) {
