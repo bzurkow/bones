@@ -16,15 +16,15 @@
     "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix"
   },
   "dependencies": {
-    "@mantine/core": "^9.4.1",
-    "@mantine/hooks": "^9.4.1",
-    "@tabler/icons-react": "^3.45.0",
+    "@mantine/core": "^9.5.2",
+    "@mantine/hooks": "^9.5.2",
+    "@tabler/icons-react": "^3.46.0",
     "@trpc/client": "^11.18.0",
     "backend": "0.1.0",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.3"
   },
   "peerDependencies": {
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }
