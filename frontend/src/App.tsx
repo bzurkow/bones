@@ -5,7 +5,10 @@ import { authClient } from "./AuthHelpers/auth-client";
 import { Landing } from "./Landing";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
+import { ApplicationProfile } from "./ApplicationProfile";
+import { ApplicationSettings } from "./ApplicationSettings";
 import { Login } from "./Login";
+import { NotFound } from "./NotFound";
 import { theme } from "./theme";
 import { DevColorSchemeToggle } from "./DevColorSchemeToggle";
 
@@ -47,8 +50,11 @@ export function App() {
           <Route path="/" element={<RequireAuth />}>
             <Route element={<AuthenticatedLayout />}>
               <Route index element={<ApplicationHome />} />
+              <Route path="profile" element={<ApplicationProfile />} />
+              <Route path="settings" element={<ApplicationSettings />} />
             </Route>
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>

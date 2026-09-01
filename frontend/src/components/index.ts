@@ -4,6 +4,7 @@
 // them get built.
 export * from "./Button";
 export * from "./BonesMark";
+export * from "./ConfusedIcon";
 export * from "./Eyebrow";
 export * from "./CardGrid";
 export * from "./CodePanel";

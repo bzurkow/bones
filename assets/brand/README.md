@@ -16,6 +16,9 @@ ends. Read one way it is a wireframe, read the other it is a bone.
 | `bones-app-icon-white.svg` | Black mark on a white rounded square. |
 | `bones-mark-{32,512,1024}.png` | Raster mark, transparent background. |
 | `bones-app-icon-{512,1024}.png` | Raster app icon (store / PWA). |
+| `bones-confused.svg` | Confused skeleton — empty states, 404s, failed generations. |
+| `bones-confused-inverse.svg` | Same, white on dark. |
+| `bones-confused-compact.svg` | No teeth or question marks — use at 32–56px. |
 
 The wordmark SVGs use live `<text>` set in Instrument Sans 600 at -0.04em tracking.
 Convert text to outlines before handing the logo to anyone outside the team, or
