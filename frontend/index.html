@@ -28,6 +28,27 @@
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Sets Mantine's data-mantine-color-scheme attribute synchronously,
+         before first paint -- tokens.css's dark-mode block is keyed off
+         this attribute. Without it, the page paints with tokens.css's
+         default (light) values first, then flashes to the resolved scheme
+         once MantineProvider mounts and sets it. This is the plain-HTML
+         equivalent of Mantine's own ColorSchemeScript component (which
+         assumes a server rendering index.html per request -- doesn't apply
+         to a static Vite SPA, so this replicates its exact script inline
+         instead). Keep defaultColorScheme / the localStorage key in sync
+         with App.tsx's <MantineProvider defaultColorScheme="auto">. -->
+    <script>
+      try {
+        var storedScheme = window.localStorage.getItem("mantine-color-scheme-value");
+        var scheme =
+          storedScheme === "light" || storedScheme === "dark" || storedScheme === "auto" ? storedScheme : "auto";
+        var computedScheme =
+          scheme !== "auto" ? scheme : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.setAttribute("data-mantine-color-scheme", computedScheme);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
