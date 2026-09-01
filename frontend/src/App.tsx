@@ -5,6 +5,7 @@ import { authClient } from "./AuthHelpers/auth-client";
 import { Landing } from "./Landing";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
+import { Login } from "./Login";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
 // whole <Routes> tree -- so which routes require auth is declared in the
@@ -35,10 +36,12 @@ export function App() {
     <MantineProvider forceColorScheme="light">
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Landing />} />
-          <Route element={<RequireAuth />}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/signup" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/app" element={<RequireAuth />}>
             <Route element={<AuthenticatedLayout />}>
-              <Route path="/" element={<ApplicationHome />} />
+              <Route index element={<ApplicationHome />} />
             </Route>
           </Route>
         </Routes>
