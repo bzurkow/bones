@@ -1,40 +1,48 @@
 import "@mantine/core/styles.css";
-import type { ReactNode } from "react";
-import { MantineProvider } from "@mantine/core";
-import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Center, Loader, MantineProvider } from "@mantine/core";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { Landing } from "./Landing";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
-import { Home } from "./Home";
+import { ApplicationHome } from "./ApplicationHome";
 
-function AuthGate({ children }: { children: ReactNode }) {
+// Gates only the route subtree it wraps (via <Outlet />), rather than the
+// whole <Routes> tree -- so which routes require auth is declared in the
+// route tree itself, not hardcoded as a path string here. Passes the
+// current location through as state so Login can send the user back to
+// where they were headed instead of always landing on "/".
+function RequireAuth() {
   const { data: session, isPending } = authClient.useSession();
   const location = useLocation();
 
   if (isPending) {
-    return null;
+    return (
+      <Center mih="100vh">
+        <Loader />
+      </Center>
+    );
   }
 
-  if (!session && location.pathname !== "/login") {
-    return <Navigate to="/login" replace />;
+  if (!session) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return children;
+  return <Outlet />;
 }
 
 export function App() {
   return (
     <MantineProvider forceColorScheme="light">
-      <HashRouter>
-        <AuthGate>
-          <Routes>
-            <Route path="/login" element={<Landing />} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Landing />} />
+          <Route element={<RequireAuth />}>
             <Route element={<AuthenticatedLayout />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<ApplicationHome />} />
             </Route>
-          </Routes>
-        </AuthGate>
-      </HashRouter>
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </MantineProvider>
   );
 }

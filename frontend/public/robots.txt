@@ -1,0 +1,7 @@
+# Everything below "/" is behind Better Auth's session gate (RequireAuth in
+# App.tsx) anyway -- an unauthenticated crawler hitting any of those routes
+# gets client-side redirected to /login, so there's nothing there to
+# disallow that isn't already effectively private. No sitemap yet: only
+# real public route is /login.
+User-agent: *
+Allow: /
