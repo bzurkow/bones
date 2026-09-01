@@ -10,7 +10,7 @@ export function Login() {
   const from = (location.state as { from?: Location } | null)?.from;
 
   async function handleSignIn() {
-    const target = from ? `${from.pathname}${from.search}` : "/app";
+    const target = from ? `${from.pathname}${from.search}` : "/";
     await authClient.signIn.social({
       provider: "google",
       callbackURL: `${window.location.origin}${target}`,

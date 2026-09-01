@@ -41,6 +41,22 @@
 
   /* Elevation — used sparingly, only on the hero frame */
   --bones-shadow-frame: 0 24px 60px -30px rgba(10, 10, 10, 0.28);
+
+  /* Sticky header blur backdrop -- scheme-aware tint under backdrop-filter */
+  --bones-header-bg: rgba(255, 255, 255, 0.88);
+
+  /* CodePanel: always the *opposite* of the page's current scheme (dark
+     panel on a light page, light panel on a dark page), so it reads as a
+     distinct "screen" against the page rather than blending into a
+     same-toned surface. In light mode (here) that means it looks like a
+     dark-mode surface -- these values equal dark mode's ink/bg/border
+     ramp. Overridden below, in the dark-mode block, to light mode's ramp. */
+  --bones-code-bg: #0A0A0A;
+  --bones-code-text: #D6D6D6;
+  --bones-code-muted: #6E6E6E;
+  --bones-code-emphasis: #FFFFFF;
+  --bones-code-border: #262626;
+  --bones-code-border-faint: #1C1C1C;
 }
 
 /* Dark mode — CLAUDE.md/COMPONENTS.md only specify a light system; there is
@@ -72,6 +88,17 @@
   --bones-block-3:    #333333;
 
   --bones-shadow-frame: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
+  --bones-header-bg: rgba(10, 10, 10, 0.88);
+
+  /* CodePanel stays the opposite of the page here too -- in dark mode that
+     means it looks like a *light*-mode surface, i.e. light mode's own
+     ink/bg/border ramp. */
+  --bones-code-bg: #FFFFFF;
+  --bones-code-text: #3A3A3A;
+  --bones-code-muted: #8A8A8A;
+  --bones-code-emphasis: #0A0A0A;
+  --bones-code-border: #E4E4E4;
+  --bones-code-border-faint: #EDEDED;
 }
 
 /* Type scale (as used on the landing page) */

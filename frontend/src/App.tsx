@@ -27,7 +27,7 @@ function RequireAuth() {
   }
 
   if (!session) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/welcome" state={{ from: location }} replace />;
   }
 
   return <Outlet />;
@@ -41,10 +41,10 @@ export function App() {
       <DevColorSchemeToggle />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/welcome" element={<Landing />} />
           <Route path="/signup" element={<Login />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/app" element={<RequireAuth />}>
+          <Route path="/" element={<RequireAuth />}>
             <Route element={<AuthenticatedLayout />}>
               <Route index element={<ApplicationHome />} />
             </Route>

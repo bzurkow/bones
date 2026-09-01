@@ -1,0 +1,24 @@
+.panel {
+  border-radius: var(--bones-radius-lg);
+  background: var(--bones-code-bg);
+  padding: 26px 28px;
+  overflow: hidden;
+}
+
+.filename {
+  margin-bottom: 18px;
+  font-family: var(--bones-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--bones-code-muted);
+}
+
+.code {
+  margin: 0;
+  font-family: var(--bones-font-mono);
+  font-size: 12.5px;
+  line-height: 1.95;
+  color: var(--bones-code-text);
+  white-space: pre;
+  overflow-x: auto;
+}

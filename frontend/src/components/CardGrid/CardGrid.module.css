@@ -1,0 +1,36 @@
+.grid {
+  display: grid;
+  gap: 1px;
+  background: var(--bones-border);
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-lg);
+  overflow: hidden;
+}
+
+.cell {
+  background: var(--bones-bg);
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.index {
+  font-family: var(--bones-font-mono);
+  font-size: 11px;
+  color: var(--bones-subtle);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.description {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--bones-muted);
+}
