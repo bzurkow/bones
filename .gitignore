@@ -7,7 +7,3 @@ storybook-static/
 !.env.example
 *.log
 .DS_Store
-
-# Rust / Tauri
-target/
-apps/tauri/src-tauri/target/

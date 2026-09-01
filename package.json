@@ -4,12 +4,15 @@
   "description": "",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "backend",
+    "frontend"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "install-all": "yarn --cwd backend install && yarn --cwd frontend install",
+    "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",
+    "frontend:dev": "yarn workspace frontend dev",
     "lint": "oxlint && syncpack lint",
     "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",
@@ -18,22 +21,10 @@
   "keywords": [],
   "author": "",
   "license": "UNLICENSED",
-  "dependencies": {
-    "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-deep-link": "^2.4.10",
-    "@tauri-apps/plugin-opener": "^2.5.5",
-    "better-auth": "^1.7.2",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
-  },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.80.0",
     "syncpack": "^15.3.3",
-    "typescript": "~7.0.2",
-    "vite": "^8.2.2"
+    "typescript": "~7.0.2"
   }
 }

@@ -44,7 +44,7 @@ React Router, using `HashRouter` (not `BrowserRouter`). Tauri serves the built f
 ## Local-polling-to-backend migration plan
 Mandatory auth means a backend exists from day one (for auth + user DB), but notification **polling** itself can still run client-side in v1, using tokens brokered/stored via the backend rather than purely local. Moving actual polling/webhook handling server-side later is a swap of connector internals only, not a rearchitect.
 
-## Scaffolding plan
+## Scaffolding plan (superseded — see "Repo restructure" below)
 Single monorepo (yarn workspaces) so tRPC types can be shared end-to-end between backend and clients without publishing packages:
 - `apps/tauri` — the Tauri shell (the native/OS-level bits: window, system tray, OS keychain), thin wrapper that mounts `packages/react-ui`. One project, multiple build targets — desktop **scaffolded**; iOS/Android are additional targets on this *same* project (`tauri ios init`/`tauri android init`), not separate apps. Renamed from `apps/desktop` once mobile made that name inaccurate.
 - `apps/web` — plain Vite + React web build, thin wrapper that mounts `packages/react-ui`. Exists so the same UI can run in a browser tab, no Tauri/native layer.
@@ -55,17 +55,32 @@ Single monorepo (yarn workspaces) so tRPC types can be shared end-to-end between
 
 Setup order: `apps/backend` skeleton (Fastify+tRPC, health route, Docker/hot reload — unblocked, no dependency on prod hosting) → Drizzle pointed at local Postgres-in-Docker → Better Auth wired up (Google) → wire `apps/tauri`/`apps/web` to backend tRPC client + real auth flow → first connector. Production AWS RDS deploy happens separately, at actual deploy time.
 
+## Repo restructure (2026-08-31)
+Desktop/mobile parked for now (see README's "Desktop/mobile (parked)"), and with only one client left, the `apps/*` + `packages/*` split stopped earning its keep. Flattened to a plain two-tier layout:
+- `backend/` (was `apps/backend`) — unchanged internally, just relocated.
+- `frontend/` (was `apps/web`, merged with `packages/react-ui`) — one standalone Vite + React app instead of a thin shell importing a separate UI package. `packages/react-ui/src/index.ts`'s re-export is gone since there's no longer a package boundary to cross — `main.tsx` imports `./App` directly.
+- `apps/tauri`'s own `package.json`/`vite.config.ts`/`index.html`/`src/main.tsx` shell is gone; when revisited, Tauri wraps `frontend` directly rather than needing its own copy of the app (that's how Tauri is designed to work — see README).
+- `packages/shared` / `packages/connectors` were never actually scaffolded, so nothing to move there.
+
+Workspaces are now just `["backend", "frontend"]`.
+
+`apps/tauri`'s `src-tauri` (the Rust/Tauri project) was moved to `frontend/src-tauri` as dormant scaffolding, then deleted outright the same day once it was clear it wasn't needed for anything currently planned (`src-tauri` only matters for native desktop/mobile *builds*, not for publishing the web app's static assets — that's just `frontend/dist` to wherever it's hosted, unrelated to Tauri).
+
+All the Tauri-specific JS was then deleted too, rather than kept dormant: `frontend/src/AuthHelpers/desktop-auth.ts` + `desktop-token.ts`, the `isTauri()` branch in `Login.tsx`, the `setDesktopToken(undefined)` calls in `Logout.tsx`/`TopBar.tsx`, `auth-client.ts`'s bearer-token `fetchOptions`, `backend/src/auth.ts`'s `bearer()` plugin, and `backend`'s `/auth/desktop-signin` + `/auth/desktop-bridge` routes. `TRUSTED_ORIGINS` trimmed of the `localhost:1420`/`tauri://localhost`/`https://tauri.localhost` entries those routes needed. Auth is plain cookie-based Better Auth sessions now, browser-only. The deleted desktop OAuth flow (system browser + `bones://` deep link, working around the Tauri webview/system-browser cookie-jar split) is fully documented above under "Open / next decisions" if it needs rebuilding later — that write-up is why the code itself didn't need to survive as a reference.
+
 ## Dependency management convention
 Shared deps used identically across workspaces (`react`, `react-dom`, `typescript`, `vite`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`, `oxlint`) are declared **once, at the root `package.json`**, and hoisted to every workspace via yarn workspaces rather than re-declared per app — avoids the version drift we hit when `apps/web`'s scaffold pulled a different `typescript` than `apps/tauri`. Only genuinely package-specific deps (e.g. `@tauri-apps/*` in `apps/tauri`) stay local. `syncpack` (`yarn deps:check` / `yarn deps:fix`) lints for any version mismatch that creeps back in across workspaces.
 
+**Revisited in the 2026-08-31 restructure**: with `frontend` now the only consumer of `react`/`vite`/`@vitejs/plugin-react`/`@types/react`/`@types/react-dom`, the "avoid drift across multiple consumers" rationale no longer applies to those — they moved into `frontend/package.json` directly, alongside `better-auth` and `@tauri-apps/*` (also only used there). Root `package.json` now holds only genuinely repo-wide tooling: `typescript`, `oxlint`, `syncpack`, `@types/node` (needed by both `backend`'s runtime types and `frontend`'s Node-context `vite.config.ts`).
+
 ## Linting
-**Oxlint** (Rust-based, part of the Oxc toolchain) — dramatically faster than ESLint since it's a native binary, though fewer rules/smaller plugin ecosystem. Adopted because `create-vite`'s `react-ts` template defaults to it now; kept it and made it consistent across the whole monorepo rather than mixing linters per app. One shared `.oxlintrc.json` at repo root; each workspace has a `lint` script pointing at it (`oxlint -c ../../.oxlintrc.json .`).
+**Oxlint** (Rust-based, part of the Oxc toolchain) — dramatically faster than ESLint since it's a native binary, though fewer rules/smaller plugin ecosystem. Adopted because `create-vite`'s `react-ts` template defaults to it now; kept it and made it consistent across the whole monorepo rather than mixing linters per app. One shared `.oxlintrc.json` at repo root; each workspace has a `lint` script pointing at it (`oxlint -c ../.oxlintrc.json .`).
 
 Rules on top of the defaults, in `.oxlintrc.json`:
 - `func-style: ["error", "declaration"]` — `function foo() {}` over `const foo = () => {}` for readability. Verified oxlint actually enforces it (not just a recognized-but-ignored name) before relying on it.
 
 ## TypeScript config convention
-Same single-source-of-truth idea as dependencies: a root `tsconfig.base.json` holds compiler options shared across every workspace (strict mode, `target`/`lib`, `jsx`, bundler module resolution, unused-locals/params checks). Each workspace's `tsconfig.json` (or `tsconfig.app.json`/`tsconfig.node.json` for split browser/Node contexts, e.g. app code vs. `vite.config.ts`) does `"extends": "../../tsconfig.base.json"` and only overrides what's genuinely different for that context (e.g. `types: ["node"]` + `module: "nodenext"` for the Node-context config that type-checks `vite.config.ts`, ambient `vite/client` types for app code). Fixes the drift we'd already gotten from two different scaffolders (`create-tauri-app` vs. `create-vite`) picking different `target`s and one of them silently missing `strict: true`.
+Same single-source-of-truth idea as dependencies: a root `tsconfig.base.json` holds compiler options shared across every workspace (strict mode, `target`/`lib`, `jsx`, bundler module resolution, unused-locals/params checks). Each workspace's `tsconfig.json` (or `tsconfig.app.json`/`tsconfig.node.json` for split browser/Node contexts, e.g. app code vs. `vite.config.ts`) does `"extends": "../tsconfig.base.json"` and only overrides what's genuinely different for that context (e.g. `types: ["node"]` + `module: "nodenext"` for the Node-context config that type-checks `vite.config.ts`, ambient `vite/client` types for app code). Fixes the drift we'd already gotten from two different scaffolders (`create-tauri-app` vs. `create-vite`) picking different `target`s and one of them silently missing `strict: true`.
 
 ## Formatting
 No formatter configured yet (oxlint is a linter, not a formatter — doesn't cover code style/whitespace). Open gap, not yet decided (e.g. Prettier).
@@ -83,6 +98,8 @@ Layered smoke checks, each isolating one piece so a failure points at exactly wh
 4. A DB-touching procedure (`SELECT 1` via Drizzle) — proves the DB connection + Drizzle setup, independent of which host we land on.
 5. An auth-gated procedure — once OAuth exists, proves Better Auth + our session verification end to end.
 6. A `/debug` route in `packages/react-ui` with buttons wired to each procedure above, showing raw responses on screen — exercises the *real* client→backend pipe from both `apps/tauri` and `apps/web` (both mount `packages/react-ui`), not just the backend in isolation. Gated on `import.meta.env.DEV` so it never ships in production builds.
+
+**Migrations on boot (2026-08-31)**: `backend`'s four `db:*` scripts (`db:generate`, `db:migrate`, `db:studio`, `db:auth:generate`) stay as-is, but `db:migrate` is no longer something you run by hand for local dev — the Dockerfile's dev-stage `CMD` runs `yarn db:migrate && yarn dev`, so every `yarn backend:dev` brings the DB to the current schema before starting the server. `db:generate`/`db:auth:generate` stay manual on purpose (schema-authoring steps needing human review of the generated output before it's committed); `db:studio` stays manual since it's an on-demand GUI. This needed `docker-compose.yml`'s `postgres` service to get a real `pg_isready` healthcheck and `backend`'s `depends_on` to wait on `condition: service_healthy` instead of just container-started — otherwise migrate could race Postgres actually accepting connections.
 
 ## Hosting philosophy
 **Single cloud provider: AWS hosts everything.** Explicit preference — operational simplicity of one vendor/one bill/one console over chasing best-per-service pricing or features across multiple providers. Applies to anything actually *hosted* (compute, managed DB, container registry, static assets); doesn't apply to things that aren't hosted anywhere by nature — local dev tools (OrbStack, Drizzle Studio) run on your own machine, and Better Auth is code embedded in our own backend, not a separate vendor. Concrete implications: container images go to **ECR**, not Docker Hub; `apps/web` static hosting is S3 + CloudFront (already the plan); DB hosting below narrows to AWS-only options.

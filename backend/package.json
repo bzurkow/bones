@@ -1,0 +1,39 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/trpc/router.ts",
+  "types": "./src/trpc/router.ts",
+  "exports": {
+    ".": {
+      "types": "./src/trpc/router.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:auth:generate": "better-auth generate --output src/db/auth-schema.ts -y",
+    "lint": "oxlint -c ../.oxlintrc.json .",
+    "lint:fix": "oxlint -c ../.oxlintrc.json . --fix"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@trpc/server": "^11.18.0",
+    "better-auth": "^1.7.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.12.1",
+    "pg": "^8.23.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "auth": "^1.7.2",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.13"
+  }
+}
