@@ -6,6 +6,8 @@ import { Landing } from "./Landing";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
 import { Login } from "./Login";
+import { theme } from "./theme";
+import { DevColorSchemeToggle } from "./DevColorSchemeToggle";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
 // whole <Routes> tree -- so which routes require auth is declared in the
@@ -33,7 +35,10 @@ function RequireAuth() {
 
 export function App() {
   return (
-    <MantineProvider forceColorScheme="light">
+    <MantineProvider theme={theme} defaultColorScheme="auto">
+      {/* TODO(temporary): remove once there's enough real UI to eyeball
+          both modes without it -- see DevColorSchemeToggle.tsx. */}
+      <DevColorSchemeToggle />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />

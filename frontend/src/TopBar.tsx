@@ -2,7 +2,7 @@ import { Avatar, Group, Menu, Text } from "@mantine/core";
 import { IconLogout2 } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import icon from "./assets/bones-icon.svg";
+import { BonesMark } from "./components";
 
 const TOPBAR_HEIGHT = 56;
 
@@ -27,7 +27,7 @@ export function TopBar() {
     >
       <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
         <Group gap="sm">
-          <Avatar src={icon} alt="" radius="xl" size={TOPBAR_HEIGHT} style={{ background: "transparent" }} />
+          <BonesMark size={TOPBAR_HEIGHT} />
           <Text fw={700} size="lg">
             Bones
           </Text>

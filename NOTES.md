@@ -1,24 +1,31 @@
 # Bones — Project Notes
 
-## Vision
-All-in-one communication tool (messaging, video, etc.), starting with a **notification center** that aggregates notifications from many external services into one place.
+## Vision (pivoted 2026-08-31, still being defined — see "Product pivot" below)
+~~All-in-one communication tool (messaging, video, etc.), starting with a **notification center** that aggregates notifications from many external services into one place.~~
 
-## Notification aggregation approach
+**Current, not yet fully defined**: Bones is a toolkit an AI can use, not a self-service app-generator SaaS with its own generation UI. Explicit correction from the design handoff's marketing copy (which reads as the latter — "describe your product and Bones builds the whole thing," a v0/Lovable/bolt.new-style wizard): **that framing is wrong.** What "toolkit that your AI can use" actually means operationally isn't settled yet — revisit and firm this up before writing more product copy or building the generation engine (Phase 5/6 below). Don't take the handoff's landing-page pitch as literal product truth in the meantime; it's parked/placeholder, same status as `bones-future-ideas.html`'s content.
+
+## Product pivot (2026-08-31)
+Replaced the notification-aggregator concept above. Triggered by a design handoff (`bone_handoff/`, landing/login/home page designs + `COMPONENTS.md`/`tokens.css`/brand assets) — the **visual design system** it specifies (grayscale, Instrument Sans + JetBrains Mono, borders not shadows, no accent color — see `CLAUDE.md` at the repo root once adopted) is confirmed and being adopted; its **marketing copy** (the specific "describe your product, get SSO/schema/API/infra" pitch) is not confirmed as accurate — see "Vision" above.
+
+Everything under "Notification aggregation approach" and "Connector architecture" below is **obsolete** (kept as historical record, not deleted, per this file's usual convention) — there is no notification-polling/connector layer in the new product. "Auth requirements" mostly still applies but needs a reading update: it originally meant *this app's own* login (a Bones account signing into Bones) — that's still true and still SSO-gated, still Google-first. The new product *additionally* needs to generate SSO (SAML/OIDC) *for the apps it builds* — a second, much bigger auth surface, unbuilt, tracked in "Open / next decisions" as its own initiative.
+
+## Notification aggregation approach (obsolete — see "Product pivot")
 Chose service-API integration (Gmail API, Slack API, Discord, Calendar, etc.) over OS-level notification interception — more reliable, more maintainable, one integration per source instead of fragile/restricted OS hooks (esp. on macOS).
 
-## Connector architecture
+## Connector architecture (obsolete — see "Product pivot")
 Each source is a **connector** with one contract: call `emit(normalizedNotification)` when something new shows up. Everything downstream (local store, event bus, UI) only ever consumes `emit()`'d notifications and doesn't know how a connector gets its data. This makes the ingestion mechanism swappable per source without touching the rest of the app:
 - **v1**: connector polls the source's REST API on a timer, diffs against last-seen IDs/timestamps.
 - **v2**: connector opens a WebSocket/SSE connection to our own backend relay (which holds the actual webhook subscription from the source), pushes to `emit()` when the relay forwards an event.
 
 Connector logic lives in TypeScript (not Rust) — better SDKs for Gmail/Slack/Discord etc. Rust/Tauri is reserved for OS-level integration (secure token storage via OS keychain, system tray, native OS notifications).
 
-## Auth requirements
+## Auth requirements (this app's own login — see "Product pivot" for the second, unbuilt SSO-for-generated-apps surface)
 - No unauthenticated use — the whole app UI gates on a valid session before rendering anything.
 - SSO login required. Start with **Google**, but architecture must support adding any provider (Microsoft, GitHub, Apple, etc.) without rework.
-- Two distinct OAuth uses to keep separate: (1) "Sign in with Google" for identity/login, (2) Gmail API access for pulling notifications (broader scope, requested as incremental/separate consent, not bundled into login).
-- Desktop auth flow: Tauri app opens system browser → backend `/auth/<provider>` → backend completes OAuth, creates/looks up user, issues its own session token → redirects to a custom protocol (`bones://callback`) Tauri catches → session token stored in OS keychain.
-- User's own data (connected sources, notifications, preferences) lives in our own DB, keyed off the auth provider's `user_id`.
+- Two distinct OAuth uses to keep separate: (1) "Sign in with Google" for identity/login, (2) Gmail API access for pulling notifications (broader scope, requested as incremental/separate consent, not bundled into login) — **this second one was specific to the old notification-aggregator product and no longer applies.**
+- Desktop auth flow: Tauri app opens system browser → backend `/auth/<provider>` → backend completes OAuth, creates/looks up user, issues its own session token → redirects to a custom protocol (`bones://callback`) Tauri catches → session token stored in OS keychain. **Also obsolete** — Tauri was dropped entirely on 2026-08-31, see "Repo restructure" above.
+- User's own data lives in our own DB, keyed off the auth provider's `user_id`.
 
 ## Chosen stack
 
@@ -130,6 +137,9 @@ Doesn't block current backend work either way: local dev still runs Postgres in 
 **Drizzle Studio** (`drizzle-kit studio`) as the default — free, no extra install since `drizzle-kit` is already a dependency, browser-based so cross-platform, reads the actual Drizzle schema. **Supabase's own dashboard** as a complement (also shows Auth users/sessions). **DBeaver** as a free cross-platform fallback for raw SQL. Deliberately not Postico — Mac-only, conflicts with the cross-platform goal.
 
 ## Open / next decisions
+- [x] ~~Design system foundation adopted~~ (2026-08-31) — `CLAUDE.md` (build rules) at repo root, `frontend/src/tokens.css` imported in `main.tsx`, new brand mark (`frontend/src/assets/brand/`, `frontend/public/brand/` for favicon/apple-touch-icon), Instrument Sans + JetBrains Mono loaded in `index.html`. Mantine **not** removed — still used by `TopBar`/`Logout`/`AuthenticatedLayout`/the health-check components, none of which were in scope this pass; new pages use the token system directly (plain CSS/CSS Modules, no Mantine components) rather than fighting Mantine's theme API to match a from-scratch design.
+- [ ] Login rebuilt to the new design (Google-only) — **deliberately excluded from this pass, revisit later**: Microsoft SSO (user doesn't want to register the app yet), any generic/enterprise SSO or email+password login (explicitly ruled out, not just deferred), and the black proof-panel/marketing copy (dropped entirely — its content asserted the app-generator product claims that turned out to be wrong, see "Vision" above).
+- [ ] Landing (`/`) and Home (`/app`) still placeholders — Landing's copy can't be written until "Vision" is settled; Home is intentionally left alone per explicit ask ("I'll think of something to put there").
 - [x] ~~Scaffold `apps/backend`~~ — Fastify + tRPC + Docker skeleton done, validated end to end (health route, tRPC round-trip, hot reload all confirmed working).
 - [x] ~~Drizzle schema + `db.ping`~~ — first migration generated and applied against local Postgres, `db.ping` (`SELECT 1`) verified end to end. `DbHealthCheck` added to `packages/react-ui` as its own component (not merged into the existing `HealthCheck`), both rendered dev-only on the home screen.
 - [x] ~~Better Auth wired up (Google)~~ — `apps/backend/src/auth.ts` (Drizzle adapter, Google social provider, `trustedOrigins` for the dev client ports). Mounted on Fastify at `/api/auth/*` via a manual Fetch Request/Response bridge, since Better Auth's handler is Fetch-native like Auth.js's. Schema regenerated via `yarn db:auth:generate` (the `@better-auth/cli`) — its generated `users`/`sessions`/`accounts`/`verifications` tables replaced the earlier placeholder `users` table entirely, since Better Auth needs to own that shape; `src/db/schema.ts` now just re-exports `auth-schema.ts` (generated, not hand-edited) plus future domain tables. Verified end to end two ways: `POST /api/auth/sign-in/social` returns a real `accounts.google.com` URL with our actual `client_id`; and hitting that URL directly against Google's real server got a real sign-in page back (200, not an `invalid_client`/`redirect_uri_mismatch` error), confirming the Google Cloud Console side is correctly configured too. Google OAuth client credentials live in `apps/backend/.env` (gitignored).
