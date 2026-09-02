@@ -1,0 +1,7 @@
+.body {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--bones-muted);
+}

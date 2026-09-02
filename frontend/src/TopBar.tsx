@@ -1,7 +1,8 @@
 import { Avatar, Menu } from "@mantine/core";
-import { IconLogout2, IconSettings, IconUser } from "@tabler/icons-react";
+import { IconLogout2, IconSettings, IconShieldLock, IconUser } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
+import { isAdmin } from "./AuthHelpers/roles";
 import { BonesMark } from "./components";
 import styles from "./TopBar.module.css";
 
@@ -43,6 +44,15 @@ export function TopBar() {
             <Menu.Item component={Link} to="/settings" leftSection={<IconSettings size={16} />}>
               Settings
             </Menu.Item>
+            {isAdmin(session?.user) && (
+              <>
+                <Menu.Divider />
+                <Menu.Item component={Link} to="/admin" leftSection={<IconShieldLock size={16} />}>
+                  Admin
+                </Menu.Item>
+              </>
+            )}
+            <Menu.Divider />
             <Menu.Item leftSection={<IconLogout2 size={16} />} onClick={handleSignOut}>
               Log Out
             </Menu.Item>
