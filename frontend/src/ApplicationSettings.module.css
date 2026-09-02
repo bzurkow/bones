@@ -1,0 +1,72 @@
+.page {
+  max-width: var(--bones-max-width);
+  margin: 0 auto;
+  padding: 48px var(--bones-gutter) 64px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--bones-ink);
+}
+
+.card {
+  max-width: 560px;
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-lg);
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 24px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--bones-border);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rowLabel {
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--bones-ink);
+}
+
+.rowDescription {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bones-muted);
+}
+
+.error {
+  margin: 0;
+  max-width: 560px;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 2px solid var(--bones-danger);
+  border-radius: var(--bones-radius-sm);
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  color: var(--bones-danger);
+}

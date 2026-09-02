@@ -15,7 +15,7 @@ import { AdminRoles } from "./Admin/AdminRoles";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
 import { theme } from "./theme";
-import { DevColorSchemeToggle } from "./DevColorSchemeToggle";
+import { useColorScheme } from "./hooks/useColorScheme";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
 // whole <Routes> tree -- so which routes require auth is declared in the
@@ -63,11 +63,13 @@ function RequireAdmin() {
 }
 
 export function App() {
+  // Called here, outside MantineProvider, since its result feeds
+  // MantineProvider's own forceColorScheme prop below -- useColorScheme
+  // itself doesn't need Mantine's context, only authClient's session.
+  const forceColorScheme = useColorScheme();
+
   return (
-    <MantineProvider theme={theme} defaultColorScheme="auto">
-      {/* TODO(temporary): remove once there's enough real UI to eyeball
-          both modes without it -- see DevColorSchemeToggle.tsx. */}
-      <DevColorSchemeToggle />
+    <MantineProvider theme={theme} defaultColorScheme="auto" forceColorScheme={forceColorScheme}>
       <BrowserRouter>
         <Routes>
           <Route path="/welcome" element={<Landing />} />

@@ -1,5 +1,7 @@
 /* Bones — design tokens
-   Pure grayscale. No accent color; emphasis comes from weight and contrast. */
+   Grayscale, with one sanctioned exception (--bones-danger, for error
+   states only). Otherwise no accent color; emphasis comes from weight and
+   contrast. */
 
 :root {
   /* Ink */
@@ -23,6 +25,12 @@
   --bones-block-1:    #F4F4F4;
   --bones-block-2:    #EAEAEA;
   --bones-block-3:    #D8D8D8;
+
+  /* Status — the one sanctioned exception to grayscale-only (CLAUDE.md rule 1).
+     Error text/borders only; no success/warning/other accent gets added
+     alongside it. Picked for ~6.5:1+ contrast against --bones-bg in both
+     schemes (overridden below for dark). */
+  --bones-danger:     #B42318;
 
   /* Type */
   --bones-font-sans:  'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -78,7 +86,10 @@
 
   --bones-bg:         #0A0A0A;
   --bones-surface:    #141414;
-  --bones-border:     #262626;  /* matches CodePanel's internal rules */
+  /* #262626 (matching CodePanel's internal rules) measured ~1.3:1 against
+     --bones-bg -- essentially invisible as a real card/row divider. Bumped
+     to clear WCAG's 3:1 non-text-contrast floor (~3.4:1 here) instead. */
+  --bones-border:     #666666;
   --bones-border-faint: #1C1C1C; /* matches CodePanel's sub-rules */
   --bones-border-strong: #FFFFFF;
   --bones-disabled-bg: #1C1C1C;
@@ -86,6 +97,10 @@
   --bones-block-1:    #1C1C1C;
   --bones-block-2:    #262626;
   --bones-block-3:    #333333;
+
+  /* Lighter/brighter than light mode's --bones-danger -- ~7:1 contrast
+     against dark mode's near-black --bones-bg instead of near-zero. */
+  --bones-danger:     #F97066;
 
   --bones-shadow-frame: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
   --bones-header-bg: rgba(10, 10, 10, 0.88);

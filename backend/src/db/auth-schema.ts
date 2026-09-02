@@ -23,6 +23,12 @@ export const users = pgTable("users", {
     .default("standard")
     .notNull(),
   deletedAt: timestamp("deleted_at"),
+  inheritViewModeFromBrowser: boolean("inherit_view_mode_from_browser")
+    .default(true)
+    .notNull(),
+  viewMode: text("view_mode", { enum: ["light", "dark"] })
+    .default("light")
+    .notNull(),
 });
 
 export const sessions = pgTable(

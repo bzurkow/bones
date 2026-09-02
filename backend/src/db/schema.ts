@@ -13,3 +13,7 @@ export * from "./auth-schema.js";
 // `text("role", { enum: [...] })` via `db:auth:generate`).
 export const USER_ROLES = users.role.enumValues;
 export type UserRole = (typeof USER_ROLES)[number];
+
+// Same reasoning as USER_ROLES, for user.additionalFields.viewMode.
+export const USER_VIEW_MODES = users.viewMode.enumValues;
+export type UserViewMode = (typeof USER_VIEW_MODES)[number];

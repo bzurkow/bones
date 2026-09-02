@@ -2,7 +2,9 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { appRouter } from "./trpc/router.js";
+import { createContext } from "./trpc/trpc.js";
 import { auth } from "./auth.js";
+import { toFetchHeaders } from "./lib/fetch-headers.js";
 import { trustedOrigins } from "./trusted-origins.js";
 
 const server = Fastify({ logger: true });
@@ -28,11 +30,7 @@ await server.register(async (instance) => {
 
   instance.all("/api/auth/*", async (request, reply) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
-
-    const headers = new Headers();
-    for (const [key, value] of Object.entries(request.headers)) {
-      if (value) headers.append(key, Array.isArray(value) ? value.join(", ") : value);
-    }
+    const headers = toFetchHeaders(request.headers);
 
     const init: RequestInit = { method: request.method, headers };
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -49,7 +47,7 @@ await server.register(async (instance) => {
 
 await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
-  trpcOptions: { router: appRouter },
+  trpcOptions: { router: appRouter, createContext },
 });
 
 const port = Number(process.env.PORT ?? 3000);

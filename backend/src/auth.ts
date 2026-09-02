@@ -33,6 +33,24 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      // View-mode preference. input: false for the same reason as role --
+      // better-auth's own updateUser endpoint accepts any additionalField
+      // marked input: true, which would let a client PATCH these with no
+      // validation of its own; trpc/routers/user-settings.ts's
+      // updateUserSettings is the only writer, and it's already scoped to
+      // the caller's own row.
+      inheritViewModeFromBrowser: {
+        type: "boolean",
+        required: true,
+        input: false,
+        defaultValue: true,
+      },
+      viewMode: {
+        type: ["light", "dark"],
+        required: true,
+        input: false,
+        defaultValue: "light",
+      },
     },
   },
   // The very first user to ever sign up becomes the Owner; everyone after

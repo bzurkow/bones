@@ -9,9 +9,11 @@ Black and white, borders not shadows, mono for machine values, gaps not margins.
 
 ## Hard rules
 
-1. **Grayscale only.** `#0A0A0A #3A3A3A #6E6E6E #8A8A8A #A8A8A8 #C8C8C8 #E4E4E4 #EDEDED #F2F2F2 #FAFAFA #FFFFFF`.
-   No accent, success, warning, or danger color. Do not add one. Error states use
-   a 2px ink border and a mono message; status uses a filled dot.
+1. **Grayscale, plus one exception.** `#0A0A0A #3A3A3A #6E6E6E #8A8A8A #A8A8A8 #C8C8C8 #E4E4E4 #EDEDED #F2F2F2 #FAFAFA #FFFFFF`,
+   plus `--bones-danger` (`#B42318` light / `#F97066` dark) for error text and
+   borders only. No success, warning, or other accent color — don't add another
+   one. Error states use a 2px `--bones-danger` border and a mono message in
+   `--bones-danger`; status uses a filled dot.
 2. **Two fonts.** Instrument Sans (400/500/600) for anything a human wrote.
    JetBrains Mono (400/500) for anything a machine produced — paths, hashes,
    regions, timestamps, counts, IDs, status words, eyebrows.
