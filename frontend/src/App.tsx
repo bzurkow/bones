@@ -11,7 +11,9 @@ import { ApplicationSettings } from "./ApplicationSettings";
 import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
 import { AdminAuth } from "./Admin/AdminAuth";
-import { AdminRoles } from "./Admin/AdminRoles";
+import { AdminFeatureFlags } from "./Admin/AdminFeatureFlags";
+import { AdminRBAC } from "./Admin/AdminRBAC";
+import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
 import { theme } from "./theme";
@@ -85,7 +87,9 @@ export function App() {
                   <Route index element={<Navigate to="users" replace />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="auth" element={<AdminAuth />} />
-                  <Route path="roles" element={<AdminRoles />} />
+                  <Route path="feature-flags" element={<AdminFeatureFlags />} />
+                  <Route path="rbac" element={<AdminRBAC />} />
+                  <Route path="site-settings" element={<AdminSiteSettings />} />
                 </Route>
               </Route>
             </Route>

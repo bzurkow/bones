@@ -2,10 +2,10 @@ import styles from "./AdminPanel.module.css";
 
 // Placeholder for the feature-table x role join-table work (none/read/write
 // per feature) -- deliberately deferred, see the roadmap notes.
-export function AdminRoles() {
+export function AdminRBAC() {
   return (
     <p className={styles.body}>
-      Per-feature access -- none, read, write -- mapped to each role will live here.
+      Each feature, with per-role access -- none, read, write -- will live here.
     </p>
   );
 }
