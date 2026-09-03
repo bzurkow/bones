@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Switch } from "@mantine/core";
 import type { ViewMode } from "backend";
 import { authClient } from "./AuthHelpers/auth-client";
-import { ErrorMessage, PageHeader } from "./components";
+import { ErrorMessage, PageHeader, Row, RowCard } from "./components";
 import { trpc } from "./trpc";
-import styles from "./ApplicationSettings.module.css";
 
 interface ViewSettingsInput {
   inheritViewModeFromBrowser?: boolean;
@@ -42,14 +41,11 @@ export function ApplicationSettings() {
 
   return (
     <PageHeader eyebrow="Settings" title="Settings">
-      <div className={styles.card}>
-        <div className={styles.row}>
-          <div className={styles.rowText}>
-            <span className={styles.rowLabel}>Inherit view mode from browser</span>
-            <span className={styles.rowDescription}>
-              Follow your operating system's light/dark preference automatically.
-            </span>
-          </div>
+      <RowCard>
+        <Row
+          label="Inherit view mode from browser"
+          description="Follow your operating system's light/dark preference automatically."
+        >
           <Switch
             aria-label="Inherit view mode from browser"
             checked={inheritViewModeFromBrowser}
@@ -57,15 +53,9 @@ export function ApplicationSettings() {
               void updateSettings({ inheritViewModeFromBrowser: event.currentTarget.checked })
             }
           />
-        </div>
+        </Row>
 
-        <div className={styles.row}>
-          <div className={styles.rowText}>
-            <span className={styles.rowLabel}>Dark mode</span>
-            <span className={styles.rowDescription}>
-              Only applies when not inheriting from your browser.
-            </span>
-          </div>
+        <Row label="Dark mode" description="Only applies when not inheriting from your browser.">
           <Switch
             aria-label="Dark mode"
             checked={viewMode === "dark"}
@@ -74,8 +64,8 @@ export function ApplicationSettings() {
               void updateSettings({ viewMode: event.currentTarget.checked ? "dark" : "light" })
             }
           />
-        </div>
-      </div>
+        </Row>
+      </RowCard>
 
       <ErrorMessage message={error} />
     </PageHeader>

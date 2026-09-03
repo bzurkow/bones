@@ -1,0 +1,43 @@
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.identityFields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.email {
+  font-size: 14px;
+  color: var(--bones-muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--bones-muted);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--bones-ink);
+}
+
+.mono {
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  color: var(--bones-muted);
+}
