@@ -8,6 +8,7 @@ const ROLE_LABELS = {
   owner: "Owner",
   administrator: "Administrator",
   standard: "Standard",
+  demo: "Demo",
 } as const;
 
 export function ApplicationProfile() {

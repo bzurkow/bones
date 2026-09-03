@@ -41,6 +41,15 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      // Admin-controlled enable/disable, distinct from deletedAt above --
+      // suspending an account isn't the same action as deleting it. No API
+      // sets this yet either; reserves the column.
+      active: {
+        type: "boolean",
+        required: true,
+        input: false,
+        defaultValue: true,
+      },
       // View-mode preference. input: false for the same reason as role --
       // better-auth's own updateUser endpoint accepts any additionalField
       // marked input: true, which would let a client PATCH these with no
