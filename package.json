@@ -8,7 +8,7 @@
     "frontend"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "yarn workspace backend test",
     "install-all": "yarn --cwd backend install && yarn --cwd frontend install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",

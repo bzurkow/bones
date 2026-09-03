@@ -4,6 +4,13 @@ import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { trustedOrigins } from "./trusted-origins.js";
 import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
+import type { UserRole } from "./user-fields.js";
+
+// Pure decision logic pulled out of the databaseHooks.user.create.before
+// hook below so it's directly unit-testable (auth.test.ts) without a DB.
+export function nextUserRole(hasExistingUsers: boolean): UserRole {
+  return hasExistingUsers ? "standard" : "owner";
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", usePlural: true }),
@@ -63,7 +70,7 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const [existing] = await db.select({ id: users.id }).from(users).limit(1);
-          return { data: { ...user, role: existing ? "standard" : "owner" } };
+          return { data: { ...user, role: nextUserRole(Boolean(existing)) } };
         },
       },
     },

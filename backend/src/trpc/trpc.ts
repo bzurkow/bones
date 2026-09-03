@@ -12,12 +12,18 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
   return { session };
 }
 
-type Context = Awaited<ReturnType<typeof createContext>>;
+// Exported so tests can build a context object directly (bypassing
+// createContext's real header/cookie parsing) for createCallerFactory --
+// see trpc/routers/*.test.ts.
+export type Context = Awaited<ReturnType<typeof createContext>>;
 
 const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+// For tests: calls a router's procedures directly in-process with an
+// injected context, no HTTP/fastify involved. See trpc/routers/*.test.ts.
+export const createCallerFactory = t.createCallerFactory;
 
 // Rejects unauthenticated calls before the procedure body runs, and narrows
 // ctx.session from "session | null" to "session" for everything downstream
