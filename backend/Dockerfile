@@ -29,4 +29,12 @@ COPY --from=build /app/backend/package.json ./package.json
 # semver ranges alone, which can drift from what dev/build actually tested.
 COPY --from=build /app/yarn.lock ./yarn.lock
 RUN yarn install --production
+# --production only controls which package.json entries are resolution
+# *roots* -- it doesn't stop a devDependency from being installed anyway
+# when its version also happens to satisfy a peerDependency declared by a
+# real dependency (drizzle-orm peer-depends on @types/pg; better-auth
+# peer-depends on drizzle-kit/vitest -- both npm and yarn do this, it's not
+# a flag/tool bug). Nothing at runtime imports our own devDependencies
+# regardless of why they got pulled in, so remove them by name explicitly.
+RUN node -e "for (const name of Object.keys(require('./package.json').devDependencies ?? {})) require('node:fs').rmSync('node_modules/' + name, { recursive: true, force: true });"
 CMD ["node", "dist/index.js"]
