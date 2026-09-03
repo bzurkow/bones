@@ -1,26 +1,33 @@
 import { useState } from "react";
 import { Switch } from "@mantine/core";
+import type { ViewMode } from "backend";
 import { authClient } from "./AuthHelpers/auth-client";
-import { getViewSettings, type ViewSettings } from "./AuthHelpers/viewSettings";
-import { Eyebrow } from "./components";
+import { ErrorMessage, PageHeader } from "./components";
 import { trpc } from "./trpc";
 import styles from "./ApplicationSettings.module.css";
 
+interface ViewSettingsInput {
+  inheritViewModeFromBrowser?: boolean;
+  viewMode?: ViewMode;
+}
+
 export function ApplicationSettings() {
   const { data: session, refetch } = authClient.useSession();
-  const settings = getViewSettings(session?.user);
 
   // Session is the source of truth; this only covers the gap between
   // flipping a switch and refetch() below confirming it saved -- cleared
   // either way once that resolves, so it never drifts from the session.
-  const [optimistic, setOptimistic] = useState<Partial<ViewSettings> | null>(null);
+  const [optimistic, setOptimistic] = useState<ViewSettingsInput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // The ?? fallbacks only matter for the brief window before session
+  // loads -- once it has, these fields are always present (required: true
+  // in auth.ts).
   const inheritViewModeFromBrowser =
-    optimistic?.inheritViewModeFromBrowser ?? settings.inheritViewModeFromBrowser;
-  const viewMode = optimistic?.viewMode ?? settings.viewMode;
+    optimistic?.inheritViewModeFromBrowser ?? session?.user.inheritViewModeFromBrowser ?? true;
+  const viewMode = optimistic?.viewMode ?? session?.user.viewMode ?? "light";
 
-  async function updateSettings(input: Partial<ViewSettings>) {
+  async function updateSettings(input: ViewSettingsInput) {
     setError(null);
     setOptimistic({ inheritViewModeFromBrowser, viewMode, ...input });
     try {
@@ -34,12 +41,7 @@ export function ApplicationSettings() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Eyebrow>Settings</Eyebrow>
-        <h1 className={styles.title}>Settings</h1>
-      </div>
-
+    <PageHeader eyebrow="Settings" title="Settings">
       <div className={styles.card}>
         <div className={styles.row}>
           <div className={styles.rowText}>
@@ -75,7 +77,7 @@ export function ApplicationSettings() {
         </div>
       </div>
 
-      {error && <p className={styles.error}>{error}</p>}
-    </div>
+      <ErrorMessage message={error} />
+    </PageHeader>
   );
 }

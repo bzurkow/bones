@@ -8,3 +8,5 @@ export * from "./ConfusedIcon";
 export * from "./Eyebrow";
 export * from "./CardGrid";
 export * from "./CodePanel";
+export * from "./PageHeader";
+export * from "./ErrorMessage";

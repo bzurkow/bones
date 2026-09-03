@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { trustedOrigins } from "./trusted-origins.js";
+import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", usePlural: true }),
@@ -21,7 +22,7 @@ export const auth = betterAuth({
       // keeps it out of the client-facing sign-up payload entirely, so
       // there's no role a client could self-assign.
       role: {
-        type: ["owner", "administrator", "standard"],
+        type: [...USER_ROLES],
         required: true,
         input: false,
         defaultValue: "standard",
@@ -46,7 +47,7 @@ export const auth = betterAuth({
         defaultValue: true,
       },
       viewMode: {
-        type: ["light", "dark"],
+        type: [...VIEW_MODES],
         required: true,
         input: false,
         defaultValue: "light",

@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { USER_VIEW_MODES, users } from "../../db/schema.js";
+import { users } from "../../db/schema.js";
+import { VIEW_MODES } from "../../user-fields.js";
 import { protectedProcedure, router } from "../trpc.js";
 
 // No getter here -- inheritViewModeFromBrowser/viewMode are
@@ -14,7 +15,7 @@ export const userSettingsRouter = router({
       z
         .object({
           inheritViewModeFromBrowser: z.boolean().optional(),
-          viewMode: z.enum(USER_VIEW_MODES).optional(),
+          viewMode: z.enum(VIEW_MODES).optional(),
         })
         .refine((input) => Object.keys(input).length > 0, "Provide at least one field to update."),
     )

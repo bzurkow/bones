@@ -1,0 +1,11 @@
+.error {
+  margin: 0;
+  max-width: 560px;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 2px solid var(--bones-danger);
+  border-radius: var(--bones-radius-sm);
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  color: var(--bones-danger);
+}
