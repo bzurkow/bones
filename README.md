@@ -51,7 +51,3 @@ Builds and starts `backend` (Fastify + tRPC, hot reload via bind mount) alongsid
 Out of scope for now — no `src-tauri` project exists in the repo, and there's no Tauri-specific code left in `frontend` or `backend` either (removed rather than kept dormant, per [`NOTES.md`](NOTES.md#repo-restructure-2026-08-31)). Auth is plain cookie-based sessions via Better Auth, browser-only.
 
 To pick Tauri back up: run `tauri init` inside `frontend/` (Tauri wraps a single existing frontend rather than needing its own copy of it — no need to scaffold a separate app), point `tauri.conf.json`'s `devUrl`/`frontendDist` at `frontend`'s own dev server/build output, and add `@tauri-apps/api`, `@tauri-apps/plugin-deep-link`, `@tauri-apps/plugin-opener`, and `@tauri-apps/cli`. The desktop OAuth flow (system browser + `bones://` deep link, to work around the Tauri webview and system browser being separate cookie jars) will need rebuilding from scratch — see NOTES.md's "Open / next decisions" for how it worked before, as a reference. From there, `tauri ios init` / `tauri android init` add the mobile targets on the same project. See [Tauri's own docs](https://v2.tauri.app/start/).
-
-## Docs
-
-- [`docs/dev/service-map.html`](docs/dev/service-map.html) — architecture diagram of the client/backend/data/external layers. Open it directly in a browser (GitHub won't render HTML inline); redeploy the matching Claude artifact to update it, then copy the file back here.
