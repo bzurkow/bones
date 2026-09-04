@@ -33,7 +33,7 @@ One-time setup:
 yarn initialize-backend
 ```
 
-Creates `backend/.env` from `backend/.env.example` if it doesn't already exist (gitignored, not committed — fill in the real secrets after), runs `yarn install`, brings up Postgres, and applies any pending migrations. Safe to re-run any time — every step is a no-op if you've already done it. Leaves Postgres running; doesn't start the backend itself.
+Creates `.env` from `.env.example` if it doesn't already exist (gitignored, not committed — fill in the real secrets after), runs `yarn install`, brings up Postgres, and applies any pending migrations. Safe to re-run any time — every step is a no-op if you've already done it. Leaves Postgres running; doesn't start the backend itself.
 
 Then, to actually run it:
 
