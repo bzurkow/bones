@@ -3,7 +3,6 @@ import { Center, Loader, MantineProvider } from "@mantine/core";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { isAdmin } from "./AuthHelpers/roles";
-import { Landing } from "./Landing";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
 import { ApplicationProfile } from "./ApplicationProfile";
@@ -16,14 +15,18 @@ import { AdminRBAC } from "./Admin/AdminRBAC";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
-import { theme } from "./theme";
+import { theme } from "ui";
 import { useColorScheme } from "./hooks/useColorScheme";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
 // whole <Routes> tree -- so which routes require auth is declared in the
 // route tree itself, not hardcoded as a path string here. Passes the
 // current location through as state so Login can send the user back to
-// where they were headed instead of always landing on "/".
+// where they were headed instead of always landing on "/". Redirects to
+// /login (not the marketing site) -- that site is a separate origin now
+// (see marketing/), and bouncing out to it and back would lose this
+// `state` hand-off, since React Router state doesn't survive a cross-origin
+// trip.
 function RequireAuth() {
   const { data: session, isPending } = authClient.useSession();
   const location = useLocation();
@@ -37,7 +40,7 @@ function RequireAuth() {
   }
 
   if (!session) {
-    return <Navigate to="/welcome" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Outlet />;
@@ -45,7 +48,7 @@ function RequireAuth() {
 
 // Nested inside RequireAuth's subtree, so a session is already guaranteed
 // here -- this only adds the role check, and sends non-admins back to the
-// app home rather than /welcome (they're logged in, just not authorized).
+// app home rather than /login (they're logged in, just not authorized).
 function RequireAdmin() {
   const { data: session, isPending } = authClient.useSession();
 
@@ -74,7 +77,6 @@ export function App() {
     <MantineProvider theme={theme} defaultColorScheme="auto" forceColorScheme={forceColorScheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/welcome" element={<Landing />} />
           <Route path="/signup" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RequireAuth />}>

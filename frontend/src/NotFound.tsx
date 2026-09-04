@@ -4,7 +4,7 @@ import styles from "./NotFound.module.css";
 
 // Catch-all for any route that doesn't match -- wired in App.tsx as
 // path="*", the last route in the tree. "/" is always a safe destination
-// regardless of auth state: RequireAuth redirects to /welcome on its own
+// regardless of auth state: RequireAuth redirects to /login on its own
 // if there's no session.
 export function NotFound() {
   return (

@@ -7,3 +7,8 @@ storybook-static/
 !.env.example
 *.log
 .DS_Store
+*.tsbuildinfo
+
+# marketing/ (Next.js)
+.next/
+next-env.d.ts

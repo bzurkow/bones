@@ -5,14 +5,17 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "ui",
+    "marketing"
   ],
   "scripts": {
     "test": "yarn workspace backend test",
-    "install-all": "yarn --cwd backend install && yarn --cwd frontend install",
+    "install:all": "yarn --cwd backend install && yarn --cwd frontend install && yarn --cwd ui install && yarn --cwd marketing install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",
     "frontend:dev": "yarn workspace frontend dev",
+    "marketing:dev": "yarn workspace marketing dev",
     "lint": "oxlint && syncpack lint",
     "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",

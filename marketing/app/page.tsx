@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
-import { BonesMark, Button, CardGrid, CodePanel, Eyebrow } from "./components";
-import type { CardGridItem } from "./components";
-import styles from "./Landing.module.css";
+"use client";
+
+import { BonesMark, Button, CardGrid, CodePanel, Eyebrow } from "ui";
+import type { CardGridItem } from "ui";
+import styles from "./page.module.css";
 
 // Copy below is carried over verbatim from the design handoff
 // (bone_handoff/source/Bones Landing.dc.html) -- it describes Bones as a
@@ -11,6 +12,10 @@ import styles from "./Landing.module.css";
 // implemented for real below; this specific wording is a placeholder,
 // same status as bones-future-ideas.html's parked content -- expect to
 // revise once the product framing is nailed down.
+
+// The application itself lives on a separate origin now (frontend/, the
+// app.-subdomain) -- see NOTES.md's marketing/app split entry.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://app.localhost:5173";
 
 const STACK_ITEMS: CardGridItem[] = [
   {
@@ -89,12 +94,7 @@ const OUTPUT_CODE = `export const invoices = router({
     ),
 });`;
 
-export function Landing() {
-  // Relays RequireAuth's `from` (if this page was reached via its redirect)
-  // through to Login, so the "return to where you were headed" behavior
-  // survives the extra hop through this page instead of dead-ending here.
-  const location = useLocation();
-
+export default function Home() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -113,7 +113,7 @@ export function Landing() {
             <a href="#own" className={styles.navLink}>
               The output
             </a>
-            <Button component={Link} to="/login" state={location.state} size="sm">
+            <Button component="a" href={`${APP_URL}/login`} size="sm">
               Start building
             </Button>
           </nav>
@@ -128,7 +128,7 @@ export function Landing() {
           Postgres schema, a typed API layer, and a push to the cloud. You own every file.
         </p>
         <div className={styles.ctaRow}>
-          <Button component={Link} to="/login" state={location.state}>
+          <Button component="a" href={`${APP_URL}/login`}>
             Start building
           </Button>
           <Button variant="secondary" component="a" href="#stack">
@@ -188,7 +188,7 @@ export function Landing() {
           <h2 className={styles.finalCtaHeading}>Start with a sentence. Ship with a stack.</h2>
           <p className={styles.finalCtaLead}>First project is free, and the export button works before you ever enter a card.</p>
           <div className={styles.ctaRow}>
-            <Button component={Link} to="/login" state={location.state}>
+            <Button component="a" href={`${APP_URL}/login`}>
               Generate your first app
             </Button>
             <Button variant="secondary" component="a" href="#own">
