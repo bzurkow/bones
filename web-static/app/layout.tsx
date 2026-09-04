@@ -1,11 +1,11 @@
 import "@mantine/core/styles.css";
-import "ui/tokens.css";
+import "shared-ui/tokens.css";
 import { ColorSchemeScript } from "@mantine/core";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "./providers";
 
-// Copied verbatim from frontend/index.html's own head -- see that file's
+// Copied verbatim from web-app/index.html's own head -- see that file's
 // comments for why this is minimal (product pitch not settled yet) and why
 // og:url/og:image are omitted (need an absolute production URL).
 export const metadata: Metadata = {
@@ -26,10 +26,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Same Google Fonts <link> approach as frontend/index.html, not
+        {/* Same Google Fonts <link> approach as web-app/index.html, not
             next/font -- next/font's self-hosting generates its own scoped
             font-family name rather than the literal 'Instrument Sans'/
-            'JetBrains Mono' tokens.css (shared with frontend/) already
+            'JetBrains Mono' tokens.css (shared with web-app/) already
             references by name, so plain links keep both apps loading fonts
             identically instead of reconciling two different mechanisms. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         {/* Mantine's own SSR-aware flash-prevention -- sets
             data-mantine-color-scheme before first paint, server-rendered
-            here since Next actually renders per-request (frontend/'s own
+            here since Next actually renders per-request (web-app/'s own
             version of this is a hand-rolled inline script specifically
             because a static Vite SPA can't do this the proper way). */}
         <ColorSchemeScript defaultColorScheme="auto" />

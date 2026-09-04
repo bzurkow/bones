@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Eyebrow } from "ui";
+import { Eyebrow } from "shared-ui";
 import styles from "./PageHeader.module.css";
 
 // The app-page shell every authenticated page uses: eyebrow + h1 up top,

@@ -7,7 +7,7 @@ import { BonesMark } from "./components";
 import styles from "./TopBar.module.css";
 
 // COMPONENTS.md's Header, app variant (62px, gap 26px, avatar as the
-// rightmost item -- vs. marketing's 66px/28px/CTA button, see Landing.tsx's
+// rightmost item -- vs. web-static's 66px/28px/CTA button, see Landing.tsx's
 // own header). Menu/Avatar stay Mantine components (real dropdown/focus
 // behavior); the container/height/background/border match our tokens
 // instead of Mantine's own body/border variables.

@@ -9,6 +9,6 @@ storybook-static/
 .DS_Store
 *.tsbuildinfo
 
-# marketing/ (Next.js)
+# web-static/ (Next.js)
 .next/
 next-env.d.ts

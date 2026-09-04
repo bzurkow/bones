@@ -12,14 +12,14 @@ export const appRouter = router({
 export type AppRouter = typeof appRouter;
 
 // Re-exported (type-only -- see backend/package.json's "." export, same
-// types-only condition as AppRouter above) so the frontend's auth client
+// types-only condition as AppRouter above) so the web app's auth client
 // can run better-auth's inferAdditionalFields<typeof auth>() plugin and get
 // role/viewMode/etc. properly typed on session.user, instead of the
 // unknown-narrowing AuthHelpers used before that existed.
 export type { auth } from "../auth.js";
 
-// Frontend imports these types from here (type-only) rather than reaching
-// into backend's own source layout -- every frontend use of them is
+// web-app imports these types from here (type-only) rather than reaching
+// into backend's own source layout -- every web-app use of them is
 // type-only anyway (see hooks/useColorScheme.ts), so there's nothing more
 // than this re-export it needs.
 export type { UserRole, ViewMode } from "../user-fields.js";

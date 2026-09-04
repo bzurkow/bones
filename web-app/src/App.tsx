@@ -15,7 +15,7 @@ import { AdminRBAC } from "./Admin/AdminRBAC";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
-import { theme } from "ui";
+import { theme } from "shared-ui";
 import { useColorScheme } from "./hooks/useColorScheme";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
@@ -24,7 +24,7 @@ import { useColorScheme } from "./hooks/useColorScheme";
 // current location through as state so Login can send the user back to
 // where they were headed instead of always landing on "/". Redirects to
 // /login (not the marketing site) -- that site is a separate origin now
-// (see marketing/), and bouncing out to it and back would lose this
+// (see web-static/), and bouncing out to it and back would lose this
 // `state` hand-off, since React Router state doesn't survive a cross-origin
 // trip.
 function RequireAuth() {

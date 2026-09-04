@@ -1,7 +1,7 @@
 // Single source of truth for user.role / user.viewMode's allowed values --
 // fed into auth.ts's additionalFields (which is what `db:auth:generate`
 // turns into auth-schema.ts's generated enum columns), and re-exported
-// type-only from trpc/router.ts for the frontend.
+// type-only from trpc/router.ts for the web app.
 export const USER_ROLES = ["owner", "administrator", "standard", "demo"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 

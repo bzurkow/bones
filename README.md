@@ -4,7 +4,7 @@
 
 ## Layout
 
-Standard two-tier workspace: [`backend/`](backend) (Fastify + tRPC API) and [`frontend/`](frontend) (Vite + React web app).
+[`backend/`](backend) (Fastify + tRPC API), [`web-app/`](web-app) (Vite + React authenticated app), [`web-static/`](web-static) (Next.js marketing site), and [`shared-ui/`](shared-ui) (design-system components/tokens shared by both frontends).
 
 ## Prerequisites
 
@@ -17,13 +17,13 @@ Install workspace dependencies once, from the repo root:
 yarn install
 ```
 
-## Frontend
+## Web app
 
 ```sh
-yarn frontend:dev
+yarn web-app:dev
 ```
 
-Starts the Vite dev server for `frontend` (plain browser build).
+Starts the Vite dev server for `web-app` (plain browser build).
 
 ## Backend
 
@@ -48,6 +48,6 @@ Builds and starts `backend` (Fastify + tRPC, hot reload via bind mount) alongsid
 
 ## Desktop/mobile (not set up)
 
-Out of scope for now — no `src-tauri` project exists in the repo, and there's no Tauri-specific code left in `frontend` or `backend` either (removed rather than kept dormant, per [`NOTES.md`](NOTES.md#repo-restructure-2026-08-31)). Auth is plain cookie-based sessions via Better Auth, browser-only.
+Out of scope for now — no `src-tauri` project exists in the repo, and there's no Tauri-specific code left in `web-app` or `backend` either (removed rather than kept dormant, per [`NOTES.md`](NOTES.md#repo-restructure-2026-08-31)). Auth is plain cookie-based sessions via Better Auth, browser-only.
 
-To pick Tauri back up: run `tauri init` inside `frontend/` (Tauri wraps a single existing frontend rather than needing its own copy of it — no need to scaffold a separate app), point `tauri.conf.json`'s `devUrl`/`frontendDist` at `frontend`'s own dev server/build output, and add `@tauri-apps/api`, `@tauri-apps/plugin-deep-link`, `@tauri-apps/plugin-opener`, and `@tauri-apps/cli`. The desktop OAuth flow (system browser + `bones://` deep link, to work around the Tauri webview and system browser being separate cookie jars) will need rebuilding from scratch — see NOTES.md's "Open / next decisions" for how it worked before, as a reference. From there, `tauri ios init` / `tauri android init` add the mobile targets on the same project. See [Tauri's own docs](https://v2.tauri.app/start/).
+To pick Tauri back up: run `tauri init` inside `web-app/` (Tauri wraps a single existing frontend rather than needing its own copy of it — no need to scaffold a separate app), point `tauri.conf.json`'s `devUrl`/`frontendDist` at `web-app`'s own dev server/build output, and add `@tauri-apps/api`, `@tauri-apps/plugin-deep-link`, `@tauri-apps/plugin-opener`, and `@tauri-apps/cli`. The desktop OAuth flow (system browser + `bones://` deep link, to work around the Tauri webview and system browser being separate cookie jars) will need rebuilding from scratch — see NOTES.md's "Open / next decisions" for how it worked before, as a reference. From there, `tauri ios init` / `tauri android init` add the mobile targets on the same project. See [Tauri's own docs](https://v2.tauri.app/start/).

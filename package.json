@@ -5,17 +5,17 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend",
-    "ui",
-    "marketing"
+    "web-app",
+    "shared-ui",
+    "web-static"
   ],
   "scripts": {
     "test": "yarn workspace backend test",
-    "install:all": "yarn --cwd backend install && yarn --cwd frontend install && yarn --cwd ui install && yarn --cwd marketing install",
+    "install:all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",
-    "frontend:dev": "yarn workspace frontend dev",
-    "marketing:dev": "yarn workspace marketing dev",
+    "web-app:dev": "yarn workspace web-app dev",
+    "web-static:dev": "yarn workspace web-static dev",
     "lint": "oxlint && syncpack lint",
     "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",

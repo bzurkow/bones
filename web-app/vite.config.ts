@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     // Dev convention as of the marketing-site split: this app is reached at
     // app.localhost, not bare localhost, to mirror the eventual
-    // apex-domain (marketing) vs. app.-subdomain (this) production split --
+    // apex-domain (web-static) vs. app.-subdomain (this) production split --
     // Vite's default host allowlist doesn't include it otherwise.
     allowedHosts: ['app.localhost'],
   },

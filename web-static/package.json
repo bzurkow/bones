@@ -1,5 +1,5 @@
 {
-  "name": "marketing",
+  "name": "web-static",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -14,7 +14,7 @@
     "next": "^16.3.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "ui": "0.1.0"
+    "shared-ui": "0.1.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

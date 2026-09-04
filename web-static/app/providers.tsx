@@ -1,7 +1,7 @@
 "use client";
 
 import { MantineProvider } from "@mantine/core";
-import { theme } from "ui";
+import { theme } from "shared-ui";
 import type { ReactNode } from "react";
 
 // Split out from layout.tsx because MantineProvider needs a Client

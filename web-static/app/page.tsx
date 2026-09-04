@@ -1,7 +1,7 @@
 "use client";
 
-import { BonesMark, Button, CardGrid, CodePanel, Eyebrow } from "ui";
-import type { CardGridItem } from "ui";
+import { BonesMark, Button, CardGrid, CodePanel, Eyebrow } from "shared-ui";
+import type { CardGridItem } from "shared-ui";
 import styles from "./page.module.css";
 
 // Copy below is carried over verbatim from the design handoff
@@ -13,7 +13,7 @@ import styles from "./page.module.css";
 // same status as bones-future-ideas.html's parked content -- expect to
 // revise once the product framing is nailed down.
 
-// The application itself lives on a separate origin now (frontend/, the
+// The application itself lives on a separate origin now (web-app/, the
 // app.-subdomain) -- see NOTES.md's marketing/app split entry.
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://app.localhost:5173";
 

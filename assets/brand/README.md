@@ -47,4 +47,4 @@ embed the font — otherwise it falls back to Helvetica.
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
-Tokens are in `frontend/src/tokens.css` (the copy that actually ships — imported in `frontend/src/main.tsx`, not duplicated here).
+Tokens are in `shared-ui/src/tokens.css` (imported in `web-app/src/main.tsx` and `web-static/app/layout.tsx`, not duplicated here).
