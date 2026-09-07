@@ -17,6 +17,19 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
+  // Broadens every auth cookie's Domain from host-only (exactly this
+  // server's own hostname) to cover subdomains too -- specifically so the
+  // OAuth `state` cookie stays valid on both app.localhost:5173 (where
+  // vite.config.ts's proxy makes it get set, same-origin) and this
+  // server's own bare `localhost` (where Google's OAuth redirect lands
+  // directly, unproxied -- see vite.config.ts's comment for why BETTER_AUTH_URL
+  // can't just move to app.localhost like the proxy target did). No
+  // `domain` given -- defaults to BETTER_AUTH_URL's own hostname
+  // ("localhost"), a valid parent domain of app.localhost, so this
+  // follows whatever host each environment actually uses.
+  advanced: {
+    crossSubDomainCookies: { enabled: true },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
