@@ -24,7 +24,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: ColorSchemeScript below sets
+    // data-mantine-color-scheme on this element via a synchronous inline
+    // script, before React hydrates -- an expected, benign mismatch
+    // between the server-rendered markup and the DOM by the time
+    // hydration runs (Mantine's own documented fix for this exact case).
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Same Google Fonts <link> approach as web-app/index.html, not
             next/font -- next/font's self-hosting generates its own scoped
