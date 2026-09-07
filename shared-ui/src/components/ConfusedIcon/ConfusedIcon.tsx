@@ -1,4 +1,5 @@
 import { useComputedColorScheme } from "@mantine/core";
+import { assetUrl } from "../../asset-url";
 import confused from "../../assets/brand/bones-confused.svg";
 import confusedInverse from "../../assets/brand/bones-confused-inverse.svg";
 
@@ -13,5 +14,5 @@ export interface ConfusedIconProps {
 
 export function ConfusedIcon({ size = 96 }: ConfusedIconProps) {
   const isDark = useComputedColorScheme("light") === "dark";
-  return <img src={isDark ? confusedInverse : confused} alt="" width={size} height={size} />;
+  return <img src={assetUrl(isDark ? confusedInverse : confused)} alt="" width={size} height={size} />;
 }

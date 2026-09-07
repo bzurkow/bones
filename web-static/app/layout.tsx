@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             here since Next actually renders per-request (web-app/'s own
             version of this is a hand-rolled inline script specifically
             because a static Vite SPA can't do this the proper way). */}
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
         <Providers>{children}</Providers>

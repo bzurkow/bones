@@ -3,14 +3,16 @@
 import { MantineProvider } from "@mantine/core";
 import { theme } from "shared-ui";
 import type { ReactNode } from "react";
+import { ColorSchemeToggle } from "./ColorSchemeToggle";
 
 // Split out from layout.tsx because MantineProvider needs a Client
 // Component boundary (it's context-based), while layout.tsx stays a Server
 // Component so it can export `metadata`.
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <MantineProvider theme={theme} defaultColorScheme="auto">
+    <MantineProvider theme={theme} defaultColorScheme="light">
       {children}
+      <ColorSchemeToggle />
     </MantineProvider>
   );
 }
