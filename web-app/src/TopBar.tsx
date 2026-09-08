@@ -1,6 +1,6 @@
 import { Avatar, Menu } from "@mantine/core";
 import { IconLogout2, IconSettings, IconShieldLock, IconUser } from "@tabler/icons-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { isAdmin } from "./AuthHelpers/roles";
 import { BonesMark } from "./components";
@@ -13,10 +13,19 @@ import styles from "./TopBar.module.css";
 // instead of Mantine's own body/border variables.
 export function TopBar() {
   const { data: session, refetch } = authClient.useSession();
+  const navigate = useNavigate();
 
   async function handleSignOut() {
     await authClient.signOut();
     await refetch();
+    // Explicit navigation, not left to RequireAuth's own reactive redirect
+    // -- that redirect passes state: { from: location }, where location is
+    // still whatever page you were on when you clicked Log Out (e.g.
+    // /profile), so signing back in would send you right back there. A
+    // deliberate logout isn't "trying to reach a page" the way an
+    // unauthenticated visit is, so there's nothing to return to -- always
+    // land on /login with no `from`, so Login.tsx defaults back to "/".
+    navigate("/login", { replace: true });
   }
 
   return (
