@@ -3,7 +3,7 @@
 import { ActionIcon, useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 
-// Same floating bottom-right toggle as web-app's DevColorSchemeToggle, but
+// Same floating bottom-right toggle as web-app's ColorSchemeToggle, but
 // without its auth/session plumbing -- this site has no signed-in user to
 // persist a preference against. Uses Mantine's own useMantineColorScheme()
 // directly, which persists to localStorage under the same

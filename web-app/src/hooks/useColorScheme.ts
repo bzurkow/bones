@@ -1,8 +1,9 @@
 import type { ViewMode } from "backend";
 import { authClient } from "../AuthHelpers/auth-client";
 
-// Replaces DevColorSchemeToggle's manual button: the signed-in user's own
-// settings now drive Mantine's color scheme instead. Returns the value
+// Drives Mantine's color scheme from the signed-in user's own settings
+// (ColorSchemeToggle writes to the same settings, so both stay in sync
+// through the session rather than a separate local override). Returns the value
 // MantineProvider's forceColorScheme prop should get -- an explicit
 // "light"/"dark" to pin it, or undefined to let MantineProvider fall back
 // to its own defaultColorScheme="auto" (OS prefers-color-scheme, also what

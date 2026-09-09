@@ -1,13 +1,12 @@
 import { Outlet } from "react-router-dom";
-import { DevColorSchemeToggle } from "./DevColorSchemeToggle";
+import { ColorSchemeToggle } from "./ColorSchemeToggle";
 import { TopBar } from "./TopBar";
 
 export function AuthenticatedLayout() {
   return (
     <>
       <TopBar />
-      {/* TODO(temporary): see DevColorSchemeToggle.tsx */}
-      <DevColorSchemeToggle />
+      <ColorSchemeToggle />
       <Outlet />
     </>
   );
