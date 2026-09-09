@@ -1,6 +1,6 @@
 "use client";
 
-import { BonesMark, Button, CardGrid, CodePanel, Eyebrow } from "shared-ui";
+import { BonesMark, BrandLockup, Button, CardGrid, CodePanel, Eyebrow } from "shared-ui";
 import type { CardGridItem } from "shared-ui";
 import styles from "./page.module.css";
 
@@ -100,8 +100,7 @@ export default function Home() {
       <header className={styles.header}>
         <div className={`${styles.container} ${styles.headerInner}`}>
           <a href="#top" className={styles.brand}>
-            <BonesMark size={24} />
-            <span className={styles.wordmark}>Bones</span>
+            <BrandLockup />
           </a>
           <nav className={styles.nav}>
             <a href="#stack" className={styles.navLink}>

@@ -3,7 +3,7 @@ import { IconLogout2, IconSettings, IconShieldLock, IconUser } from "@tabler/ico
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { isAdmin } from "./AuthHelpers/roles";
-import { BonesMark } from "./components";
+import { BrandLockup } from "./components";
 import styles from "./TopBar.module.css";
 
 // COMPONENTS.md's Header, app variant (62px, gap 26px, avatar as the
@@ -32,8 +32,7 @@ export function TopBar() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
-          <BonesMark size={22} />
-          <span className={styles.wordmark}>Bones</span>
+          <BrandLockup size="sm" />
         </Link>
 
         <Menu width={200} position="bottom-end">

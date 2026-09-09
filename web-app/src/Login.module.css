@@ -11,18 +11,9 @@
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   align-self: flex-start;
   text-decoration: none;
   color: var(--bones-ink);
-}
-
-.wordmark {
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
 }
 
 .center {

@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import { BonesMark, Button } from "./components";
+import { BrandLockup, Button } from "./components";
 import styles from "./Login.module.css";
 
 export function Login() {
@@ -21,8 +21,7 @@ export function Login() {
   return (
     <div className={styles.page}>
       <a href="/" className={styles.brand}>
-        <BonesMark size={24} />
-        <span className={styles.wordmark}>Bones</span>
+        <BrandLockup />
       </a>
 
       <div className={styles.center}>

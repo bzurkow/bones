@@ -10,16 +10,10 @@
     "lint": "oxlint -c ../.oxlintrc.json ."
   },
   "dependencies": {
-    "@mantine/core": "^9.6.0",
-    "@tabler/icons-react": "^3.46.0",
     "next": "^16.3.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
     "shared-ui": "0.1.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1"
   }

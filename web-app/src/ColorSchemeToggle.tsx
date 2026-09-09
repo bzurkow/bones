@@ -1,5 +1,5 @@
-import { ActionIcon, useComputedColorScheme } from "@mantine/core";
-import { IconMoon, IconSun } from "@tabler/icons-react";
+import { useComputedColorScheme } from "@mantine/core";
+import { ColorSchemeToggleButton } from "shared-ui";
 import { authClient } from "./AuthHelpers/auth-client";
 import { trpc } from "./trpc";
 
@@ -29,16 +29,5 @@ export function ColorSchemeToggle() {
     await refetch();
   }
 
-  return (
-    <ActionIcon
-      variant="default"
-      size="lg"
-      radius="xl"
-      onClick={() => void handleToggle()}
-      aria-label="Toggle color scheme"
-      style={{ position: "fixed", right: 20, bottom: 20, zIndex: 1000 }}
-    >
-      {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
-    </ActionIcon>
-  );
+  return <ColorSchemeToggleButton isDark={isDark} onToggle={() => void handleToggle()} />;
 }

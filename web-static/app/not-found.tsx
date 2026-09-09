@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { BonesMark, Button, ConfusedIcon } from "shared-ui";
+import { BrandLockup, Button, ConfusedIcon } from "shared-ui";
 import styles from "./not-found.module.css";
 
 // Next's App Router convention: this file replaces the framework's default
 // 404 for any unmatched route. Mirrors web-app/src/NotFound.tsx (same
-// copy, same ConfusedIcon/BonesMark/Button) adapted for next/link instead
-// of react-router's Link -- "/" is this site's only real route so far, but
-// stays a safe destination regardless.
+// copy, same ConfusedIcon/BrandLockup/Button) adapted for next/link
+// instead of react-router's Link -- "/" is this site's only real route so
+// far, but stays a safe destination regardless.
 export default function NotFound() {
   return (
     <div className={styles.page}>
       <Link href="/" className={styles.brand}>
-        <BonesMark size={24} />
-        <span className={styles.wordmark}>Bones</span>
+        <BrandLockup />
       </Link>
 
       <div className={styles.center}>

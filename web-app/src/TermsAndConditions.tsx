@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import { BonesMark, Button, ErrorMessage, MarkdownViewer } from "./components";
+import { BrandLockup, Button, ErrorMessage, MarkdownViewer } from "./components";
 import { trpc } from "./trpc";
 import styles from "./TermsAndConditions.module.css";
 
@@ -88,10 +88,7 @@ export function TermsAndConditions() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div className={styles.brand}>
-          <BonesMark size={24} />
-          <span className={styles.wordmark}>Bones</span>
-        </div>
+        <BrandLockup />
         <button type="button" className={styles.logout} onClick={() => void handleLogout()}>
           Log out
         </button>

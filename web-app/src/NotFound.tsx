@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BonesMark, Button, ConfusedIcon } from "./components";
+import { BrandLockup, Button, ConfusedIcon } from "./components";
 import styles from "./NotFound.module.css";
 
 // Catch-all for any route that doesn't match -- wired in App.tsx as
@@ -10,8 +10,7 @@ export function NotFound() {
   return (
     <div className={styles.page}>
       <Link to="/" className={styles.brand}>
-        <BonesMark size={24} />
-        <span className={styles.wordmark}>Bones</span>
+        <BrandLockup />
       </Link>
 
       <div className={styles.center}>

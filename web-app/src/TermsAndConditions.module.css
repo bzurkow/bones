@@ -16,18 +16,6 @@
   padding: 40px 48px 0;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.wordmark {
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-}
-
 .logout {
   font-family: var(--bones-font-sans);
   font-size: 14px;

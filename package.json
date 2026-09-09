@@ -25,8 +25,15 @@
   "author": "",
   "license": "UNLICENSED",
   "devDependencies": {
+    "@mantine/core": "^9.6.0",
+    "@mantine/hooks": "^9.6.0",
+    "@tabler/icons-react": "^3.46.0",
     "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
     "oxlint": "^1.81.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "syncpack": "^15.3.3",
     "typescript": "~7.0.2"
   }

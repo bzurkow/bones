@@ -1,7 +1,7 @@
 "use client";
 
-import { ActionIcon, useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
-import { IconMoon, IconSun } from "@tabler/icons-react";
+import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
+import { ColorSchemeToggleButton } from "shared-ui";
 
 // Same floating bottom-right toggle as web-app's ColorSchemeToggle, but
 // without its auth/session plumbing -- this site has no signed-in user to
@@ -15,16 +15,5 @@ export function ColorSchemeToggle() {
   const computed = useComputedColorScheme("light");
   const isDark = computed === "dark";
 
-  return (
-    <ActionIcon
-      variant="default"
-      size="lg"
-      radius="xl"
-      onClick={() => setColorScheme(isDark ? "light" : "dark")}
-      aria-label="Toggle color scheme"
-      style={{ position: "fixed", right: 20, bottom: 20, zIndex: 1000 }}
-    >
-      {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
-    </ActionIcon>
-  );
+  return <ColorSchemeToggleButton isDark={isDark} onToggle={() => setColorScheme(isDark ? "light" : "dark")} />;
 }
