@@ -17,6 +17,29 @@ services:
       interval: 2s
       retries: 10
 
+  rustfs:
+    # S3-compatible local dev only -- production uses real AWS S3 (S3_ENDPOINT
+    # unset there, see backend/src/storage/index.ts). Not LocalStack/MinIO:
+    # both archived in 2026 with no mature successor; RustFS is the least-bad
+    # current option despite being pre-GA itself -- see NOTES.md.
+    image: rustfs/rustfs:v1.0.0-rc.5
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs-data:/data
+    command: >
+      --address :9000
+      --console-enable
+      --access-key ${AWS_ACCESS_KEY_ID}
+      --secret-key ${AWS_SECRET_ACCESS_KEY}
+      /data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- --spider http://localhost:9000/ || exit 0"]
+      interval: 2s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -34,6 +57,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rustfs:
+        condition: service_healthy
 
 volumes:
   postgres-data:
+  rustfs-data:
