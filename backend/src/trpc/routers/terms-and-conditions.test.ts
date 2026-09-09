@@ -27,6 +27,9 @@ describe("termsAndConditions.get", () => {
     const result = await createCaller(noSessionCtx).get();
     expect(result?.active).toBe(true);
     expect(result?.termsAndConditionsAttribution).toBe("Test attribution");
+    // The server-fetched content, for consumers (e.g. the admin edit form)
+    // that shouldn't need their own browser-side fetch against the bucket.
+    expect(result?.content).toBe("# Terms\n\nBe kind.");
 
     // Not just "a URL was returned" -- confirms it's actually fetchable
     // against the real RustFS instance and round-trips the uploaded content.

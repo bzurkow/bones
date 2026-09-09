@@ -1,0 +1,47 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bones-muted);
+}
+
+.tabList {
+  border-bottom: 1px solid var(--bones-border);
+}
+
+.tab {
+  font-family: var(--bones-font-sans);
+  font-size: 14px;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--bones-font-mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  background: var(--bones-surface);
+  border-color: var(--bones-border);
+}
+
+.previewPanel {
+  box-sizing: border-box;
+  min-height: 240px;
+  padding: 16px 20px;
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-sm);
+  background: var(--bones-surface);
+}
+
+.empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--bones-subtle);
+}

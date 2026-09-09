@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { termsAndConditions, userTermsAndConditions } from "../../db/schema.js";
-import { getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
+import { getObjectText, getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc.js";
 
 export const termsAndConditionsRouter = router({
@@ -11,13 +11,23 @@ export const termsAndConditionsRouter = router({
   // necessarily have a session yet (e.g. a signup page). Acceptance status
   // for the signed-in user specifically lives on the session itself (see
   // auth.ts's customSession plugin / hasAcceptedTermsAndConditions), not
-  // here -- this is just "what is the current version."
+  // here -- this is just "what is the current version." Returns both
+  // assetUrl (a presigned URL, for direct linking/download) and the raw
+  // markdown content itself (fetched server-side -- see
+  // storage/index.ts's getObjectText -- so a consumer like the admin edit
+  // form doesn't need its own browser-side fetch against a bucket with no
+  // CORS policy configured).
   get: publicProcedure.query(async () => {
     const [active] = await db.select().from(termsAndConditions).where(eq(termsAndConditions.active, true)).limit(1);
 
     if (!active) return null;
 
-    return { ...active, assetUrl: await getPresignedDownloadUrl(active.assetUrl) };
+    const [assetUrl, content] = await Promise.all([
+      getPresignedDownloadUrl(active.assetUrl),
+      getObjectText(active.assetUrl),
+    ]);
+
+    return { ...active, assetUrl, content };
   }),
 
   // Admin-only. Takes the new version's raw markdown directly in the input

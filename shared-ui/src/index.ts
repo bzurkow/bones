@@ -8,4 +8,6 @@ export * from "./components/CardGrid";
 export * from "./components/CodePanel";
 export * from "./components/ConfusedIcon";
 export * from "./components/Eyebrow";
+export * from "./components/MarkdownEditor";
+export * from "./components/MarkdownViewer";
 export * from "./theme";

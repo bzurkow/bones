@@ -1,0 +1,147 @@
+.prose {
+  font-family: var(--bones-font-sans);
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--bones-body);
+}
+
+.prose > *:first-child {
+  margin-top: 0;
+}
+
+.prose > *:last-child {
+  margin-bottom: 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--bones-ink);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.6em 0 0.6em;
+}
+
+.prose h1 {
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--bones-border-strong);
+}
+
+.prose h2 {
+  font-size: 21px;
+  letter-spacing: -0.025em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--bones-border);
+}
+
+.prose h3 {
+  font-size: 17.5px;
+  letter-spacing: -0.02em;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
+}
+
+.prose p {
+  margin: 0.9em 0;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0.9em 0;
+  padding-left: 1.5em;
+}
+
+.prose li + li {
+  margin-top: 0.3em;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin: 0.3em 0;
+}
+
+.prose a {
+  color: var(--bones-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: var(--bones-muted);
+}
+
+.prose strong {
+  color: var(--bones-ink);
+  font-weight: 600;
+}
+
+.prose blockquote {
+  margin: 0.9em 0;
+  padding: 0.2em 0 0.2em 16px;
+  border-left: 2px solid var(--bones-border-strong);
+  color: var(--bones-muted);
+}
+
+.prose hr {
+  margin: 2em 0;
+  border: none;
+  border-top: 1px solid var(--bones-border);
+}
+
+.prose code {
+  font-family: var(--bones-font-mono);
+  font-size: 0.9em;
+  background: var(--bones-surface);
+  border: 1px solid var(--bones-border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.prose pre {
+  margin: 0.9em 0;
+  padding: 14px 16px;
+  background: var(--bones-surface);
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-sm);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.prose table {
+  margin: 0.9em 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--bones-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.prose th {
+  color: var(--bones-ink);
+  font-weight: 600;
+  background: var(--bones-surface);
+}
+
+.prose input[type="checkbox"] {
+  margin-right: 0.5em;
+}

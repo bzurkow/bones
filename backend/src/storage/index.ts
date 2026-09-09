@@ -32,6 +32,17 @@ export async function uploadObject(key: string, body: string, contentType: strin
   await s3Client.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }));
 }
 
+// Direct server-side read, same reasoning in reverse: for callers that want
+// the actual text (e.g. terms-and-conditions.get prefilling an edit form)
+// rather than a URL for the browser to fetch itself -- a real S3 bucket
+// has no CORS policy configured by default, so a browser-side fetch()
+// against a presigned URL would just fail; the backend has direct network
+// access regardless.
+export async function getObjectText(key: string): Promise<string> {
+  const response = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  return response.Body!.transformToString();
+}
+
 // Dev convenience only -- mirrors "migrations run on every boot" (see
 // backend/Dockerfile's dev CMD): auto-creates the bucket against the local
 // RustFS container so a fresh clone needs zero manual setup. Gated on
