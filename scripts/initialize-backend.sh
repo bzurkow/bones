@@ -27,14 +27,15 @@ yarn workspace backend db:auth:generate
 echo "Generating any pending migrations from schema changes..."
 yarn workspace backend db:generate
 
-echo "Starting postgres and applying migrations..."
-# `docker compose run` starts postgres too (it's backend's depends_on) and
-# waits for its healthcheck, same as `up` would. Overriding the command to
-# just `yarn db:migrate` runs the same migration step the dev container's
-# CMD runs on every boot, then exits instead of also starting the server.
-# This one does need a live DB, hence Docker: same network as postgres,
-# same DATABASE_URL from .env as the real dev container uses.
-NODE_VERSION=$(cat .node-version) docker compose run --rm --build backend yarn db:migrate
+echo "Starting postgres/rustfs and applying migrations..."
+# `docker compose run` starts postgres and rustfs too (both are backend's
+# depends_on) and waits for their healthchecks, same as `up` would.
+# Overriding the command to just `yarn db:migrate` runs the same migration
+# step the dev container's CMD runs on every boot, then exits instead of
+# also starting the server. This one does need a live DB, hence Docker:
+# same network as postgres, same DATABASE_URL from .env as the real dev
+# container uses.
+NODE_VERSION=$(cat .node-version) docker compose -f docker-compose.dev.yml run --rm --build backend yarn db:migrate
 
 echo
 echo "Backend initialized. Run 'yarn backend:dev' to start it."

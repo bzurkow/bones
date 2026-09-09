@@ -13,7 +13,7 @@
     "test": "yarn workspace backend test",
     "install:all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
-    "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose up",
+    "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose -f docker-compose.dev.yml up",
     "web-app:dev": "yarn workspace web-app dev",
     "web-static:dev": "yarn workspace web-static dev",
     "lint": "oxlint && syncpack lint",
