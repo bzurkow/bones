@@ -1,10 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { customSession } from "better-auth/plugins";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
+import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
 import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
-import type { UserRole } from "./user-fields.js";
+import type { UserRole, ViewMode } from "./user-fields.js";
 
 // Pure decision logic pulled out of the databaseHooks.user.create.before
 // hook below so it's directly unit-testable (auth.test.ts) without a DB.
@@ -97,4 +99,32 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: [
+    // Adds hasAcceptedTermsAndConditions to every getSession response --
+    // whether the currently-active terms-and-conditions row (if any) has
+    // an accepted acceptance row for this user. See
+    // terms-and-conditions.ts's getHasAcceptedTermsAndConditions.
+    customSession(async ({ user, session }) => {
+      // customSession's callback param type doesn't carry `user`'s
+      // additionalFields (role/viewMode/etc.) even though they're genuinely
+      // present at runtime -- a confirmed better-auth limitation
+      // (github.com/better-auth/better-auth/issues/3888), not a bug here.
+      // Re-typing once, right where the plugin's own Returns generic gets
+      // inferred, so the correct shape flows to every downstream consumer
+      // of auth.api.getSession() (e.g. trpc/trpc.ts's adminProcedure)
+      // instead of every caller needing its own cast.
+      const typedUser = user as typeof user & {
+        role: UserRole;
+        deletedAt: Date | null;
+        active: boolean;
+        inheritViewModeFromBrowser: boolean;
+        viewMode: ViewMode;
+      };
+      return {
+        user: typedUser,
+        session,
+        hasAcceptedTermsAndConditions: await getHasAcceptedTermsAndConditions(typedUser.id),
+      };
+    }),
+  ],
 });

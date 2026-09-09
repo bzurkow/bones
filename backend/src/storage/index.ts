@@ -24,6 +24,14 @@ export function getPresignedDownloadUrl(key: string) {
   return getSignedUrl(s3Client, new GetObjectCommand({ Bucket: BUCKET, Key: key }), { expiresIn: 300 });
 }
 
+// Direct server-side upload, not a presigned URL -- for content the
+// backend already has in hand from a trusted caller (e.g. an admin's
+// terms-and-conditions markdown, small text posted straight in a
+// mutation's input) rather than a client uploading a file of its own.
+export async function uploadObject(key: string, body: string, contentType: string) {
+  await s3Client.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }));
+}
+
 // Dev convenience only -- mirrors "migrations run on every boot" (see
 // backend/Dockerfile's dev CMD): auto-creates the bucket against the local
 // RustFS container so a fresh clone needs zero manual setup. Gated on

@@ -34,3 +34,17 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   }
   return next({ ctx: { ...ctx, session: ctx.session } });
 });
+
+// Same role check as web-app/src/AuthHelpers/roles.ts's isAdmin -- kept
+// separate rather than shared, since that one reads a client-side session
+// object and this one reads ctx.session.user server-side; duplicating a
+// two-branch check is cheaper than a shared module neither side otherwise
+// needs. FORBIDDEN (not UNAUTHORIZED) since protectedProcedure below
+// already established there's a valid session -- this is "you're signed
+// in, but not allowed," a different failure than "you're not signed in."
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.session.user.role !== "owner" && ctx.session.user.role !== "administrator") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next({ ctx });
+});
