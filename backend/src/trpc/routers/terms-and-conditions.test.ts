@@ -154,4 +154,11 @@ describe("termsAndConditions.accept", () => {
 
     expect(await getHasAcceptedTermsAndConditions(user.id)).toBe(true);
   });
+
+  it("is null (not true or false) when there's no active version at all", async () => {
+    const user = await createTestUser();
+    const { getHasAcceptedTermsAndConditions } = await import("../../terms-and-conditions.js");
+
+    expect(await getHasAcceptedTermsAndConditions(user.id)).toBeNull();
+  });
 });

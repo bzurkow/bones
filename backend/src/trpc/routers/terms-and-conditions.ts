@@ -37,7 +37,12 @@ export const termsAndConditionsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const id = crypto.randomUUID();
-      const key = `terms-and-conditions/${id}.md`;
+      // Date-stamped (not just the id) so the bucket itself stays readable
+      // and sortable by when each version was posted, not just a list of
+      // opaque UUIDs -- the id alone already guarantees no overwrite, this
+      // is about the object listing being legible at a glance.
+      const dateStamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const key = `terms-and-conditions/${dateStamp}-${id}.md`;
 
       await uploadObject(key, input.content, "text/markdown");
 

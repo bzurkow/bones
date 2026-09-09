@@ -6,15 +6,16 @@ import { termsAndConditions, userTermsAndConditions } from "./db/schema.js";
 // on the session response) -- kept as its own module rather than living in
 // trpc/routers/terms-and-conditions.ts specifically so auth.ts can import it
 // without creating a cycle through trpc.ts (which itself imports auth.ts).
-export async function getHasAcceptedTermsAndConditions(userId: string): Promise<boolean> {
+export async function getHasAcceptedTermsAndConditions(userId: string): Promise<boolean | null> {
   const [active] = await db
     .select({ id: termsAndConditions.id })
     .from(termsAndConditions)
     .where(eq(termsAndConditions.active, true))
     .limit(1);
 
-  // Nothing active to accept -- vacuously true, not a pending gate.
-  if (!active) return true;
+  // Nothing active -- null, not a pending gate but also not "accepted";
+  // there's simply nothing to have an opinion about yet.
+  if (!active) return null;
 
   const [acceptance] = await db
     .select({ accepted: userTermsAndConditions.accepted })

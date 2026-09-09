@@ -101,8 +101,9 @@ export const auth = betterAuth({
   },
   plugins: [
     // Adds hasAcceptedTermsAndConditions to every getSession response --
-    // whether the currently-active terms-and-conditions row (if any) has
-    // an accepted acceptance row for this user. See
+    // whether the currently-active terms-and-conditions row has an
+    // accepted acceptance row for this user, or null if there's no active
+    // row at all (nothing to have accepted or not). See
     // terms-and-conditions.ts's getHasAcceptedTermsAndConditions.
     customSession(async ({ user, session }) => {
       // customSession's callback param type doesn't carry `user`'s
