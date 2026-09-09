@@ -41,6 +41,16 @@ export function TermsAndConditions() {
   }, [terms, navigate]);
 
   useEffect(() => {
+    // Guard, not just an optimization: this effect's own initial check
+    // below (the "content short enough" case) previously ran on the very
+    // first render too, while terms was still undefined and the component
+    // was rendering null -- an essentially empty page trivially satisfies
+    // "scrolled to bottom", so scrolledToBottom silently became true
+    // before the real, tall content ever rendered, and the button never
+    // actually looked disabled at all. Only attach/check once the real
+    // content (and its real scrollHeight) exists.
+    if (!terms) return;
+
     function handleScroll() {
       const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24;
       if (nearBottom) setScrolledToBottom(true);
