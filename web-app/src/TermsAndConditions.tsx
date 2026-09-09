@@ -29,14 +29,16 @@ export function TermsAndConditions() {
     void trpc.termsAndConditions.get.query().then(setTerms);
   }, []);
 
-  // Nothing active to accept, or already accepted (e.g. reached this page
-  // directly by URL) -- nothing to do here either way, bounce back to the
-  // app rather than trap the user on an empty/redundant gate.
+  // Nothing active to accept at all -- nothing to do here, bounce back to
+  // the app rather than trap the user on an empty gate. Already-accepted
+  // is NOT redirected away, unlike that case: reaching this page directly
+  // (e.g. a bookmark, or a future "read our terms" link) should still show
+  // the content, just without the accept prompt/footer below.
   useEffect(() => {
-    if (terms === null || session?.hasAcceptedTermsAndConditions === true) {
+    if (terms === null) {
       navigate("/", { replace: true });
     }
-  }, [terms, session, navigate]);
+  }, [terms, navigate]);
 
   useEffect(() => {
     function handleScroll() {
@@ -71,6 +73,8 @@ export function TermsAndConditions() {
 
   if (!terms) return null;
 
+  const alreadyAccepted = session?.hasAcceptedTermsAndConditions === true;
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -83,19 +87,23 @@ export function TermsAndConditions() {
         </button>
       </div>
 
-      <div className={styles.content}>
+      <div className={alreadyAccepted ? styles.content : `${styles.content} ${styles.contentWithActionBar}`}>
         <h1 className={styles.heading}>Terms &amp; Conditions</h1>
-        <p className={styles.prompt}>Please accept our terms and conditions before proceeding.</p>
+        {!alreadyAccepted && (
+          <p className={styles.prompt}>Please accept our terms and conditions before proceeding.</p>
+        )}
         <MarkdownViewer content={terms.content} />
       </div>
 
-      <div className={styles.actionBar}>
-        <Button onClick={() => void accept()} disabled={!scrolledToBottom} loading={accepting}>
-          Accept
-        </Button>
-        {!scrolledToBottom && <span className={styles.hint}>Scroll to the bottom to continue.</span>}
-        <ErrorMessage message={error} />
-      </div>
+      {!alreadyAccepted && (
+        <div className={styles.actionBar}>
+          <Button onClick={() => void accept()} disabled={!scrolledToBottom} loading={accepting}>
+            Accept
+          </Button>
+          {!scrolledToBottom && <span className={styles.hint}>Scroll to the bottom to continue.</span>}
+          <ErrorMessage message={error} />
+        </div>
+      )}
     </div>
   );
 }

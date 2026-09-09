@@ -47,8 +47,15 @@
   width: 100%;
   max-width: 720px;
   margin: 40px auto 0;
-  padding: 0 48px 100px;
+  padding: 0 48px 40px;
   box-sizing: border-box;
+}
+
+/* Extra bottom room only when the sticky .actionBar is actually rendered
+   (not accepted yet) -- otherwise it's just dead space at the end of the
+   document. */
+.contentWithActionBar {
+  padding-bottom: 100px;
 }
 
 .heading {

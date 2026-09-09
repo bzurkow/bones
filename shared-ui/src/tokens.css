@@ -21,6 +21,20 @@
   --bones-border-strong: #0A0A0A; /* section rules, focused input */
   --bones-disabled-bg: #F2F2F2; /* disabled button background, dense sub-list rules */
 
+  /* Mantine's own global disabled-state variables (Button, Input, etc. all
+     read these) default to its stock grey scale, not this design's tokens
+     -- pointed at the tokens already reserved for exactly this above,
+     rather than each disabled component drifting from the rest of the
+     grayscale ramp. References, not literal values, so this stays correct
+     in the dark-mode block below without needing to repeat it there.
+     !important: Mantine's own light/dark overrides for these same
+     properties live behind `:root[data-mantine-color-scheme="..."]`,
+     higher specificity than this bare `:root` -- without it, Mantine's
+     own values would win regardless of import order. */
+  --mantine-color-disabled: var(--bones-disabled-bg) !important;
+  --mantine-color-disabled-color: var(--bones-disabled-text) !important;
+  --mantine-color-disabled-border: var(--bones-border-faint) !important;
+
   /* Wireframe fills (placeholder blocks in previews) */
   --bones-block-1:    #F4F4F4;
   --bones-block-2:    #EAEAEA;
