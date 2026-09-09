@@ -11,8 +11,7 @@ import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
 import { AdminOrganizations } from "./Admin/AdminOrganizations";
 import { AdminTerms } from "./Admin/AdminTerms";
-import { AdminFeatureFlags } from "./Admin/AdminFeatureFlags";
-import { AdminRBAC } from "./Admin/AdminRBAC";
+import { AdminPermissions } from "./Admin/AdminPermissions";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
@@ -95,8 +94,7 @@ export function App() {
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="organizations" element={<AdminOrganizations />} />
                   <Route path="terms" element={<AdminTerms />} />
-                  <Route path="feature-flags" element={<AdminFeatureFlags />} />
-                  <Route path="rbac" element={<AdminRBAC />} />
+                  <Route path="permissions" element={<AdminPermissions />} />
                   <Route path="site-settings" element={<AdminSiteSettings />} />
                 </Route>
               </Route>

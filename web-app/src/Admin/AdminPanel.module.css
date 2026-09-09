@@ -5,3 +5,9 @@
   line-height: 1.6;
   color: var(--bones-muted);
 }
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

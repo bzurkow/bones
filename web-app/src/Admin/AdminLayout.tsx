@@ -6,16 +6,19 @@ const TABS = [
   { to: "users", label: "Users" },
   { to: "organizations", label: "Organizations" },
   { to: "terms", label: "Terms & Conditions" },
-  { to: "feature-flags", label: "Feature Flags" },
-  { to: "rbac", label: "RBAC" },
+  { to: "permissions", label: "Feature Flags and Permissions" },
   { to: "site-settings", label: "Site Settings" },
 ];
 
 // Shell for the /admin/* route tree: heading + a hairline tab bar over an
 // <Outlet />, so each tab (AdminUsers/AdminOrganizations/AdminTerms/
-// AdminFeatureFlags/AdminRBAC/AdminSiteSettings) is its own real route
-// rather than client-only tab state -- bookmarkable/shareable like the
-// rest of the app. Gated by RequireAdmin in App.tsx, not here.
+// AdminPermissions/AdminSiteSettings) is its own real route rather than
+// client-only tab state -- bookmarkable/shareable like the rest of the
+// app. Gated by RequireAdmin in App.tsx, not here.
+//
+// "permissions" combines what were two separate tabs (feature flags,
+// RBAC) into one -- see AdminPermissions.tsx for why the underlying
+// concepts still stay distinct.
 export function AdminLayout() {
   return (
     <PageHeader eyebrow="Admin" title="Admin">
