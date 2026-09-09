@@ -1,9 +1,9 @@
 import styles from "./AdminPanel.module.css";
 
-export function AdminAuth() {
+export function AdminTerms() {
   return (
     <p className={styles.body}>
-      Social providers, SSO connections, and session policy will live here.
+      The Terms &amp; Conditions users agree to will live here.
     </p>
   );
 }

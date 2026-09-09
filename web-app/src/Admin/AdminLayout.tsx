@@ -4,14 +4,14 @@ import styles from "./AdminLayout.module.css";
 
 const TABS = [
   { to: "users", label: "Users" },
-  { to: "auth", label: "Auth" },
+  { to: "terms", label: "Terms & Conditions" },
   { to: "feature-flags", label: "Feature Flags" },
   { to: "rbac", label: "RBAC" },
   { to: "site-settings", label: "Site Settings" },
 ];
 
 // Shell for the /admin/* route tree: heading + a hairline tab bar over an
-// <Outlet />, so each tab (AdminUsers/AdminAuth/AdminFeatureFlags/AdminRBAC/
+// <Outlet />, so each tab (AdminUsers/AdminTerms/AdminFeatureFlags/AdminRBAC/
 // AdminSiteSettings) is its own real route rather than client-only tab
 // state -- bookmarkable/shareable like the rest of the app. Gated by
 // RequireAdmin in App.tsx, not here.

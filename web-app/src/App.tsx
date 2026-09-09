@@ -9,7 +9,7 @@ import { ApplicationProfile } from "./ApplicationProfile";
 import { ApplicationSettings } from "./ApplicationSettings";
 import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
-import { AdminAuth } from "./Admin/AdminAuth";
+import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminFeatureFlags } from "./Admin/AdminFeatureFlags";
 import { AdminRBAC } from "./Admin/AdminRBAC";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
@@ -88,7 +88,7 @@ export function App() {
                 <Route element={<AdminLayout />}>
                   <Route index element={<Navigate to="users" replace />} />
                   <Route path="users" element={<AdminUsers />} />
-                  <Route path="auth" element={<AdminAuth />} />
+                  <Route path="terms" element={<AdminTerms />} />
                   <Route path="feature-flags" element={<AdminFeatureFlags />} />
                   <Route path="rbac" element={<AdminRBAC />} />
                   <Route path="site-settings" element={<AdminSiteSettings />} />
