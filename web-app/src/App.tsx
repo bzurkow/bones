@@ -15,6 +15,7 @@ import { AdminRBAC } from "./Admin/AdminRBAC";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
+import { TermsAndConditions } from "./TermsAndConditions";
 import { theme } from "shared-ui";
 import { useColorScheme } from "./hooks/useColorScheme";
 
@@ -80,6 +81,9 @@ export function App() {
           <Route path="/signup" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RequireAuth />}>
+            {/* Sibling to AuthenticatedLayout, not nested inside it -- see
+                AuthenticatedLayout.tsx's comment. */}
+            <Route path="terms-and-conditions" element={<TermsAndConditions />} />
             <Route element={<AuthenticatedLayout />}>
               <Route index element={<ApplicationHome />} />
               <Route path="profile" element={<ApplicationProfile />} />
