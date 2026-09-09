@@ -1,14 +1,10 @@
+import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { termsAndConditions } from "../../db/schema.js";
+import { termsAndConditions, userTermsAndConditions } from "../../db/schema.js";
 import { getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
-import { adminProcedure, publicProcedure, router } from "../trpc.js";
-
-// No "accept" mutation yet -- the join table (user-terms-and-conditions-
-// schema.ts) exists and auth.ts's customSession already reads from it via
-// getHasAcceptedTermsAndConditions, but nothing writes to it yet. Add one
-// here when a real "accept" flow is needed.
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc.js";
 
 export const termsAndConditionsRouter = router({
   // Public: whoever needs to show/link the current terms doesn't
@@ -61,5 +57,46 @@ export const termsAndConditionsRouter = router({
 
         return created;
       });
+    }),
+
+  // userId always comes from ctx.session.user.id, never the input -- taking
+  // it from the caller's own session (not a client-supplied field) is
+  // deliberate, same reasoning as userSettings.updateUserSettings: a user
+  // can only ever accept on their own behalf, never forge another user's
+  // acceptance record. termsAndConditionsId is still an explicit input
+  // (not "whichever version is currently active") so acceptance is tied to
+  // the exact version the caller actually saw via `get`, even if a newer
+  // one goes active in between -- not the currently-active one necessarily.
+  // Upserts: a caller re-accepting (or accepting a version they'd
+  // previously been given a not-yet-accepted row for) just refreshes
+  // accepted/acceptedDate rather than erroring on the composite PK.
+  accept: protectedProcedure
+    .input(z.object({ termsAndConditionsId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const [terms] = await db
+        .select({ id: termsAndConditions.id })
+        .from(termsAndConditions)
+        .where(eq(termsAndConditions.id, input.termsAndConditionsId))
+        .limit(1);
+
+      if (!terms) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No terms and conditions version with that id." });
+      }
+
+      const [accepted] = await db
+        .insert(userTermsAndConditions)
+        .values({
+          termsAndConditionsId: input.termsAndConditionsId,
+          userId: ctx.session.user.id,
+          accepted: true,
+          acceptedDate: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [userTermsAndConditions.termsAndConditionsId, userTermsAndConditions.userId],
+          set: { accepted: true, acceptedDate: new Date() },
+        })
+        .returning();
+
+      return accepted;
     }),
 });

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "terms_and_conditions_active_uidx" ON "terms_and_conditions" USING btree ("active") WHERE "terms_and_conditions"."active" = true;
