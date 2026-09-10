@@ -15,6 +15,7 @@ import { AdminPermissions } from "./Admin/AdminPermissions";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
+import { SignUp } from "./SignUp";
 import { TermsAndConditions } from "./TermsAndConditions";
 import { theme } from "shared-ui";
 import { useColorScheme } from "./hooks/useColorScheme";
@@ -78,7 +79,7 @@ export function App() {
     <MantineProvider theme={theme} defaultColorScheme="auto" forceColorScheme={forceColorScheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/signup" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RequireAuth />}>
             {/* Sibling to AuthenticatedLayout, not nested inside it -- see

@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { db } from "./db/index.js";
@@ -12,6 +13,21 @@ import type { UserRole, ViewMode } from "./user-fields.js";
 // hook below so it's directly unit-testable (auth.test.ts) without a DB.
 export function nextUserRole(hasExistingUsers: boolean): UserRole {
   return hasExistingUsers ? "standard" : "owner";
+}
+
+// Better Auth's own minPasswordLength/maxPasswordLength (set below) only
+// gate length -- there's no built-in complexity option, so that half of
+// the rule lives here as a plain regex: at least one letter, one digit, one
+// special character. Exported (and unit-tested in auth.test.ts) the same
+// way nextUserRole is. Mirrored client-side in
+// web-app/src/AuthHelpers/password-rules.ts for instant validation before
+// a request ever goes out -- backend can't export runtime code to web-app
+// (this package's own exports are types-only, see package.json), so this
+// gets duplicated rather than shared; keep both in sync if either changes.
+export const PASSWORD_RULES_MESSAGE = "Password must be at least 8 characters and include a letter, a number, and a special character.";
+
+export function isStrongPassword(password: string): boolean {
+  return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password) && /[^a-zA-Z0-9]/.test(password);
 }
 
 export const auth = betterAuth({
@@ -32,11 +48,43 @@ export const auth = betterAuth({
   advanced: {
     crossSubDomainCookies: { enabled: true },
   },
+  // Hashing is Better Auth's own default (node:crypto scrypt -- a
+  // memory-hard KDF; see node_modules/better-auth/dist/crypto/password.mjs),
+  // not overridden here. minPasswordLength/maxPasswordLength is the length
+  // half of the password rule; the complexity half (letter + digit +
+  // special character) is enforced below in hooks.before, since Better
+  // Auth has no built-in option for that.
+  //
+  // requireEmailVerification is false because there's no email-sending
+  // infrastructure in this repo yet (no SMTP/Resend/etc. configured
+  // anywhere) -- turning this on with no sendVerificationEmail wired up
+  // would lock every credential sign-up out immediately. This is
+  // deliberately temporary: flip it on once email verification is built.
+  emailAndPassword: {
+    enabled: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    requireEmailVerification: false,
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
+  },
+  // Password complexity (length is covered by minPasswordLength above).
+  // Only /sign-up/email carries a fresh plaintext password to check --
+  // sign-in verifies against an existing hash, not this rule, and there's
+  // no password-reset flow yet for the same reason emailAndPassword above
+  // has requireEmailVerification: false.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") return;
+      const password = typeof ctx.body?.password === "string" ? ctx.body.password : "";
+      if (!isStrongPassword(password)) {
+        throw new APIError("BAD_REQUEST", { message: PASSWORD_RULES_MESSAGE });
+      }
+    }),
   },
   user: {
     additionalFields: {
