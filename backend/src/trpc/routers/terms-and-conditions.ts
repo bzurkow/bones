@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { termsAndConditions, userTermsAndConditions } from "../../db/schema.js";
-import { getObjectText, getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
+import { BUCKET, getObjectText, getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc.js";
 
 export const termsAndConditionsRouter = router({
@@ -23,7 +23,7 @@ export const termsAndConditionsRouter = router({
     if (!active) return null;
 
     const [assetUrl, content] = await Promise.all([
-      getPresignedDownloadUrl(active.assetUrl),
+      getPresignedDownloadUrl(BUCKET, active.assetUrl),
       getObjectText(active.assetUrl),
     ]);
 

@@ -35,6 +35,7 @@ export default async function setup() {
   process.env.AWS_ACCESS_KEY_ID ??= "rustfsadmin";
   process.env.AWS_SECRET_ACCESS_KEY ??= "rustfsadmin";
   process.env.S3_BUCKET ??= "bones-dev";
+  process.env.S3_AVATAR_BUCKET ??= "avatar";
   process.env.S3_ENDPOINT ??= "http://localhost:9000";
   process.env.S3_FORCE_PATH_STYLE ??= "true";
 

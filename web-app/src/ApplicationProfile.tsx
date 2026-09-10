@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Avatar, TextInput } from "@mantine/core";
+import { IconCamera } from "@tabler/icons-react";
+import { isAllowedAvatarFile } from "./AuthHelpers/avatar-rules";
 import { authClient } from "./AuthHelpers/auth-client";
 import { Button, ErrorMessage, PageHeader, Row, RowCard } from "./components";
+import { trpc } from "./trpc";
 import styles from "./ApplicationProfile.module.css";
 
 const ROLE_LABELS = {
@@ -19,10 +22,14 @@ export function ApplicationProfile() {
   // ApplicationSettings.tsx).
   const [draftName, setDraftName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const name = draftName ?? session?.user.name ?? "";
   const isDirty = draftName !== null && draftName !== session?.user.name;
+  // Uploaded avatar wins once set; Google's own profile picture (the
+  // native `image` field) is the fallback until then.
+  const avatarSrc = session?.user.avatarUrl ?? session?.user.image ?? undefined;
 
   async function handleSave() {
     if (!isDirty || draftName === null) return;
@@ -41,10 +48,70 @@ export function ApplicationProfile() {
     setSaving(false);
   }
 
+  async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Always clear the input's own value, selected file or not -- without
+    // this, picking the exact same file again wouldn't fire onChange a
+    // second time.
+    event.target.value = "";
+    if (!file) return;
+
+    const validationError = isAllowedAvatarFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setError(null);
+    setAvatarUploading(true);
+    try {
+      // contentType is already validated against the same allowlist the
+      // server enforces (isAllowedAvatarFile above) -- safe to pass
+      // file.type straight through, trpc/routers/profile.ts's own zod
+      // schema is the real backstop either way.
+      const { uploadUrl, key } = await trpc.profile.requestAvatarUpload.mutate({
+        contentType: file.type as "image/jpeg" | "image/png" | "image/webp",
+      });
+
+      const putResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putResponse.ok) {
+        throw new Error("Upload to storage failed.");
+      }
+
+      await trpc.profile.confirmAvatarUpload.mutate({ key });
+      await refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't upload that image.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   return (
     <PageHeader eyebrow="Profile" title="Profile">
       <div className={styles.identity}>
-        <Avatar src={session?.user.image ?? undefined} alt={session?.user.name} size={64} radius="xl" />
+        <label className={styles.avatarWrap}>
+          <Avatar src={avatarSrc} alt={session?.user.name} size={64} radius="xl" />
+          <input
+            className={styles.avatarInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Change profile photo"
+            disabled={avatarUploading}
+            onChange={(event) => void handleAvatarChange(event)}
+          />
+          <span className={styles.avatarOverlay}>
+            {avatarUploading ? (
+              <span className={styles.avatarOverlayLabel}>…</span>
+            ) : (
+              <IconCamera size={20} stroke={1.75} />
+            )}
+          </span>
+        </label>
         <div className={styles.identityFields}>
           <TextInput
             aria-label="Name"

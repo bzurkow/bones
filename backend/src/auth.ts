@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
+import { AVATAR_BUCKET, getPresignedDownloadUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
 import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
@@ -131,6 +132,17 @@ export const auth = betterAuth({
         input: false,
         defaultValue: "light",
       },
+      // Stores an S3 object *key*, not a real URL (despite the name --
+      // matches terms-and-conditions.assetUrl's same convention), resolved
+      // into a real presigned GET URL below in customSession. input: false
+      // for the same reason as role/viewMode: only
+      // trpc/routers/profile.ts's confirmAvatarUpload can set this, never
+      // an arbitrary client-supplied URL via updateUser.
+      avatarUrl: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   // The very first user to ever sign up becomes the Owner; everyone after
@@ -168,9 +180,23 @@ export const auth = betterAuth({
         active: boolean;
         inheritViewModeFromBrowser: boolean;
         viewMode: ViewMode;
+        avatarUrl: string | null;
       };
+      // typedUser.avatarUrl as stored on the row is an S3 *key* (see the
+      // additionalFields comment above), not a working URL -- resolved into
+      // a real presigned GET URL here, once, and the field is overwritten
+      // in place on the returned user so every useSession()/getSession()
+      // caller (TopBar, ApplicationProfile, ...) just reads
+      // session.user.avatarUrl and gets a real URL for free, same reasoning
+      // as hasAcceptedTermsAndConditions below being resolved centrally
+      // rather than per-caller. Stays null when no avatar has been
+      // uploaded yet -- callers fall back to the native `image` field
+      // (Google's profile picture) in that case.
+      const resolvedAvatarUrl = typedUser.avatarUrl
+        ? await getPresignedDownloadUrl(AVATAR_BUCKET, typedUser.avatarUrl)
+        : null;
       return {
-        user: typedUser,
+        user: { ...typedUser, avatarUrl: resolvedAvatarUrl },
         session,
         hasAcceptedTermsAndConditions: await getHasAcceptedTermsAndConditions(typedUser.id),
       };

@@ -4,6 +4,56 @@
   gap: 20px;
 }
 
+/* The avatar itself is the upload control -- click opens the file picker,
+   hover shows the overlay below. Fixed to the Avatar's own 64px so the
+   overlay/input line up exactly over the circle. */
+.avatarWrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+/* A real native file input the user actually clicks (not a synthetic
+   .click() call), so keyboard/screen-reader use keeps working -- just
+   invisible and stretched over the circle. */
+.avatarInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* No shadow, no transition -- an instant toggle on hover/focus, matching
+   this app's plain, no-animation loading-state convention elsewhere
+   (button label swaps instead of spinners). */
+.avatarOverlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.55);
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.avatarWrap:hover .avatarOverlay,
+.avatarWrap:focus-within .avatarOverlay {
+  display: flex;
+}
+
+.avatarOverlayLabel {
+  font-family: var(--bones-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .identityFields {
   flex: 1;
   display: flex;

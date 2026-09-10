@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   viewMode: text("view_mode", { enum: ["light", "dark"] })
     .default("light")
     .notNull(),
+  avatarUrl: text("avatar_url"),
 });
 
 export const sessions = pgTable(

@@ -38,7 +38,7 @@ export function TopBar() {
         <Menu width={200} position="bottom-end">
           <Menu.Target>
             <Avatar
-              src={session?.user.image ?? undefined}
+              src={session?.user.avatarUrl ?? session?.user.image ?? undefined}
               alt={session?.user.name ?? "Account"}
               radius="xl"
               size="sm"
