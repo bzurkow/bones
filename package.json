@@ -7,15 +7,18 @@
     "backend",
     "web-app",
     "shared-ui",
-    "web-static"
+    "web-static",
+    "email-templates"
   ],
   "scripts": {
     "test": "yarn workspace backend test",
-    "install:all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install",
+    "install:all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install && yarn --cwd email-templates install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose -f docker-compose.dev.yml up",
     "web-app:dev": "yarn workspace web-app dev",
     "web-static:dev": "yarn workspace web-static dev",
+    "email-templates:dev": "yarn workspace email-templates dev",
+    "email-templates:build": "yarn workspace email-templates build",
     "lint": "oxlint && syncpack lint",
     "lint:fix": "oxlint --fix && syncpack fix",
     "deps:check": "syncpack lint",

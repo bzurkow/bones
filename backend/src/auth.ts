@@ -6,7 +6,7 @@ import { isAuthProtocolEnabled } from "./auth-protocols.js";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { sendEmail } from "./email/index.js";
-import { verificationEmailHtml } from "./email/templates.js";
+import { renderVerificationEmail } from "./email/templates.js";
 import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
@@ -79,7 +79,7 @@ export const auth = betterAuth({
   // verifying -- their first email may be long gone by then.
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail(user.email, "Verify your email", verificationEmailHtml(url));
+      await sendEmail(user.email, "Verify your email", await renderVerificationEmail(url));
     },
     sendOnSignUp: true,
     sendOnSignIn: true,
