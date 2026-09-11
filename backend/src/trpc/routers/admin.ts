@@ -3,8 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { roles, users } from "../../db/schema.js";
+import { hasPermission } from "../../permissions.js";
 import { resolveAvatarUrl } from "../../storage/index.js";
-import { adminProcedure, router } from "../trpc.js";
+import { protectedProcedure, requirePermission, router } from "../trpc.js";
 
 // Allowlist, not a raw column-name lookup straight from client input --
 // both for safety (an unvalidated column name straight into orderBy is a
@@ -30,7 +31,7 @@ export const adminRouter = router({
   // at a time (not the whole table), both search and sort have to happen
   // server-side too, or they'd only ever apply to whatever page happened
   // to already be loaded. See NOTES.md for the fuller reasoning.
-  listUsers: adminProcedure
+  listUsers: requirePermission("admin.users.view")
     .input(
       z.object({
         page: z.number().int().min(1).default(1),
@@ -75,11 +76,27 @@ export const adminRouter = router({
   // say) would be a self-inflicted lockout with no UI left to undo it
   // from. Role/profile changes to your own account already go through
   // ApplicationProfile.tsx instead.
-  setUserRole: adminProcedure
+  setUserRole: protectedProcedure
     .input(z.object({ userId: z.string(), role: z.string() }))
     .mutation(async ({ ctx, input }) => {
       if (input.userId === ctx.session.user.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "You can't change your own role here." });
+      }
+
+      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId));
+      if (!target) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found." });
+      }
+
+      // Granting or revoking "owner" specifically needs the more
+      // sensitive of the two permissions -- moving someone into or out of
+      // owner is a bigger deal than moving between every other role, the
+      // same split the RBAC feature list makes explicit
+      // (admin.users.update-owner vs. admin.users.update-role).
+      const touchesOwner = target.role === "owner" || input.role === "owner";
+      const required = touchesOwner ? "admin.users.update-owner" : "admin.users.update-role";
+      if (!(await hasPermission(ctx.session.user.role, required))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
       }
 
       // role is a plain string now, not a fixed z.enum -- roles are
@@ -107,11 +124,14 @@ export const adminRouter = router({
       return updated;
     }),
 
-  setUserActive: adminProcedure
+  setUserActive: protectedProcedure
     .input(z.object({ userId: z.string(), active: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       if (input.userId === ctx.session.user.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "You can't change your own status here." });
+      }
+      if (!(await hasPermission(ctx.session.user.role, "admin.users.update-status"))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
       }
 
       const [updated] = await db

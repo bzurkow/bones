@@ -130,6 +130,36 @@ describe("admin.setUserRole", () => {
       caller.setUserRole({ userId: "00000000-0000-0000-0000-000000000000", role: "standard" }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
+
+  it("lets administrator move a user between non-owner roles (has admin.users.update-role)", async () => {
+    const admin = await createTestUser({ role: "administrator" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(admin));
+
+    const result = await caller.setUserRole({ userId: target.id, role: "demo" });
+
+    expect(result).toEqual({ id: target.id, role: "demo" });
+  });
+
+  it("refuses administrator granting owner (has update-role but not update-owner)", async () => {
+    const admin = await createTestUser({ role: "administrator" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(caller.setUserRole({ userId: target.id, role: "owner" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("refuses administrator demoting an owner (touching owner either direction needs update-owner)", async () => {
+    const admin = await createTestUser({ role: "administrator" });
+    const target = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(caller.setUserRole({ userId: target.id, role: "standard" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
 });
 
 describe("admin.setUserActive", () => {
@@ -170,5 +200,25 @@ describe("admin.setUserActive", () => {
     await expect(
       caller.setUserActive({ userId: "00000000-0000-0000-0000-000000000000", active: false }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("lets administrator change status (has admin.users.update-status per the seed)", async () => {
+    const admin = await createTestUser({ role: "administrator" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(admin));
+
+    const result = await caller.setUserActive({ userId: target.id, active: false });
+
+    expect(result).toEqual({ id: target.id, active: false });
+  });
+
+  it("refuses demo (has neither admin.users.update-status nor page.admin.view-adjacent grants)", async () => {
+    const demo = await createTestUser({ role: "demo" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(demo));
+
+    await expect(caller.setUserActive({ userId: target.id, active: false })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 });

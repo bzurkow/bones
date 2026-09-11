@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { TextInput } from "@mantine/core";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { Button, ErrorMessage, MarkdownEditor, MarkdownViewer } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
 import termsStyles from "./AdminTerms.module.css";
@@ -18,13 +20,12 @@ interface TermsAndConditions {
 
 // view: the current version's field values, read-only. edit: the same two
 // fields as a form (attribution + markdown), pre-filled from the current
-// version if one exists. No permission check here on purpose -- this whole
-// route is already behind RequireAdmin (App.tsx), and fine-grained
-// per-feature permissions are still deliberately deferred (see
-// bones-roadmap-notes.md item 3) rather than half-built here first.
+// version if one exists.
 type Mode = "view" | "edit";
 
 export function AdminTerms() {
+  const { features: effectiveFeatures } = useEffectivePermissions();
+  const canUpdate = hasFeature(effectiveFeatures, "admin.terms.update");
   const [current, setCurrent] = useState<TermsAndConditions | null | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("view");
   const [attribution, setAttribution] = useState("");
@@ -113,9 +114,11 @@ export function AdminTerms() {
           <MarkdownViewer content={current.content} />
         </>
       )}
-      <div className={termsStyles.actions}>
-        <Button onClick={startEdit}>{current === null ? "Create" : "Edit"}</Button>
-      </div>
+      {canUpdate && (
+        <div className={termsStyles.actions}>
+          <Button onClick={startEdit}>{current === null ? "Create" : "Edit"}</Button>
+        </div>
+      )}
     </div>
   );
 }

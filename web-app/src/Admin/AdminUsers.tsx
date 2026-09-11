@@ -4,8 +4,10 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import type { UserRole } from "backend";
 import { authClient } from "../AuthHelpers/auth-client";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Table } from "../components";
 import type { TableColumn } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminUsers.module.css";
 
@@ -18,18 +20,19 @@ type SortKey = "name" | "email" | "role" | "active" | "createdAt";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
-// Role/status are now live editable dropdowns (setUserRole/setUserActive
-// below) -- everything else (name, email, joined) stays read-only,
-// deferred to the per-feature permissions work same as the rest of the
-// admin area.
+// Role/status are live editable dropdowns (setUserRole/setUserActive
+// below) -- everything else (name, email, joined) stays read-only.
 //
-// TODO(permissions): the "can't target your own row" guard here is just
-// admin.ts's own ad hoc check (self-lockout prevention), not a real
-// permissions model -- revisit once bones-roadmap-notes.md item 3's actual
-// RBAC approach is settled, so this doesn't end up a second, inconsistent
-// place role/permission rules live.
+// The "can't target your own row" guard (admin.ts) is still just an ad hoc
+// self-lockout check, separate from the real permission checks below --
+// kept exactly as-is per an explicit decision during RBAC planning (see
+// bones-roadmap-notes.md item 3) not to fold the two together this pass.
 export function AdminUsers() {
   const { data: session } = authClient.useSession();
+  const { features: effectiveFeatures } = useEffectivePermissions();
+  const canUpdateRole = hasFeature(effectiveFeatures, "admin.users.update-role");
+  const canUpdateOwner = hasFeature(effectiveFeatures, "admin.users.update-owner");
+  const canUpdateStatus = hasFeature(effectiveFeatures, "admin.users.update-status");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState("");
@@ -78,9 +81,20 @@ export function AdminUsers() {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchUsers().then((data) => {
-      if (!cancelled) setResult(data);
-    });
+    void fetchUsers()
+      .then((data) => {
+        if (!cancelled) setResult(data);
+      })
+      .catch((err: unknown) => {
+        // A role with page.admin.users (so it can reach this tab at all)
+        // but not admin.users.view (its own, more specific permission --
+        // e.g. "demo" per the RBAC seed) genuinely gets FORBIDDEN here,
+        // not a bug. Show that instead of spinning forever.
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Couldn't load users.");
+          setResult({ users: [], total: 0 });
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -152,10 +166,14 @@ export function AdminUsers() {
       // (Table columns are always drag-resizable).
       width: 170,
       render: (user) => {
-        // admin.ts rejects a caller targeting their own row (self-lockout
-        // guard) -- so your own row just shows the plain value instead of
-        // a dropdown that would only ever fail when used.
-        if (user.id === session?.user.id) {
+        // Plain text, no chevron, no menu, no possible click -- both for
+        // admin.ts's self-lockout guard (your own row) and for a role
+        // that genuinely can't change anyone's role at all. Moving
+        // someone to/from "owner" specifically also needs
+        // admin.users.update-owner (checked per-option below, inside the
+        // menu) -- but if update-role itself is missing, there's nothing
+        // this dropdown could ever do, so it doesn't render as one.
+        if (user.id === session?.user.id || !canUpdateRole) {
           return <span className={styles.mono}>{user.role}</span>;
         }
         return (
@@ -170,7 +188,7 @@ export function AdminUsers() {
               {roles.map((role) => (
                 <Menu.Item
                   key={role.name}
-                  disabled={role.name === user.role}
+                  disabled={role.name === user.role || ((role.name === "owner" || user.role === "owner") && !canUpdateOwner)}
                   onClick={() => void handleRoleChange(user, role.name)}
                 >
                   {role.name}
@@ -197,7 +215,9 @@ export function AdminUsers() {
             {user.active ? "Active" : "Inactive"}
           </span>
         );
-        if (user.id === session?.user.id) return label;
+        // Same plain-text disabled treatment as the role dropdown above --
+        // self-lockout guard, or genuinely no admin.users.update-status.
+        if (user.id === session?.user.id || !canUpdateStatus) return label;
         return (
           <Menu width={150} position="bottom-start" disabled={updatingUserId === user.id}>
             <Menu.Target>

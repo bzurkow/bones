@@ -79,4 +79,38 @@ describe("featureRoles.setGranted", () => {
 
     await db.delete(features).where(eq(features.key, key));
   });
+
+  it("refuses to revoke owner's grant on a feature", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const key = `test.feature.${randomUUID()}`;
+    // Real features are always seeded owner:true (features.ts's create
+    // auto-grants it too) -- inserted explicitly here to exercise the
+    // guard without depending on that seeding behavior.
+    await db.insert(features).values({ key, label: "Test" });
+    await db.insert(featureRoles).values({ featureKey: key, role: "owner", granted: true });
+
+    await expect(caller.setGranted({ featureKey: key, role: "owner", granted: false })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    const [row] = await db
+      .select()
+      .from(featureRoles)
+      .where(and(eq(featureRoles.featureKey, key), eq(featureRoles.role, "owner")));
+    expect(row?.granted).toBe(true);
+
+    await db.delete(features).where(eq(features.key, key));
+  });
+
+  it("still allows granting owner true (only revoking is blocked)", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const key = `test.feature.${randomUUID()}`;
+    await db.insert(features).values({ key, label: "Test" });
+
+    const result = await caller.setGranted({ featureKey: key, role: "owner", granted: true });
+    expect(result).toMatchObject({ featureKey: key, role: "owner", granted: true });
+
+    await db.delete(features).where(eq(features.key, key));
+  });
 });

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "../../db/index.js";
 import { termsAndConditions, userTermsAndConditions } from "../../db/schema.js";
 import { BUCKET, getObjectText, getPresignedDownloadUrl, uploadObject } from "../../storage/index.js";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc.js";
+import { protectedProcedure, publicProcedure, requirePermission, router } from "../trpc.js";
 
 export const termsAndConditionsRouter = router({
   // Public: whoever needs to show/link the current terms doesn't
@@ -38,7 +38,7 @@ export const termsAndConditionsRouter = router({
   // in place, so there's a real version history (see
   // db/terms-and-conditions-schema.ts's comment); the previous active row
   // (if any) is flipped off in the same transaction.
-  update: adminProcedure
+  update: requirePermission("admin.terms.update")
     .input(
       z.object({
         content: z.string().min(1),

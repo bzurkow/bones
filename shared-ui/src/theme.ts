@@ -1,4 +1,4 @@
-import { Button, createTheme } from "@mantine/core";
+import { Button, Checkbox, Switch, createTheme } from "@mantine/core";
 import type { MantineColorsTuple } from "@mantine/core";
 
 // The design system's whole palette, in one Mantine color scale (lightest
@@ -131,6 +131,19 @@ export const theme = createTheme({
             };
         }
       },
+    }),
+    // Both default to Mantine's own shade-array auto-pick for their
+    // "checked" color (--switch-color/--checkbox-color both read
+    // var(--mantine-primary-color-filled)) -- for the "ink" palette that
+    // lands on a mid-gray shade (index 6, #A8A8A8), not the actual
+    // --bones-ink token every other filled/primary treatment in this
+    // design uses. Same fix as Button above: point the CSS var straight
+    // at the real token instead of trusting Mantine's shade computation.
+    Switch: Switch.extend({
+      vars: () => ({ root: { "--switch-color": "var(--bones-ink)" } }),
+    }),
+    Checkbox: Checkbox.extend({
+      vars: () => ({ root: { "--checkbox-color": "var(--bones-ink)" } }),
     }),
   },
 });

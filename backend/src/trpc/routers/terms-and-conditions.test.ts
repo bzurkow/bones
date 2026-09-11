@@ -56,7 +56,9 @@ describe("termsAndConditions.update", () => {
   });
 
   it("deactivates the previous version when a new one is added", async () => {
-    const admin = await createTestUser({ role: "administrator" });
+    // "administrator" doesn't have admin.terms.update per the RBAC seed
+    // (only "owner" does) -- this needs a caller that actually can.
+    const admin = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(admin));
 
     const first = await caller.update({ content: "v1", attribution: "Attribution 1" });

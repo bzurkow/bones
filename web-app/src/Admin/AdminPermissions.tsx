@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Checkbox } from "@mantine/core";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import panelStyles from "./AdminPanel.module.css";
 import styles from "./AdminPermissions.module.css";
@@ -14,6 +16,10 @@ type Grant = Awaited<ReturnType<typeof trpc.featureRoles.listAll.query>>[number]
 // rest of the row) -- both concepts live in one table by design, not two
 // kept in sync (see the RBAC migration's own comment on features-schema.ts).
 export function AdminPermissions() {
+  const { features: effectiveFeatures } = useEffectivePermissions();
+  const canEnable = hasFeature(effectiveFeatures, "admin.features.enable");
+  const canDisable = hasFeature(effectiveFeatures, "admin.features.disable");
+  const canUpdateGrants = hasFeature(effectiveFeatures, "admin.role-permissions.update");
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const [roles, setRoles] = useState<Role[]>([]);
   const [grants, setGrants] = useState<Grant[]>([]);
@@ -100,20 +106,39 @@ export function AdminPermissions() {
                     <Checkbox
                       aria-label={`${feature.label} enabled`}
                       checked={feature.enabled}
-                      disabled={updatingCell === `enabled:${feature.key}`}
+                      // Enable and disable are separate permissions (see
+                      // features.ts's setEnabled) -- which one applies
+                      // depends on which direction clicking this checkbox
+                      // would actually go.
+                      disabled={
+                        updatingCell === `enabled:${feature.key}` || !(feature.enabled ? canDisable : canEnable)
+                      }
                       onChange={(event) => void handleEnabledChange(feature, event.currentTarget.checked)}
                     />
                   </td>
-                  {roles.map((role) => (
-                    <td key={role.name}>
-                      <Checkbox
-                        aria-label={`${feature.label} for ${role.name}`}
-                        checked={isGranted(feature.key, role.name)}
-                        disabled={updatingCell === `${feature.key}:${role.name}`}
-                        onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
-                      />
-                    </td>
-                  ))}
+                  {roles.map((role) => {
+                    const granted = isGranted(feature.key, role.name);
+                    return (
+                      <td key={role.name}>
+                        <Checkbox
+                          aria-label={`${feature.label} for ${role.name}`}
+                          checked={granted}
+                          // Owner's grant, once true, can never be
+                          // unchecked (see feature-roles.ts's setGranted --
+                          // enforced there too, this is just matching UI,
+                          // not the only thing stopping it). Otherwise
+                          // needs admin.role-permissions.update to change
+                          // anything at all.
+                          disabled={
+                            updatingCell === `${feature.key}:${role.name}` ||
+                            !canUpdateGrants ||
+                            (role.name === "owner" && granted)
+                          }
+                          onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
+                        />
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
