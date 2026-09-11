@@ -11,7 +11,6 @@ import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
 import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminPermissions } from "./Admin/AdminPermissions";
-import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
 import { SignUp } from "./SignUp";
@@ -94,7 +93,6 @@ export function App() {
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="terms" element={<AdminTerms />} />
                   <Route path="permissions" element={<AdminPermissions />} />
-                  <Route path="site-settings" element={<AdminSiteSettings />} />
                 </Route>
               </Route>
             </Route>
