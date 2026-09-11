@@ -34,10 +34,17 @@ export function AdminUsers() {
 
   // A new search term always starts back at page 1 -- staying on, say,
   // page 3 of an old, wider result set would silently show nothing once
-  // the narrower search comes back with fewer than 3 pages.
-  useEffect(() => {
+  // the narrower search comes back with fewer than 3 pages. Reset directly
+  // in the input's own change handler (the actual event that causes it),
+  // not reactively in a useEffect watching debouncedSearch -- besides
+  // being what oxlint's set-state-in-effect guidance itself recommends
+  // ("update it from the event that caused the change"), resetting
+  // immediately on keystroke reads better anyway: no reason to wait for
+  // the debounce just to flip the page number back to 1.
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(1);
-  }, [debouncedSearch]);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +120,7 @@ export function AdminUsers() {
       rowKey={(user) => user.id}
       loading={result === undefined}
       emptyLabel="No users yet."
-      search={{ value: search, onChange: setSearch, placeholder: "Search by name or email" }}
+      search={{ value: search, onChange: handleSearchChange, placeholder: "Search by name or email" }}
       sort={{ activeKey: sortKey, direction: sortDirection, onChange: handleSortChange }}
       pagination={{
         page,

@@ -37,6 +37,13 @@ export function AdminTerms() {
   }
 
   useEffect(() => {
+    // oxlint flags setCurrent (inside load()) as "setState in an effect" --
+    // this is the legitimate case that guidance carves out, not the
+    // anti-pattern it's meant to catch: a one-time fetch-on-mount with no
+    // value to derive from render and no prior event to hang it off of,
+    // the canonical "synchronize with an external system" use of
+    // useEffect (react.dev/learn/synchronizing-with-effects#fetching-data).
+    // oxlint-disable-next-line react/set-state-in-effect
     void load();
   }, []);
 

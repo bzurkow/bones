@@ -8,6 +8,15 @@ import { Providers } from "./providers";
 // Copied verbatim from web-app/index.html's own head -- see that file's
 // comments for why this is minimal (product pitch not settled yet) and why
 // og:url/og:image are omitted (need an absolute production URL).
+//
+// oxlint flags this as a non-component export alongside RootLayout below
+// (breaks Fast Refresh in theory), but `metadata` is Next's own App Router
+// convention -- it MUST be exported from layout.tsx by this exact name, it
+// can't move to another file the way an arbitrary shared constant could.
+// A worst-case full reload on editing this rarely-touched file is a
+// non-issue; suppressed rather than restructured around a framework
+// requirement.
+// oxlint-disable-next-line react/only-export-components
 export const metadata: Metadata = {
   title: "Bones",
   description: "Bones.",
