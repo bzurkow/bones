@@ -19,6 +19,26 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set when sign-in fails specifically because the account's email isn't
+  // verified yet -- auth.ts's hooks throw this before checking the
+  // password, and (sendOnSignIn: true) already fired a fresh verification
+  // email at that point, so this just needs to say so and offer a manual
+  // resend for when that one gets lost too.
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
+  // A stale/already-used verification link lands here via RequireAuth's
+  // redirect: better-auth's own GET /verify-email appends ?error=CODE to
+  // callbackURL and redirects the browser there on failure (expired token,
+  // token already consumed, ...) instead of ever creating a session --
+  // RequireAuth then bounces the still-unauthenticated visit to /login,
+  // carrying that query string along in `from`. Derived straight from
+  // `from`, not its own state -- there's nothing to clear it back to.
+  const linkErrorCode = from?.search ? new URLSearchParams(from.search).get("error") : null;
+  const linkErrorMessage = linkErrorCode
+    ? linkErrorCode === "TOKEN_EXPIRED"
+      ? "That verification link expired. Sign in below to get a new one."
+      : "That verification link didn't work. Sign in below to get a new one."
+    : null;
 
   function redirectTarget() {
     return from ? `${from.pathname}${from.search}` : "/";
@@ -35,11 +55,17 @@ export function Login() {
   async function handleCredentialSignIn(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setUnverifiedEmail(null);
+    setResent(false);
     setSubmitting(true);
     try {
       const { error: signInError } = await authClient.signIn.email({ email, password });
       if (signInError) {
-        setError(signInError.message ?? "Couldn't sign in with that email and password.");
+        if (signInError.code === "EMAIL_NOT_VERIFIED") {
+          setUnverifiedEmail(email);
+        } else {
+          setError(signInError.message ?? "Couldn't sign in with that email and password.");
+        }
         return;
       }
       await refetch();
@@ -47,6 +73,12 @@ export function Login() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleResendVerification() {
+    if (!unverifiedEmail) return;
+    await authClient.sendVerificationEmail({ email: unverifiedEmail, callbackURL: `${window.location.origin}/` });
+    setResent(true);
   }
 
   return (
@@ -58,6 +90,8 @@ export function Login() {
       <div className={styles.center}>
         <div className={styles.card}>
           <h1 className={styles.heading}>Sign in to Bones</h1>
+
+          <ErrorMessage message={linkErrorMessage} />
 
           {/* Both start undefined while useAuthProtocols is still loading,
               so neither method renders for that first beat -- see that
@@ -83,6 +117,17 @@ export function Login() {
                 onChange={(event) => setPassword(event.currentTarget.value)}
               />
               <ErrorMessage message={error} />
+              {unverifiedEmail &&
+                (resent ? (
+                  <p className={styles.notice}>Check {unverifiedEmail} for a new link.</p>
+                ) : (
+                  <p className={styles.notice}>
+                    Verify your email first.{" "}
+                    <button type="button" className={styles.linkButton} onClick={() => void handleResendVerification()}>
+                      Resend the link
+                    </button>
+                  </p>
+                ))}
               <Button type="submit" fullWidth disabled={submitting}>
                 {submitting ? "Signing in…" : "Sign in"}
               </Button>

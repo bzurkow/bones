@@ -30,6 +30,13 @@ export function SignUp() {
   // visible regardless of this.
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  // Set once sign-up succeeds but returns no session -- auth.ts's
+  // requireEmailVerification: true means /sign-up/email creates the user
+  // and sends a verification email, but doesn't sign them in yet (Better
+  // Auth returns { token: null, user } in that case). Shown instead of
+  // navigating away, since there's no session to navigate an authenticated
+  // page with.
+  const [verificationPending, setVerificationPending] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -48,9 +55,21 @@ export function SignUp() {
 
     setSubmitting(true);
     try {
-      const { error } = await authClient.signUp.email({ name, email, password });
+      // callbackURL: where the verification link (clicked later, from the
+      // email) lands the browser after auth.ts's autoSignInAfterVerification
+      // sets the session -- this app's own origin, not the backend's.
+      const { data, error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: `${window.location.origin}/`,
+      });
       if (error) {
         setFormError(error.message ?? "Couldn't create that account.");
+        return;
+      }
+      if (!data.token) {
+        setVerificationPending(true);
         return;
       }
       await refetch();
@@ -70,7 +89,11 @@ export function SignUp() {
         <div className={styles.card}>
           <h1 className={styles.heading}>Create your account</h1>
 
-          {emailEnabled ? (
+          {verificationPending ? (
+            <p className={styles.notice}>
+              Check {email} for a link to verify your account.
+            </p>
+          ) : emailEnabled ? (
             <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
               <TextField
                 label="Name"

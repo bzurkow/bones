@@ -46,6 +46,11 @@
   gap: 16px;
 }
 
+.notice {
+  margin: 0;
+  color: var(--bones-muted);
+}
+
 .switchLink {
   align-self: center;
   font-family: var(--bones-font-mono);

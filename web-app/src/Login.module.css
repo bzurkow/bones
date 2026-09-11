@@ -46,6 +46,22 @@
   gap: 16px;
 }
 
+.notice {
+  margin: 0;
+  color: var(--bones-muted);
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--bones-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .divider {
   display: flex;
   align-items: center;

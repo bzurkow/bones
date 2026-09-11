@@ -5,6 +5,8 @@ import { customSession } from "better-auth/plugins";
 import { isAuthProtocolEnabled } from "./auth-protocols.js";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
+import { sendEmail } from "./email/index.js";
+import { verificationEmailHtml } from "./email/templates.js";
 import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
@@ -57,16 +59,31 @@ export const auth = betterAuth({
   // special character) is enforced below in hooks.before, since Better
   // Auth has no built-in option for that.
   //
-  // requireEmailVerification is false because there's no email-sending
-  // infrastructure in this repo yet (no SMTP/Resend/etc. configured
-  // anywhere) -- turning this on with no sendVerificationEmail wired up
-  // would lock every credential sign-up out immediately. This is
-  // deliberately temporary: flip it on once email verification is built.
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
-    requireEmailVerification: false,
+    // Email-sending infrastructure now exists (see email/index.ts -- Amazon
+    // SES in production, Mailpit in dev), so this can require verification
+    // instead of trusting whatever address a sign-up form was given.
+    requireEmailVerification: true,
+  },
+  // sendVerificationEmail builds the actual message; the three trigger
+  // flags below are the policy for when Better Auth calls it.
+  // autoSignInAfterVerification: clicking the email link signs the user in
+  // directly rather than dropping them back at /login having "verified"
+  // but not "signed in." sendOnSignUp defaults to requireEmailVerification's
+  // value anyway (Better Auth's own fallback) but is spelled out here since
+  // it's the whole point of turning requireEmailVerification on.
+  // sendOnSignIn re-sends a fresh link if someone tries to sign in before
+  // verifying -- their first email may be long gone by then.
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail(user.email, "Verify your email", verificationEmailHtml(url));
+    },
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
   },
   socialProviders: {
     google: {
@@ -76,9 +93,9 @@ export const auth = betterAuth({
   },
   // Password complexity (length is covered by minPasswordLength above).
   // Only /sign-up/email carries a fresh plaintext password to check --
-  // sign-in verifies against an existing hash, not this rule, and there's
-  // no password-reset flow yet for the same reason emailAndPassword above
-  // has requireEmailVerification: false.
+  // sign-in verifies against an existing hash, not this rule. There's still
+  // no password-reset flow (separate roadmap item, unrelated to email
+  // verification above -- email infra now exists for either).
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // Gate 1: is this sign-in method even turned on? Checked first, and
