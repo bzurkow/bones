@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
 import { TopBar } from "./TopBar";
+import { ViewAsRoleToggle } from "./ViewAsRoleToggle";
 
 // /terms-and-conditions is a sibling route to this layout (App.tsx), not
 // nested inside it -- so this check never runs while already there,
@@ -24,6 +25,7 @@ export function AuthenticatedLayout() {
   return (
     <>
       <TopBar />
+      <ViewAsRoleToggle />
       <ColorSchemeToggle />
       <Outlet />
     </>

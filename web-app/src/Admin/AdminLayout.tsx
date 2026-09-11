@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { PageHeader } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import styles from "./AdminLayout.module.css";
 
 // Each tab's own page.admin.<tab> feature key (see the RBAC migration's
@@ -30,8 +30,8 @@ const TABS = [
 // RBAC) into one -- see AdminPermissions.tsx for why the underlying
 // concepts still stay distinct.
 export function AdminLayout() {
-  const { data: session } = authClient.useSession();
-  const visibleTabs = TABS.filter((tab) => hasFeature(session, tab.feature));
+  const effectiveFeatures = useEffectivePermissions();
+  const visibleTabs = TABS.filter((tab) => hasFeature(effectiveFeatures, tab.feature));
 
   return (
     <PageHeader eyebrow="Admin" title="Admin">

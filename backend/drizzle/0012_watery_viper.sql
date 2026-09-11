@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "show_view_as_role_toggle" boolean DEFAULT true NOT NULL;

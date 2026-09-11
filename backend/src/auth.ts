@@ -194,6 +194,19 @@ export const auth = betterAuth({
         input: false,
         defaultValue: true,
       },
+      // Whether the "view as role" floating toggle (ViewAsRoleToggle.tsx)
+      // renders for this user -- only ever true for an "owner" role to
+      // begin with (that gate is hardcoded, not permission-table-driven,
+      // since the toggle is the tool for *previewing* the permission
+      // table), same per-user show/hide precedent as showViewModeToggle
+      // above. input: false for the same reason as that field --
+      // user-settings.ts's updateUserSettings is the only writer.
+      showViewAsRoleToggle: {
+        type: "boolean",
+        required: true,
+        input: false,
+        defaultValue: true,
+      },
       // Stores an S3 object *key*, not a real URL (despite the name --
       // matches terms-and-conditions.assetUrl's same convention), resolved
       // into a real presigned GET URL below in customSession. input: false
@@ -243,6 +256,7 @@ export const auth = betterAuth({
         inheritViewModeFromBrowser: boolean;
         viewMode: ViewMode;
         showViewModeToggle: boolean;
+        showViewAsRoleToggle: boolean;
         avatarUrl: string | null;
       };
       // typedUser.avatarUrl as stored on the row is an S3 *key* (see the

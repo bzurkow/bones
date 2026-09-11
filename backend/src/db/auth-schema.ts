@@ -22,6 +22,9 @@ export const users = pgTable("users", {
     .default("light")
     .notNull(),
   showViewModeToggle: boolean("show_view_mode_toggle").default(true).notNull(),
+  showViewAsRoleToggle: boolean("show_view_as_role_toggle")
+    .default(true)
+    .notNull(),
   avatarUrl: text("avatar_url"),
 });
 

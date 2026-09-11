@@ -1,0 +1,43 @@
+/* Sits immediately left of ColorSchemeToggleButton (shared-ui) -- that
+   button is a fixed-position 42px "lg" ActionIcon at right:20/bottom:20,
+   so this starts far enough right of it (20 + 42 + 12px gap) to clear it
+   without the two ever touching or overlapping at any viewport width. */
+.wrap {
+  position: fixed;
+  right: 74px;
+  bottom: 20px;
+  z-index: 1000;
+  display: flex;
+  /* gap:1px over a border-colored background, not per-button borders --
+     CLAUDE.md rule 5's card-grid pattern applied to a segmented control. */
+  gap: 1px;
+  background: var(--bones-border);
+  border: 1px solid var(--bones-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.button {
+  border: none;
+  background: var(--bones-bg);
+  color: var(--bones-muted);
+  font-family: var(--bones-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--bones-surface);
+}
+
+.buttonActive {
+  background: var(--bones-ink);
+  color: var(--bones-bg);
+}
+
+.buttonActive:hover {
+  background: var(--bones-ink);
+}

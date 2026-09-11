@@ -9,6 +9,7 @@ interface ViewSettingsInput {
   inheritViewModeFromBrowser?: boolean;
   viewMode?: ViewMode;
   showViewModeToggle?: boolean;
+  showViewAsRoleToggle?: boolean;
 }
 
 export function ApplicationSettings() {
@@ -28,10 +29,12 @@ export function ApplicationSettings() {
   const viewMode = optimistic?.viewMode ?? session?.user.viewMode ?? "light";
   const showViewModeToggle =
     optimistic?.showViewModeToggle ?? session?.user.showViewModeToggle ?? true;
+  const showViewAsRoleToggle =
+    optimistic?.showViewAsRoleToggle ?? session?.user.showViewAsRoleToggle ?? true;
 
   async function updateSettings(input: ViewSettingsInput) {
     setError(null);
-    setOptimistic({ inheritViewModeFromBrowser, viewMode, showViewModeToggle, ...input });
+    setOptimistic({ inheritViewModeFromBrowser, viewMode, showViewModeToggle, showViewAsRoleToggle, ...input });
     try {
       await trpc.userSettings.updateUserSettings.mutate(input);
       await refetch();
@@ -81,6 +84,24 @@ export function ApplicationSettings() {
             }
           />
         </Row>
+
+        {/* Shown only to owner, matching the toggle's own hardcoded gate
+            (ViewAsRoleToggle.tsx) -- no point offering a switch for a
+            button no other role could ever see anyway. */}
+        {session?.user.role === "owner" && (
+          <Row
+            label="Show view as role toggle"
+            description="Show the button that previews the app as a different role."
+          >
+            <Switch
+              aria-label="Show view as role toggle"
+              checked={showViewAsRoleToggle}
+              onChange={(event) =>
+                void updateSettings({ showViewAsRoleToggle: event.currentTarget.checked })
+              }
+            />
+          </Row>
+        )}
       </RowCard>
 
       <ErrorMessage message={error} />
