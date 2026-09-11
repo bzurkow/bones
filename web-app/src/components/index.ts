@@ -11,4 +11,5 @@ export * from "shared-ui";
 export * from "./PageHeader";
 export * from "./ErrorMessage";
 export * from "./RowCard";
+export * from "./Table";
 export * from "./TextField";

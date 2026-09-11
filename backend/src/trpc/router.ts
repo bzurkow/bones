@@ -1,4 +1,5 @@
 import { router } from "./trpc.js";
+import { adminRouter } from "./routers/admin.js";
 import { healthRouter } from "./routers/health.js";
 import { dbRouter } from "./routers/db.js";
 import { profileRouter } from "./routers/profile.js";
@@ -10,6 +11,7 @@ export const appRouter = router({
   db: dbRouter,
   userSettings: userSettingsRouter,
   profile: profileRouter,
+  admin: adminRouter,
   termsAndConditions: termsAndConditionsRouter,
 });
 

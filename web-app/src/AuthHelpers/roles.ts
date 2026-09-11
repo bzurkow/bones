@@ -8,3 +8,12 @@ type SessionUser = NonNullable<ReturnType<typeof authClient.useSession>["data"]>
 export function isAdmin(user: SessionUser | undefined): boolean {
   return user?.role === "owner" || user?.role === "administrator";
 }
+
+// Moved here from ApplicationProfile.tsx once AdminUsers.tsx needed the
+// same mapping -- one copy instead of two definitions drifting apart.
+export const ROLE_LABELS = {
+  owner: "Owner",
+  administrator: "Administrator",
+  standard: "Standard",
+  demo: "Demo",
+} as const;

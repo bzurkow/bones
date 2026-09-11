@@ -61,6 +61,18 @@ export function getPresignedDownloadUrl(bucket: string, key: string) {
   return getSignedUrl(presignClient, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn: 300 });
 }
 
+// Resolves a stored avatar key (users.avatarUrl -- see auth.ts's
+// additionalFields comment for why the column holds a key, not a URL) into
+// a real presigned GET URL, or null if no avatar was ever uploaded. Shared
+// by auth.ts's customSession (resolves the caller's own) and
+// trpc/routers/admin.ts's listUsers (resolves everyone's, for the users
+// table) -- a same-package reuse, unlike the client/server duplication
+// elsewhere in this repo (password-rules.ts etc.), which only exists
+// because backend's package exports are types-only.
+export function resolveAvatarUrl(key: string | null): Promise<string | null> {
+  return key ? getPresignedDownloadUrl(AVATAR_BUCKET, key) : Promise.resolve(null);
+}
+
 // Direct server-side upload, not a presigned URL -- for content the
 // backend already has in hand from a trusted caller (e.g. an admin's
 // terms-and-conditions markdown, small text posted straight in a

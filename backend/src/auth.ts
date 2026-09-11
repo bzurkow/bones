@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
-import { AVATAR_BUCKET, getPresignedDownloadUrl } from "./storage/index.js";
+import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
 import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
@@ -192,11 +192,8 @@ export const auth = betterAuth({
       // rather than per-caller. Stays null when no avatar has been
       // uploaded yet -- callers fall back to the native `image` field
       // (Google's profile picture) in that case.
-      const resolvedAvatarUrl = typedUser.avatarUrl
-        ? await getPresignedDownloadUrl(AVATAR_BUCKET, typedUser.avatarUrl)
-        : null;
       return {
-        user: { ...typedUser, avatarUrl: resolvedAvatarUrl },
+        user: { ...typedUser, avatarUrl: await resolveAvatarUrl(typedUser.avatarUrl) },
         session,
         hasAcceptedTermsAndConditions: await getHasAcceptedTermsAndConditions(typedUser.id),
       };

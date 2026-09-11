@@ -1,0 +1,171 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.search {
+  max-width: 320px;
+}
+
+/* The CSS-grid-as-table: header/body "row" wrappers render as
+   display: contents (see Table.tsx) so their cells join this single
+   grid's column tracks directly -- gridTemplateColumns mixes fixed px
+   (resized columns) and minmax(min, 1fr) (still-flex ones) natively,
+   which a real <table> can't express as cleanly. */
+.grid {
+  display: grid;
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-lg);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.headerRowContents,
+.bodyRowContents {
+  display: contents;
+}
+
+/* Header: filled surface + an ink rule under it (CLAUDE.md rule 4 -- a
+   rule that *opens* a section), bold sans labels -- a deliberately
+   stronger, more "header-like" presence than the quieter mono-eyebrow
+   treatment used elsewhere, built from weight/background/contrast only,
+   no accent color (rule 1). */
+.headerCell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 16px;
+  background: var(--bones-surface);
+  border-bottom: 1px solid var(--bones-ink);
+  box-sizing: border-box;
+}
+
+.headerLabel {
+  font-family: var(--bones-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bones-ink);
+}
+
+.headerSortButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--bones-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bones-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.headerSortHint {
+  color: var(--bones-disabled-text);
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+}
+
+.resizeHandle:hover {
+  background: var(--bones-border);
+}
+
+.bodyCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bones-border);
+  font-size: 14.5px;
+  color: var(--bones-ink);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.bodyRowContents:last-child .bodyCell {
+  border-bottom: none;
+}
+
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 14.5px;
+  color: var(--bones-muted);
+}
+
+/* Pagination */
+
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.paginationSummary {
+  font-family: var(--bones-font-mono);
+  font-size: 12px;
+  color: var(--bones-muted);
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageButton {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-sm);
+  background: var(--bones-bg);
+  color: var(--bones-ink);
+  font-family: var(--bones-font-mono);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.pageButton:hover:not(:disabled) {
+  background: var(--bones-surface);
+}
+
+.pageButton:disabled {
+  border-color: var(--bones-border-faint);
+  color: var(--bones-disabled-text);
+  cursor: default;
+}
+
+.pageButtonActive {
+  background: var(--bones-ink);
+  border-color: var(--bones-ink);
+  color: var(--bones-bg);
+}
+
+.pageEllipsis {
+  padding: 0 4px;
+  font-family: var(--bones-font-mono);
+  font-size: 12.5px;
+  color: var(--bones-disabled-text);
+}
+
+.pageSizeSelect {
+  width: 110px;
+  margin-left: 8px;
+}

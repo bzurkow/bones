@@ -3,16 +3,10 @@ import { Avatar, TextInput } from "@mantine/core";
 import { IconCamera } from "@tabler/icons-react";
 import { isAllowedAvatarFile } from "./AuthHelpers/avatar-rules";
 import { authClient } from "./AuthHelpers/auth-client";
+import { ROLE_LABELS } from "./AuthHelpers/roles";
 import { Button, ErrorMessage, PageHeader, Row, RowCard } from "./components";
 import { trpc } from "./trpc";
 import styles from "./ApplicationProfile.module.css";
-
-const ROLE_LABELS = {
-  owner: "Owner",
-  administrator: "Administrator",
-  standard: "Standard",
-  demo: "Demo",
-} as const;
 
 export function ApplicationProfile() {
   const { data: session, refetch } = authClient.useSession();
