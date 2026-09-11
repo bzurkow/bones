@@ -71,6 +71,13 @@
       "when": 1789087712096,
       "tag": "0009_wise_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789090039766,
+      "tag": "0010_motionless_mimic",
+      "breakpoints": true
     }
   ]
 }

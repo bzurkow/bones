@@ -11,3 +11,19 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.sectionTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--bones-ink);
+}
+
+.sectionDescription {
+  margin: 0 0 16px;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bones-muted);
+}

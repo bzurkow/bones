@@ -6,6 +6,7 @@
 export * from "./auth-schema.js";
 export * from "./terms-and-conditions-schema.js";
 export * from "./user-terms-and-conditions-schema.js";
+export * from "./auth-protocols-schema.js";
 
 // user.role/viewMode's allowed values live in ../user-fields.ts (imported
 // directly from there, not re-exported here) -- it's the one place that

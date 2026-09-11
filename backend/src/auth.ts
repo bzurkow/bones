@@ -2,6 +2,7 @@ import { APIError, betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
+import { isAuthProtocolEnabled } from "./auth-protocols.js";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { resolveAvatarUrl } from "./storage/index.js";
@@ -80,6 +81,27 @@ export const auth = betterAuth({
   // has requireEmailVerification: false.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Gate 1: is this sign-in method even turned on? Checked first, and
+      // for both sign-up and sign-in -- disabling "google" here blocks an
+      // already-registered Google user from signing back in too, not just
+      // new sign-ups, same as the admin panel's "Authorization Protocols"
+      // toggle implies. web-app's Login/SignUp pages also hide the
+      // corresponding UI entirely once auth-protocols.list says it's off,
+      // but this server-side check is the actual enforcement -- that UI
+      // hiding is just not showing a button that would fail anyway.
+      if (ctx.path === "/sign-up/email" || ctx.path === "/sign-in/email") {
+        if (!(await isAuthProtocolEnabled("email"))) {
+          throw new APIError("FORBIDDEN", { message: "Email sign-in is currently disabled." });
+        }
+      }
+      if (ctx.path === "/sign-in/social" && ctx.body?.provider === "google") {
+        if (!(await isAuthProtocolEnabled("google"))) {
+          throw new APIError("FORBIDDEN", { message: "Google sign-in is currently disabled." });
+        }
+      }
+
+      // Gate 2: password strength, sign-up only (sign-in verifies against
+      // an existing hash, not this rule).
       if (ctx.path !== "/sign-up/email") return;
       const password = typeof ctx.body?.password === "string" ? ctx.body.password : "";
       if (!isStrongPassword(password)) {

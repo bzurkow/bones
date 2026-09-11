@@ -1,5 +1,6 @@
 import { router } from "./trpc.js";
 import { adminRouter } from "./routers/admin.js";
+import { authProtocolsRouter } from "./routers/auth-protocols.js";
 import { healthRouter } from "./routers/health.js";
 import { dbRouter } from "./routers/db.js";
 import { profileRouter } from "./routers/profile.js";
@@ -12,6 +13,7 @@ export const appRouter = router({
   userSettings: userSettingsRouter,
   profile: profileRouter,
   admin: adminRouter,
+  authProtocols: authProtocolsRouter,
   termsAndConditions: termsAndConditionsRouter,
 });
 
@@ -29,3 +31,4 @@ export type { auth } from "../auth.js";
 // type-only anyway (see hooks/useColorScheme.ts), so there's nothing more
 // than this re-export it needs.
 export type { UserRole, ViewMode } from "../user-fields.js";
+export type { AuthProtocolName } from "../auth-protocols.js";
