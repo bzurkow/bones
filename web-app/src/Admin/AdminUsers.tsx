@@ -77,12 +77,7 @@ export function AdminUsers() {
       key: "role",
       header: "Role",
       enableSort: true,
-      render: (user) => (
-        <span className={styles.status}>
-          <span className={styles.statusDot} />
-          {ROLE_LABELS[user.role]}
-        </span>
-      ),
+      render: (user) => <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>,
     },
     {
       key: "active",
