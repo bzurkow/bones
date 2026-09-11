@@ -9,7 +9,6 @@ import { ApplicationProfile } from "./ApplicationProfile";
 import { ApplicationSettings } from "./ApplicationSettings";
 import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
-import { AdminOrganizations } from "./Admin/AdminOrganizations";
 import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminPermissions } from "./Admin/AdminPermissions";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
@@ -93,7 +92,6 @@ export function App() {
                 <Route element={<AdminLayout />}>
                   <Route index element={<Navigate to="users" replace />} />
                   <Route path="users" element={<AdminUsers />} />
-                  <Route path="organizations" element={<AdminOrganizations />} />
                   <Route path="terms" element={<AdminTerms />} />
                   <Route path="permissions" element={<AdminPermissions />} />
                   <Route path="site-settings" element={<AdminSiteSettings />} />
