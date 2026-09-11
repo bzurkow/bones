@@ -75,19 +75,48 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
     [columns, columnWidths],
   );
 
-  function startResize(event: ReactPointerEvent<HTMLDivElement>, column: TableColumn<T>) {
-    event.preventDefault();
+  function measuredWidth(column: TableColumn<T>) {
     const cell = headerCellRefs.current[column.key];
-    const startWidth = columnWidths[column.key] ?? cell?.getBoundingClientRect().width ?? column.minWidth ?? DEFAULT_MIN_WIDTH;
+    return columnWidths[column.key] ?? cell?.getBoundingClientRect().width ?? column.minWidth ?? DEFAULT_MIN_WIDTH;
+  }
+
+  // A handle sits on a column's right edge, i.e. the boundary between it
+  // and the next column -- resizing only ever redistributes width between
+  // that pair, every other column stays exactly as it was. Without this,
+  // pinning one column to a fixed px track just leaves more/less free
+  // space for *all* the remaining flexible (1fr) columns to share, which
+  // visually moves every column to the right of the drag, not just its
+  // immediate neighbor.
+  function startResize(event: ReactPointerEvent<HTMLDivElement>, index: number) {
+    event.preventDefault();
+    const column = columns[index]!;
+    const nextColumn = columns[index + 1];
     const startX = event.clientX;
     const minWidth = column.minWidth ?? DEFAULT_MIN_WIDTH;
+    const startWidth = measuredWidth(column);
+    const nextMinWidth = nextColumn ? (nextColumn.minWidth ?? DEFAULT_MIN_WIDTH) : undefined;
+    const nextStartWidth = nextColumn ? measuredWidth(nextColumn) : undefined;
     const pointerId = event.pointerId;
     const target = event.currentTarget;
     target.setPointerCapture(pointerId);
 
     function handleMove(moveEvent: PointerEvent) {
-      const nextWidth = Math.max(minWidth, startWidth + (moveEvent.clientX - startX));
-      setColumnWidths((prev) => ({ ...prev, [column.key]: nextWidth }));
+      let delta = moveEvent.clientX - startX;
+      if (nextColumn && nextStartWidth !== undefined && nextMinWidth !== undefined) {
+        // Clamp delta itself (not just each resulting width independently)
+        // so dragging past either column's floor just stops there instead
+        // of one width clamping while the other keeps changing.
+        delta = Math.min(delta, nextStartWidth - nextMinWidth);
+        delta = Math.max(delta, minWidth - startWidth);
+        setColumnWidths((prev) => ({
+          ...prev,
+          [column.key]: startWidth + delta,
+          [nextColumn.key]: nextStartWidth - delta,
+        }));
+      } else {
+        // Last column -- no neighbor to trade width with.
+        setColumnWidths((prev) => ({ ...prev, [column.key]: Math.max(minWidth, startWidth + delta) }));
+      }
     }
     function handleUp() {
       target.releasePointerCapture(pointerId);
@@ -113,7 +142,7 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
 
       <div role="table" className={styles.grid} style={{ gridTemplateColumns }}>
         <div role="row" className={styles.headerRowContents}>
-          {columns.map((column) => {
+          {columns.map((column, index) => {
             const isActiveSort = sort?.activeKey === column.key;
             return (
               <div
@@ -144,7 +173,7 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
                 ) : (
                   <span className={styles.headerLabel}>{column.header}</span>
                 )}
-                <div className={styles.resizeHandle} onPointerDown={(event) => startResize(event, column)} />
+                <div className={styles.resizeHandle} onPointerDown={(event) => startResize(event, index)} />
               </div>
             );
           })}
