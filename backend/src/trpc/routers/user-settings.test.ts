@@ -43,7 +43,11 @@ describe("userSettings.updateUserSettings", () => {
       inheritViewModeFromBrowser: false,
     });
 
-    expect(result).toEqual({ viewMode: "dark", inheritViewModeFromBrowser: false });
+    expect(result).toEqual({
+      viewMode: "dark",
+      inheritViewModeFromBrowser: false,
+      showViewModeToggle: true,
+    });
 
     // The other user's row is untouched.
     const other = await createCaller(contextFor(caller2)).updateUserSettings({
@@ -51,5 +55,18 @@ describe("userSettings.updateUserSettings", () => {
       inheritViewModeFromBrowser: caller2.inheritViewModeFromBrowser,
     });
     expect(other.viewMode).toBe(caller2.viewMode);
+  });
+
+  it("updates showViewModeToggle independently of the view-mode fields", async () => {
+    const user = await createTestUser();
+    const caller = createCaller(contextFor(user));
+
+    const result = await caller.updateUserSettings({ showViewModeToggle: false });
+
+    expect(result).toEqual({
+      viewMode: user.viewMode,
+      inheritViewModeFromBrowser: user.inheritViewModeFromBrowser,
+      showViewModeToggle: false,
+    });
   });
 });

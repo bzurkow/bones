@@ -132,6 +132,20 @@ export const auth = betterAuth({
         input: false,
         defaultValue: "light",
       },
+      // Whether the floating light/dark toggle (ColorSchemeToggle.tsx)
+      // renders for this user at all -- per-user, not the site-wide
+      // show/hide originally sketched in bones-roadmap-notes.md item 19
+      // (there's no AdminSiteSettings backing yet to hang that on, and a
+      // per-user preference is a smaller, more direct fit for "I don't
+      // want to see this button" than an admin-controlled site setting
+      // would be). input: false for the same reason as viewMode above --
+      // user-settings.ts's updateUserSettings is the only writer.
+      showViewModeToggle: {
+        type: "boolean",
+        required: true,
+        input: false,
+        defaultValue: true,
+      },
       // Stores an S3 object *key*, not a real URL (despite the name --
       // matches terms-and-conditions.assetUrl's same convention), resolved
       // into a real presigned GET URL below in customSession. input: false
@@ -180,6 +194,7 @@ export const auth = betterAuth({
         active: boolean;
         inheritViewModeFromBrowser: boolean;
         viewMode: ViewMode;
+        showViewModeToggle: boolean;
         avatarUrl: string | null;
       };
       // typedUser.avatarUrl as stored on the row is an S3 *key* (see the

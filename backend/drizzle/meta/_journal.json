@@ -64,6 +64,13 @@
       "when": 1789082055924,
       "tag": "0008_nappy_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789087712096,
+      "tag": "0009_wise_warstar",
+      "breakpoints": true
     }
   ]
 }

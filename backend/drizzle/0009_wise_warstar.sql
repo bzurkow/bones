@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "show_view_mode_toggle" boolean DEFAULT true NOT NULL;

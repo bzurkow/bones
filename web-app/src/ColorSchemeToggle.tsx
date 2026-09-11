@@ -11,15 +11,17 @@ import { trpc } from "./trpc";
 // render. Turns off "inherit from browser" on click, same as picking an
 // explicit mode in Settings would.
 //
-// TODO: a site setting to show/hide this (see AdminSiteSettings.tsx) is
-// on the roadmap -- see bones-roadmap-notes.md item 19. Not built yet;
-// this always renders for now.
+// Visibility is a per-user setting (ApplicationSettings.tsx's "Show view
+// mode toggle" switch), not the site-wide admin control originally
+// sketched in bones-roadmap-notes.md item 19 -- there's no
+// AdminSiteSettings backing yet to hang that on, and per-user is a more
+// direct fit for "I don't want to see this button" anyway.
 export function ColorSchemeToggle() {
   const { data: session, refetch } = authClient.useSession();
   const computed = useComputedColorScheme("light");
   const isDark = computed === "dark";
 
-  if (!session) return null;
+  if (!session || !session.user.showViewModeToggle) return null;
 
   async function handleToggle() {
     await trpc.userSettings.updateUserSettings.mutate({

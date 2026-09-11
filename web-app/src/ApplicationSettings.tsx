@@ -8,6 +8,7 @@ import { trpc } from "./trpc";
 interface ViewSettingsInput {
   inheritViewModeFromBrowser?: boolean;
   viewMode?: ViewMode;
+  showViewModeToggle?: boolean;
 }
 
 export function ApplicationSettings() {
@@ -25,10 +26,12 @@ export function ApplicationSettings() {
   const inheritViewModeFromBrowser =
     optimistic?.inheritViewModeFromBrowser ?? session?.user.inheritViewModeFromBrowser ?? true;
   const viewMode = optimistic?.viewMode ?? session?.user.viewMode ?? "light";
+  const showViewModeToggle =
+    optimistic?.showViewModeToggle ?? session?.user.showViewModeToggle ?? true;
 
   async function updateSettings(input: ViewSettingsInput) {
     setError(null);
-    setOptimistic({ inheritViewModeFromBrowser, viewMode, ...input });
+    setOptimistic({ inheritViewModeFromBrowser, viewMode, showViewModeToggle, ...input });
     try {
       await trpc.userSettings.updateUserSettings.mutate(input);
       await refetch();
@@ -62,6 +65,19 @@ export function ApplicationSettings() {
             disabled={inheritViewModeFromBrowser}
             onChange={(event) =>
               void updateSettings({ viewMode: event.currentTarget.checked ? "dark" : "light" })
+            }
+          />
+        </Row>
+
+        <Row
+          label="Show view mode toggle"
+          description="Show the light/dark toggle button in the app."
+        >
+          <Switch
+            aria-label="Show view mode toggle"
+            checked={showViewModeToggle}
+            onChange={(event) =>
+              void updateSettings({ showViewModeToggle: event.currentTarget.checked })
             }
           />
         </Row>
