@@ -46,6 +46,16 @@
      schemes (overridden below for dark). */
   --bones-danger:     #B42318;
 
+  /* Explicit, user-authorized carve-out from rule 1 -- NOT a standing
+     license to add accent colors elsewhere. Scoped to status-dot
+     active/inactive indicators only (first use: Admin users table).
+     Deliberately separate from --bones-danger above, which stays
+     error-text/borders only -- reusing it here for "inactive" would blur
+     that meaning. Same ~6.5:1+ contrast bar as --bones-danger (overridden
+     below for dark). */
+  --bones-status-active:   #15803D;
+  --bones-status-inactive: #B42318;
+
   /* Type */
   --bones-font-sans:  'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --bones-font-mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -115,6 +125,10 @@
   /* Lighter/brighter than light mode's --bones-danger -- ~7:1 contrast
      against dark mode's near-black --bones-bg instead of near-zero. */
   --bones-danger:     #F97066;
+
+  /* Same lighten-for-dark-mode treatment as --bones-danger above. */
+  --bones-status-active:   #4ADE80;
+  --bones-status-inactive: #F97066;
 
   --bones-shadow-frame: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
   --bones-header-bg: rgba(10, 10, 10, 0.88);

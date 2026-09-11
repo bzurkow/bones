@@ -85,7 +85,7 @@ export function AdminUsers() {
       enableSort: true,
       render: (user) => (
         <span className={styles.status}>
-          <span className={`${styles.statusDot} ${user.active ? "" : styles.statusDotInactive}`} />
+          <span className={`${styles.statusDot} ${user.active ? styles.statusDotActive : styles.statusDotInactive}`} />
           {user.active ? "Active" : "Inactive"}
         </span>
       ),

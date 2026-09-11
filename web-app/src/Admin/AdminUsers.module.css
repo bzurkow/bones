@@ -18,13 +18,19 @@
   height: 6px;
   flex-shrink: 0;
   border-radius: 999px;
-  background: var(--bones-ink);
 }
 
-/* Inactive uses --bones-inactive, reserved in tokens.css for exactly this
-   ("inactive status dot") -- no new accent color, per CLAUDE.md rule 1. */
+/* Green/red, not grayscale -- an explicit, user-authorized one-off
+   exception to CLAUDE.md rule 1 (tokens.css's --bones-status-active/
+   --bones-status-inactive carry the same note). Not a general license to
+   add accent colors elsewhere -- this stays scoped to status dots until
+   told otherwise. */
+.statusDotActive {
+  background: var(--bones-status-active);
+}
+
 .statusDotInactive {
-  background: var(--bones-inactive);
+  background: var(--bones-status-inactive);
 }
 
 .mono {
