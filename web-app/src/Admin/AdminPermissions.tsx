@@ -7,37 +7,170 @@ import { trpc } from "../trpc";
 import panelStyles from "./AdminPanel.module.css";
 import styles from "./AdminPermissions.module.css";
 
-type Feature = Awaited<ReturnType<typeof trpc.features.list.query>>[number];
 type Role = Awaited<ReturnType<typeof trpc.roles.list.query>>[number];
-type Grant = Awaited<ReturnType<typeof trpc.featureRoles.listAll.query>>[number];
 
-// Every feature in the app (the "Enabled" column -- a global kill switch,
-// independent of any role) crossed with every role's own grant for it (the
-// rest of the row) -- both concepts live in one table by design, not two
-// kept in sync (see the RBAC migration's own comment on features-schema.ts).
+interface Item {
+  key: string;
+  label: string;
+  enabled: boolean;
+}
+
+interface GridProps<G> {
+  title: string;
+  description: string;
+  items: Item[] | undefined;
+  roles: Role[];
+  grants: G[];
+  grantKeyOf: (grant: G) => string;
+  isGranted: (grant: G, itemKey: string, role: string) => boolean;
+  canEnable: boolean;
+  canDisable: boolean;
+  canUpdateGrants: boolean;
+  // Per-role, whether a currently-true grant can be unchecked at all --
+  // features/routes only protect "owner"; page_views also protects
+  // "administrator" (a direct ask, narrower than the other two).
+  isGrantLocked: (role: string) => boolean;
+  updatingCell: string | null;
+  onEnabledChange: (item: Item, enabled: boolean) => void;
+  onGrantChange: (itemKey: string, role: string, granted: boolean) => void;
+}
+
+// One reusable grid for all three "item x role" tables (features, routes,
+// page_views) -- same shape, same enable/disable-permission split, same
+// per-role grant locking, just a different backing item/grant type per
+// caller. Kept as a plain function in this file rather than its own
+// component module -- only ever used here, three times.
+function PermissionGrid<G>({
+  title,
+  description,
+  items,
+  roles,
+  grants,
+  grantKeyOf,
+  isGranted,
+  canEnable,
+  canDisable,
+  canUpdateGrants,
+  isGrantLocked,
+  updatingCell,
+  onEnabledChange,
+  onGrantChange,
+}: GridProps<G>) {
+  return (
+    <section>
+      <h2 className={panelStyles.sectionTitle}>{title}</h2>
+      <p className={panelStyles.sectionDescription}>{description}</p>
+
+      {items && (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>{title}</th>
+                <th>Enabled</th>
+                {roles.map((role) => (
+                  <th key={role.name}>{role.name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.key}>
+                  <td>{item.label}</td>
+                  <td>
+                    <Checkbox
+                      aria-label={`${item.label} enabled`}
+                      checked={item.enabled}
+                      // Enable and disable are separate permissions --
+                      // which one applies depends on which direction
+                      // clicking this checkbox would actually go.
+                      disabled={updatingCell === `enabled:${item.key}` || !(item.enabled ? canDisable : canEnable)}
+                      onChange={(event) => onEnabledChange(item, event.currentTarget.checked)}
+                    />
+                  </td>
+                  {roles.map((role) => {
+                    const granted = grants.some(
+                      (grant) => grantKeyOf(grant) === item.key && isGranted(grant, item.key, role.name),
+                    );
+                    return (
+                      <td key={role.name}>
+                        <Checkbox
+                          aria-label={`${item.label} for ${role.name}`}
+                          checked={granted}
+                          disabled={
+                            updatingCell === `${item.key}:${role.name}` ||
+                            !canUpdateGrants ||
+                            (isGrantLocked(role.name) && granted)
+                          }
+                          onChange={(event) => onGrantChange(item.key, role.name, event.currentTarget.checked)}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function isOwnerLocked(role: string) {
+  return role === "owner";
+}
+
+function isOwnerOrAdminLocked(role: string) {
+  return role === "owner" || role === "administrator";
+}
+
+// Three separate tables in the DB (features/routes/page_views, each with
+// its own -roles join) shown together here as one page, since managing
+// them is the same admin activity even though the underlying concepts are
+// distinct (see each schema file's own comment on why they're split):
+// features are in-page actions, routes are the umbrella "can enter this
+// section" gate, page_views are per-tab visibility within a route.
 export function AdminPermissions() {
   const { features: effectiveFeatures } = useEffectivePermissions();
   const canEnable = hasFeature(effectiveFeatures, "admin.features.enable");
   const canDisable = hasFeature(effectiveFeatures, "admin.features.disable");
   const canUpdateGrants = hasFeature(effectiveFeatures, "admin.role-permissions.update");
-  const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
+
   const [roles, setRoles] = useState<Role[]>([]);
-  const [grants, setGrants] = useState<Grant[]>([]);
-  // Which single cell has a change in flight -- "enabled:<key>" for the
-  // kill switch, "<key>:<role>" for a grant -- disables just that
-  // checkbox so a second click can't fire before the first resolves.
+  const [features, setFeatures] = useState<Item[] | undefined>(undefined);
+  const [featureGrants, setFeatureGrants] = useState<Awaited<ReturnType<typeof trpc.featureRoles.listAll.query>>>([]);
+  const [routes, setRoutes] = useState<Item[] | undefined>(undefined);
+  const [routeGrants, setRouteGrants] = useState<Awaited<ReturnType<typeof trpc.routeRoles.listAll.query>>>([]);
+  const [pageViews, setPageViews] = useState<Item[] | undefined>(undefined);
+  const [pageViewGrants, setPageViewGrants] = useState<Awaited<ReturnType<typeof trpc.pageViewRoles.listAll.query>>>(
+    [],
+  );
+  // Which single cell has a change in flight, across all three tables --
+  // "enabled:<key>" for a kill switch, "<key>:<role>" for a grant --
+  // disables just that checkbox so a second click can't fire before the
+  // first resolves.
   const [updatingCell, setUpdatingCell] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const [featuresResult, rolesResult, grantsResult] = await Promise.all([
-      trpc.features.list.query(),
-      trpc.roles.list.query(),
-      trpc.featureRoles.listAll.query(),
-    ]);
-    setFeatures(featuresResult);
+    const [rolesResult, featuresResult, featureGrantsResult, routesResult, routeGrantsResult, pageViewsResult, pageViewGrantsResult] =
+      await Promise.all([
+        trpc.roles.list.query(),
+        trpc.features.list.query(),
+        trpc.featureRoles.listAll.query(),
+        trpc.routes.list.query(),
+        trpc.routeRoles.listAll.query(),
+        trpc.pageViews.list.query(),
+        trpc.pageViewRoles.listAll.query(),
+      ]);
     setRoles(rolesResult);
-    setGrants(grantsResult);
+    setFeatures(featuresResult);
+    setFeatureGrants(featureGrantsResult);
+    setRoutes(routesResult);
+    setRouteGrants(routeGrantsResult);
+    setPageViews(pageViewsResult.map((pageView) => ({ key: pageView.key, label: pageView.label, enabled: pageView.enabled })));
+    setPageViewGrants(pageViewGrantsResult);
   }
 
   useEffect(() => {
@@ -47,24 +180,20 @@ export function AdminPermissions() {
     void load();
   }, []);
 
-  function isGranted(featureKey: string, role: string): boolean {
-    return grants.some((grant) => grant.featureKey === featureKey && grant.role === role && grant.granted);
-  }
-
-  async function handleEnabledChange(feature: Feature, enabled: boolean) {
+  async function handleEnabledChange(kind: "features" | "routes" | "pageViews", item: Item, enabled: boolean) {
     setError(null);
-    setUpdatingCell(`enabled:${feature.key}`);
+    setUpdatingCell(`enabled:${item.key}`);
     try {
-      await trpc.features.setEnabled.mutate({ key: feature.key, enabled });
+      await trpc[kind].setEnabled.mutate({ key: item.key, enabled });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't update that feature.");
+      setError(err instanceof Error ? err.message : "Couldn't update that.");
     } finally {
       setUpdatingCell(null);
     }
   }
 
-  async function handleGrantChange(featureKey: string, role: string, granted: boolean) {
+  async function handleFeatureGrantChange(featureKey: string, role: string, granted: boolean) {
     setError(null);
     setUpdatingCell(`${featureKey}:${role}`);
     try {
@@ -77,74 +206,92 @@ export function AdminPermissions() {
     }
   }
 
+  async function handleRouteGrantChange(routeKey: string, role: string, granted: boolean) {
+    setError(null);
+    setUpdatingCell(`${routeKey}:${role}`);
+    try {
+      await trpc.routeRoles.setGranted.mutate({ routeKey, role, granted });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that permission.");
+    } finally {
+      setUpdatingCell(null);
+    }
+  }
+
+  async function handlePageViewGrantChange(pageViewKey: string, role: string, granted: boolean) {
+    setError(null);
+    setUpdatingCell(`${pageViewKey}:${role}`);
+    try {
+      await trpc.pageViewRoles.setGranted.mutate({ pageViewKey, role, granted });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that permission.");
+    } finally {
+      setUpdatingCell(null);
+    }
+  }
+
   return (
     <div className={panelStyles.stack}>
       <p className={panelStyles.body}>
-        Every feature in the app, whether it&apos;s on at all, and which roles have access to it. A role with
-        no explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
+        Every feature, route, and page in the app, whether it&apos;s on at all, and which roles have access to
+        it. A role with no explicit grant has none -- there&apos;s nothing to configure per role until you check
+        a box.
       </p>
 
       <ErrorMessage message={error} />
 
-      {features && (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Feature</th>
-                <th>Enabled</th>
-                {roles.map((role) => (
-                  <th key={role.name}>{role.name}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {features.map((feature) => (
-                <tr key={feature.key}>
-                  <td>{feature.label}</td>
-                  <td>
-                    <Checkbox
-                      aria-label={`${feature.label} enabled`}
-                      checked={feature.enabled}
-                      // Enable and disable are separate permissions (see
-                      // features.ts's setEnabled) -- which one applies
-                      // depends on which direction clicking this checkbox
-                      // would actually go.
-                      disabled={
-                        updatingCell === `enabled:${feature.key}` || !(feature.enabled ? canDisable : canEnable)
-                      }
-                      onChange={(event) => void handleEnabledChange(feature, event.currentTarget.checked)}
-                    />
-                  </td>
-                  {roles.map((role) => {
-                    const granted = isGranted(feature.key, role.name);
-                    return (
-                      <td key={role.name}>
-                        <Checkbox
-                          aria-label={`${feature.label} for ${role.name}`}
-                          checked={granted}
-                          // Owner's grant, once true, can never be
-                          // unchecked (see feature-roles.ts's setGranted --
-                          // enforced there too, this is just matching UI,
-                          // not the only thing stopping it). Otherwise
-                          // needs admin.role-permissions.update to change
-                          // anything at all.
-                          disabled={
-                            updatingCell === `${feature.key}:${role.name}` ||
-                            !canUpdateGrants ||
-                            (role.name === "owner" && granted)
-                          }
-                          onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <PermissionGrid
+        title="Features"
+        description="In-page actions -- viewing, updating, creating, deleting."
+        items={features}
+        roles={roles}
+        grants={featureGrants}
+        grantKeyOf={(grant) => grant.featureKey}
+        isGranted={(grant) => grant.granted}
+        canEnable={canEnable}
+        canDisable={canDisable}
+        canUpdateGrants={canUpdateGrants}
+        isGrantLocked={isOwnerLocked}
+        updatingCell={updatingCell}
+        onEnabledChange={(item, enabled) => void handleEnabledChange("features", item, enabled)}
+        onGrantChange={(key, role, granted) => void handleFeatureGrantChange(key, role, granted)}
+      />
+
+      <PermissionGrid
+        title="Routes"
+        description="The umbrella gate for a whole authenticated section -- can a role enter it at all."
+        items={routes}
+        roles={roles}
+        grants={routeGrants}
+        grantKeyOf={(grant) => grant.routeKey}
+        isGranted={(grant) => grant.granted}
+        canEnable={canEnable}
+        canDisable={canDisable}
+        canUpdateGrants={canUpdateGrants}
+        isGrantLocked={isOwnerLocked}
+        updatingCell={updatingCell}
+        onEnabledChange={(item, enabled) => void handleEnabledChange("routes", item, enabled)}
+        onGrantChange={(key, role, granted) => void handleRouteGrantChange(key, role, granted)}
+      />
+
+      <PermissionGrid
+        title="Page views"
+        description="Per-tab visibility within a route. Owner and administrator's access here can't be revoked."
+        items={pageViews}
+        roles={roles}
+        grants={pageViewGrants}
+        grantKeyOf={(grant) => grant.pageViewKey}
+        isGranted={(grant) => grant.granted}
+        canEnable={canEnable}
+        canDisable={canDisable}
+        canUpdateGrants={canUpdateGrants}
+        isGrantLocked={isOwnerOrAdminLocked}
+        updatingCell={updatingCell}
+        onEnabledChange={(item, enabled) => void handleEnabledChange("pageViews", item, enabled)}
+        onGrantChange={(key, role, granted) => void handlePageViewGrantChange(key, role, granted)}
+      />
     </div>
   );
 }

@@ -86,10 +86,11 @@ export function AdminUsers() {
         if (!cancelled) setResult(data);
       })
       .catch((err: unknown) => {
-        // A role with page.admin.users (so it can reach this tab at all)
-        // but not admin.users.view (its own, more specific permission --
-        // e.g. "demo" per the RBAC seed) genuinely gets FORBIDDEN here,
-        // not a bug. Show that instead of spinning forever.
+        // A role with the admin.users page view (so it can reach this tab
+        // at all) but not admin.users.view (its own, more specific
+        // feature permission -- e.g. "demo" per the RBAC seed) genuinely
+        // gets FORBIDDEN here, not a bug. Show that instead of spinning
+        // forever.
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Couldn't load users.");
           setResult({ users: [], total: 0 });

@@ -54,7 +54,7 @@ export function TopBar() {
             <Menu.Item component={Link} to="/settings" leftSection={<IconSettings size={16} />}>
               Settings
             </Menu.Item>
-            {hasFeature(effectiveFeatures, "page.admin.view") && (
+            {hasFeature(effectiveFeatures, "admin") && (
               <>
                 <Menu.Divider />
                 <Menu.Item component={Link} to="/admin" leftSection={<IconShieldLock size={16} />}>

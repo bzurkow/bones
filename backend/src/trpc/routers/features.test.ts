@@ -33,8 +33,10 @@ describe("features.list", () => {
 
     const result = await caller.list();
 
+    // "page.admin.view" used to live here too, before routes/page_views
+    // split out of features into their own tables.
     expect(result.map((feature) => feature.key)).toEqual(
-      expect.arrayContaining(["admin.users.view", "page.admin.view"]),
+      expect.arrayContaining(["admin.users.view", "admin.auth-protocols.update"]),
     );
   });
 });

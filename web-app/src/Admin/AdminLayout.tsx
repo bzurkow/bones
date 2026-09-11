@@ -4,18 +4,19 @@ import { PageHeader } from "../components";
 import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import styles from "./AdminLayout.module.css";
 
-// Each tab's own page.admin.<tab> feature key (see the RBAC migration's
-// seed data) -- RequireAdmin (App.tsx) already gates the umbrella
-// page.admin.view for the whole /admin subtree, but a role can have that
-// without every individual tab (e.g. "demo" per the seed data gets every
-// Page > Admin > * today, but a future role might not) -- so each tab is
-// only shown if the current session actually has it.
+// Each tab's own page_views key (db/page-views-schema.ts -- "admin.<tab>",
+// its own table now, distinct from routes' single umbrella "admin" key
+// RequireAdmin (App.tsx) already gates the whole /admin subtree on). A
+// role can have route access without every individual page view (e.g.
+// "demo" per the seed data gets every admin.* page view today, but a
+// future role might not) -- so each tab is only shown if the current
+// session actually has it.
 const TABS = [
-  { to: "users", label: "Users", feature: "page.admin.users" },
-  { to: "permissions", label: "Feature Flags & Permissions", feature: "page.admin.permissions" },
-  { to: "roles", label: "Roles", feature: "page.admin.roles" },
-  { to: "site-settings", label: "Site Settings", feature: "page.admin.site-settings" },
-  { to: "terms", label: "Terms & Conditions", feature: "page.admin.terms" },
+  { to: "users", label: "Users", feature: "admin.users" },
+  { to: "permissions", label: "Feature Flags & Permissions", feature: "admin.permissions" },
+  { to: "roles", label: "Roles", feature: "admin.roles" },
+  { to: "site-settings", label: "Site Settings", feature: "admin.site-settings" },
+  { to: "terms", label: "Terms & Conditions", feature: "admin.terms" },
 ];
 
 // Shell for the /admin/* route tree: heading + a hairline tab bar over an

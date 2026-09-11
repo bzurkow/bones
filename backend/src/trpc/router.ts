@@ -1,26 +1,37 @@
 import { router } from "./trpc.js";
 import { adminRouter } from "./routers/admin.js";
 import { authProtocolsRouter } from "./routers/auth-protocols.js";
-import { healthRouter } from "./routers/health.js";
 import { dbRouter } from "./routers/db.js";
 import { featureRolesRouter } from "./routers/feature-roles.js";
 import { featuresRouter } from "./routers/features.js";
+import { healthRouter } from "./routers/health.js";
+import { pageViewRolesRouter } from "./routers/page-view-roles.js";
+import { pageViewsRouter } from "./routers/page-views.js";
 import { profileRouter } from "./routers/profile.js";
 import { rolesRouter } from "./routers/roles.js";
+import { routeRolesRouter } from "./routers/route-roles.js";
+import { routesRouter } from "./routers/routes.js";
 import { termsAndConditionsRouter } from "./routers/terms-and-conditions.js";
 import { userSettingsRouter } from "./routers/user-settings.js";
 
+// Alphabetical -- the RBAC table set (roles/features/routes/page_views,
+// each with its own -roles join) keeps growing, easier to scan sorted
+// than in whatever order each was added.
 export const appRouter = router({
-  health: healthRouter,
-  db: dbRouter,
-  userSettings: userSettingsRouter,
-  profile: profileRouter,
   admin: adminRouter,
   authProtocols: authProtocolsRouter,
-  termsAndConditions: termsAndConditionsRouter,
-  features: featuresRouter,
+  db: dbRouter,
   featureRoles: featureRolesRouter,
+  features: featuresRouter,
+  health: healthRouter,
+  pageViewRoles: pageViewRolesRouter,
+  pageViews: pageViewsRouter,
+  profile: profileRouter,
   roles: rolesRouter,
+  routeRoles: routeRolesRouter,
+  routes: routesRouter,
+  termsAndConditions: termsAndConditionsRouter,
+  userSettings: userSettingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

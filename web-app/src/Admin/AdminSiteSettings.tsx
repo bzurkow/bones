@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@mantine/core";
 import type { AuthProtocolName } from "backend";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Row, RowCard } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
 
@@ -17,6 +19,8 @@ const PROTOCOL_INFO: Record<AuthProtocolName, { label: string; description: stri
 };
 
 export function AdminSiteSettings() {
+  const { features: effectiveFeatures } = useEffectivePermissions();
+  const canUpdate = hasFeature(effectiveFeatures, "admin.auth-protocols.update");
   const [protocols, setProtocols] = useState<AuthProtocol[] | undefined>(undefined);
   const [updatingName, setUpdatingName] = useState<AuthProtocolName | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +74,7 @@ export function AdminSiteSettings() {
                 <Switch
                   aria-label={PROTOCOL_INFO[protocol.name].label}
                   checked={protocol.enabled}
-                  disabled={updatingName === protocol.name}
+                  disabled={updatingName === protocol.name || !canUpdate}
                   onChange={(event) => void handleToggle(protocol, event.currentTarget.checked)}
                 />
               </Row>

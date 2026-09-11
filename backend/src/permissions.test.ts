@@ -30,9 +30,12 @@ describe("hasPermission", () => {
 });
 
 describe("getEnabledFeatures", () => {
-  it("returns every feature key a role has access to", async () => {
+  it("returns every feature/route/page-view key a role has access to", async () => {
     const result = await getEnabledFeatures("owner");
-    expect(result).toEqual(expect.arrayContaining(["page.admin.view", "admin.roles.delete"]));
+    // One key from each of the three tables the union pulls from --
+    // "admin" (routes), "admin.users" (page_views), "admin.roles.delete"
+    // (features).
+    expect(result).toEqual(expect.arrayContaining(["admin", "admin.users", "admin.roles.delete"]));
   });
 
   it("returns an empty list for a role with no grants at all", async () => {

@@ -61,7 +61,7 @@ function RequireAdmin() {
   // view-as-role preview's derived feature list is still being fetched,
   // it's genuinely unknown whether the previewed role has access yet.
   // Redirecting on that empty-but-not-final state would boot a role that
-  // *does* have page.admin.view before ever finding out.
+  // *does* have route access to "admin" before ever finding out.
   if (isPending || isLoading) {
     return (
       <Center mih="100vh">
@@ -70,7 +70,10 @@ function RequireAdmin() {
     );
   }
 
-  if (!hasFeature(effectiveFeatures, "page.admin.view")) {
+  // "admin" is the routes-table key for this whole section (see
+  // db/routes-schema.ts) -- distinct from the per-tab page_views keys
+  // AdminLayout.tsx's TABS filters on.
+  if (!hasFeature(effectiveFeatures, "admin")) {
     return <Navigate to="/" replace />;
   }
 

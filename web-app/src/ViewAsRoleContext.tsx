@@ -56,15 +56,37 @@ export function ViewAsRoleProvider({ children }: { children: ReactNode }) {
     // here too rather than adding a bespoke "features for role X"
     // endpoint. Only an owner ever reaches this (ViewAsRoleToggle.tsx's
     // hard gate), and owner already has admin.features.view/
-    // admin.role-permissions.view.
-    void Promise.all([trpc.features.list.query(), trpc.featureRoles.listAll.query()]).then(([featureRows, grantRows]) => {
+    // admin.role-permissions.view on all three tables. Three independent
+    // (feature/grant) pairs, matching permissions.ts's getEnabledFeatures
+    // union server-side -- a previewed role's effective list has to
+    // include routes/page_views too, not just features, or the preview
+    // would never actually hide an admin tab.
+    void Promise.all([
+      trpc.features.list.query(),
+      trpc.featureRoles.listAll.query(),
+      trpc.routes.list.query(),
+      trpc.routeRoles.listAll.query(),
+      trpc.pageViews.list.query(),
+      trpc.pageViewRoles.listAll.query(),
+    ]).then(([featureRows, featureGrants, routeRows, routeGrants, pageViewRows, pageViewGrants]) => {
       if (cancelled) return;
-      const enabledKeys = new Set(featureRows.filter((feature) => feature.enabled).map((feature) => feature.key));
-      setPreviewFeatures(
-        grantRows
-          .filter((grant) => grant.role === previewRole && grant.granted && enabledKeys.has(grant.featureKey))
-          .map((grant) => grant.featureKey),
-      );
+
+      function derive<Row extends { key: string; enabled: boolean }, Grant extends { role: string; granted: boolean }>(
+        rows: Row[],
+        grants: Grant[],
+        grantKeyOf: (grant: Grant) => string,
+      ): string[] {
+        const enabledKeys = new Set(rows.filter((row) => row.enabled).map((row) => row.key));
+        return grants
+          .filter((grant) => grant.role === previewRole && grant.granted && enabledKeys.has(grantKeyOf(grant)))
+          .map(grantKeyOf);
+      }
+
+      setPreviewFeatures([
+        ...derive(featureRows, featureGrants, (grant) => grant.featureKey),
+        ...derive(routeRows, routeGrants, (grant) => grant.routeKey),
+        ...derive(pageViewRows, pageViewGrants, (grant) => grant.pageViewKey),
+      ]);
     });
     return () => {
       cancelled = true;
