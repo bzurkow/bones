@@ -4,8 +4,8 @@ import styles from "./AdminLayout.module.css";
 
 const TABS = [
   { to: "users", label: "Users" },
+  { to: "permissions", label: "Feature Flags & Permissions" },
   { to: "terms", label: "Terms & Conditions" },
-  { to: "permissions", label: "Feature Flags and Permissions" },
 ];
 
 // Shell for the /admin/* route tree: heading + a hairline tab bar over an
