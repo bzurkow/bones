@@ -69,18 +69,32 @@
   color: var(--bones-disabled-text);
 }
 
+/* Hit area is wider than the visible bar -- easier to grab without
+   changing what it looks like. The outer element (this one) is the
+   pointer target/cursor zone; ::after below draws the actual 6px
+   indicator, centered on the same boundary line. */
 .resizeHandle {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: -3px;
-  width: 6px;
+  right: -8px;
+  width: 16px;
   cursor: col-resize;
-  background: transparent;
   touch-action: none;
 }
 
-.resizeHandle:hover {
+.resizeHandle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 6px;
+  transform: translateX(-50%);
+  background: transparent;
+}
+
+.resizeHandle:hover::after {
   background: var(--bones-border);
 }
 
