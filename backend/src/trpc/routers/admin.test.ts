@@ -90,3 +90,85 @@ describe("admin.listUsers", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
   });
 });
+
+describe("admin.setUserRole", () => {
+  it("rejects a signed-in non-admin caller", async () => {
+    const standardUser = await createTestUser({ role: "standard" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(standardUser));
+    await expect(caller.setUserRole({ userId: target.id, role: "administrator" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("updates the target user's role", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(admin));
+
+    const result = await caller.setUserRole({ userId: target.id, role: "administrator" });
+
+    expect(result).toEqual({ id: target.id, role: "administrator" });
+    const [row] = await db.select().from(users).where(eq(users.id, target.id));
+    expect(row?.role).toBe("administrator");
+  });
+
+  it("rejects an admin targeting their own row", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(caller.setUserRole({ userId: admin.id, role: "standard" })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("throws NOT_FOUND for a nonexistent user id", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(
+      caller.setUserRole({ userId: "00000000-0000-0000-0000-000000000000", role: "standard" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+describe("admin.setUserActive", () => {
+  it("rejects a signed-in non-admin caller", async () => {
+    const standardUser = await createTestUser({ role: "standard" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(standardUser));
+    await expect(caller.setUserActive({ userId: target.id, active: false })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("updates the target user's active status", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const target = await createTestUser({ role: "standard" });
+    const caller = createCaller(contextFor(admin));
+
+    const result = await caller.setUserActive({ userId: target.id, active: false });
+
+    expect(result).toEqual({ id: target.id, active: false });
+    const [row] = await db.select().from(users).where(eq(users.id, target.id));
+    expect(row?.active).toBe(false);
+  });
+
+  it("rejects an admin targeting their own row", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(caller.setUserActive({ userId: admin.id, active: false })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("throws NOT_FOUND for a nonexistent user id", async () => {
+    const admin = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(admin));
+
+    await expect(
+      caller.setUserActive({ userId: "00000000-0000-0000-0000-000000000000", active: false }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});

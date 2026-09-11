@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
-import { Avatar } from "@mantine/core";
+import { useCallback, useEffect, useState } from "react";
+import { Avatar, Menu } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
+import { IconChevronDown } from "@tabler/icons-react";
+import type { UserRole } from "backend";
+import { authClient } from "../AuthHelpers/auth-client";
 import { ROLE_LABELS } from "../AuthHelpers/roles";
-import { Table } from "../components";
+import { ErrorMessage, Table } from "../components";
 import type { TableColumn } from "../components";
 import { trpc } from "../trpc";
 import styles from "./AdminUsers.module.css";
@@ -15,13 +18,25 @@ type UserRow = ListUsersResult["users"][number];
 type SortKey = "name" | "email" | "role" | "active" | "createdAt";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+// Object.keys preserves insertion order for string keys (none of these are
+// integer-like), so this always renders owner/administrator/standard/demo
+// in the same order ROLE_LABELS defines them -- no separate literal list
+// to keep in sync. ROLE_LABELS' keys are UserRole by construction; the cast
+// just tells TS that, since Object.keys itself only ever returns string[].
+const ROLE_OPTIONS = Object.keys(ROLE_LABELS) as UserRole[];
 
-// Real data now -- was a placeholder ("Every account, with role and
-// status. Invite, suspend, and role changes will live here."). Read-only
-// for this pass; invite/suspend/role-change stay deferred to the
-// per-feature permissions work, same as the placeholder's own text
-// already said.
+// Role/status are now live editable dropdowns (setUserRole/setUserActive
+// below) -- everything else (name, email, joined) stays read-only,
+// deferred to the per-feature permissions work same as the rest of the
+// admin area.
+//
+// TODO(permissions): the "can't target your own row" guard here is just
+// admin.ts's own ad hoc check (self-lockout prevention), not a real
+// permissions model -- revisit once bones-roadmap-notes.md item 3's actual
+// RBAC approach is settled, so this doesn't end up a second, inconsistent
+// place role/permission rules live.
 export function AdminUsers() {
+  const { data: session } = authClient.useSession();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState("");
@@ -31,6 +46,10 @@ export function AdminUsers() {
   // undefined: still loading the first page. Distinct from "loaded, zero
   // rows" the same way AdminTerms.tsx's `current` does.
   const [result, setResult] = useState<ListUsersResult | undefined>(undefined);
+  // Which row has a role/status change in flight -- disables that row's
+  // dropdowns so a second click can't fire before the first one resolves.
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // A new search term always starts back at page 1 -- staying on, say,
   // page 3 of an old, wider result set would silently show nothing once
@@ -46,17 +65,23 @@ export function AdminUsers() {
     setPage(1);
   }
 
+  // Pulled out of the effect so a role/status change can re-run the exact
+  // same query afterwards to refresh the row, instead of duplicating the
+  // fetch call or hand-patching the row in local state.
+  const fetchUsers = useCallback(
+    () => trpc.admin.listUsers.query({ page, pageSize, search: debouncedSearch, sortBy: sortKey, sortDirection }),
+    [page, pageSize, debouncedSearch, sortKey, sortDirection],
+  );
+
   useEffect(() => {
     let cancelled = false;
-    void trpc.admin.listUsers
-      .query({ page, pageSize, search: debouncedSearch, sortBy: sortKey, sortDirection })
-      .then((data) => {
-        if (!cancelled) setResult(data);
-      });
+    void fetchUsers().then((data) => {
+      if (!cancelled) setResult(data);
+    });
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, debouncedSearch, sortKey, sortDirection]);
+  }, [fetchUsers]);
 
   // Table only reports "this column's header was clicked" -- the actual
   // asc/desc/switch-columns toggle logic lives here, with the data.
@@ -66,6 +91,34 @@ export function AdminUsers() {
     } else {
       setSortKey(key as SortKey);
       setSortDirection("asc");
+    }
+  }
+
+  async function handleRoleChange(user: UserRow, role: UserRole) {
+    if (role === user.role) return;
+    setError(null);
+    setUpdatingUserId(user.id);
+    try {
+      await trpc.admin.setUserRole.mutate({ userId: user.id, role });
+      setResult(await fetchUsers());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that user's role.");
+    } finally {
+      setUpdatingUserId(null);
+    }
+  }
+
+  async function handleActiveChange(user: UserRow, active: boolean) {
+    if (active === user.active) return;
+    setError(null);
+    setUpdatingUserId(user.id);
+    try {
+      await trpc.admin.setUserActive.mutate({ userId: user.id, active });
+      setResult(await fetchUsers());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that user's status.");
+    } finally {
+      setUpdatingUserId(null);
     }
   }
 
@@ -84,18 +137,71 @@ export function AdminUsers() {
       key: "role",
       header: "Role",
       enableSort: true,
-      render: (user) => <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>,
+      render: (user) => {
+        // admin.ts rejects a caller targeting their own row (self-lockout
+        // guard) -- so your own row just shows the plain value instead of
+        // a dropdown that would only ever fail when used.
+        if (user.id === session?.user.id) {
+          return <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>;
+        }
+        return (
+          <Menu width={190} position="bottom-start" disabled={updatingUserId === user.id}>
+            <Menu.Target>
+              <button type="button" className={styles.cellDropdown}>
+                <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>
+                <IconChevronDown size={14} stroke={1.75} />
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {ROLE_OPTIONS.map((role) => (
+                <Menu.Item key={role} disabled={role === user.role} onClick={() => void handleRoleChange(user, role)}>
+                  {ROLE_LABELS[role]}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        );
+      },
     },
     {
       key: "active",
       header: "Status",
       enableSort: true,
-      render: (user) => (
-        <span className={styles.status}>
-          <span className={`${styles.statusDot} ${user.active ? styles.statusDotActive : styles.statusDotInactive}`} />
-          {user.active ? "Active" : "Inactive"}
-        </span>
-      ),
+      render: (user) => {
+        const label = (
+          <span className={styles.status}>
+            <span
+              className={`${styles.statusDot} ${user.active ? styles.statusDotActive : styles.statusDotInactive}`}
+            />
+            {user.active ? "Active" : "Inactive"}
+          </span>
+        );
+        if (user.id === session?.user.id) return label;
+        return (
+          <Menu width={150} position="bottom-start" disabled={updatingUserId === user.id}>
+            <Menu.Target>
+              <button type="button" className={styles.cellDropdown}>
+                {label}
+                <IconChevronDown size={14} stroke={1.75} />
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item disabled={user.active} onClick={() => void handleActiveChange(user, true)}>
+                <span className={styles.status}>
+                  <span className={`${styles.statusDot} ${styles.statusDotActive}`} />
+                  Active
+                </span>
+              </Menu.Item>
+              <Menu.Item disabled={!user.active} onClick={() => void handleActiveChange(user, false)}>
+                <span className={styles.status}>
+                  <span className={`${styles.statusDot} ${styles.statusDotInactive}`} />
+                  Inactive
+                </span>
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        );
+      },
     },
     {
       key: "createdAt",
@@ -114,25 +220,28 @@ export function AdminUsers() {
   ];
 
   return (
-    <Table
-      columns={columns}
-      rows={result?.users ?? []}
-      rowKey={(user) => user.id}
-      loading={result === undefined}
-      emptyLabel="No users yet."
-      search={{ value: search, onChange: handleSearchChange, placeholder: "Search by name or email" }}
-      sort={{ activeKey: sortKey, direction: sortDirection, onChange: handleSortChange }}
-      pagination={{
-        page,
-        pageSize,
-        total: result?.total ?? 0,
-        pageSizeOptions: PAGE_SIZE_OPTIONS,
-        onPageChange: setPage,
-        onPageSizeChange: (size) => {
-          setPageSize(size);
-          setPage(1);
-        },
-      }}
-    />
+    <>
+      <ErrorMessage message={error} />
+      <Table
+        columns={columns}
+        rows={result?.users ?? []}
+        rowKey={(user) => user.id}
+        loading={result === undefined}
+        emptyLabel="No users yet."
+        search={{ value: search, onChange: handleSearchChange, placeholder: "Search by name or email" }}
+        sort={{ activeKey: sortKey, direction: sortDirection, onChange: handleSortChange }}
+        pagination={{
+          page,
+          pageSize,
+          total: result?.total ?? 0,
+          pageSizeOptions: PAGE_SIZE_OPTIONS,
+          onPageChange: setPage,
+          onPageSizeChange: (size) => {
+            setPageSize(size);
+            setPage(1);
+          },
+        }}
+      />
+    </>
   );
 }

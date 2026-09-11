@@ -1,8 +1,10 @@
-import { asc, count, desc, ilike, or } from "drizzle-orm";
+import { asc, count, desc, eq, ilike, or } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { users } from "../../db/schema.js";
 import { resolveAvatarUrl } from "../../storage/index.js";
+import { USER_ROLES } from "../../user-fields.js";
 import { adminProcedure, router } from "../trpc.js";
 
 // Allowlist, not a raw column-name lookup straight from client input --
@@ -67,5 +69,50 @@ export const adminRouter = router({
         ),
         total: totalRow?.total ?? 0,
       };
+    }),
+
+  // Neither of these lets an admin target their own row -- an admin
+  // demoting or deactivating themselves (the only owner in the system,
+  // say) would be a self-inflicted lockout with no UI left to undo it
+  // from. Role/profile changes to your own account already go through
+  // ApplicationProfile.tsx instead.
+  setUserRole: adminProcedure
+    .input(z.object({ userId: z.string(), role: z.enum(USER_ROLES) }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "You can't change your own role here." });
+      }
+
+      const [updated] = await db
+        .update(users)
+        .set({ role: input.role })
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id, role: users.role });
+
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found." });
+      }
+
+      return updated;
+    }),
+
+  setUserActive: adminProcedure
+    .input(z.object({ userId: z.string(), active: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "You can't change your own status here." });
+      }
+
+      const [updated] = await db
+        .update(users)
+        .set({ active: input.active })
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id, active: users.active });
+
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found." });
+      }
+
+      return updated;
     }),
 });

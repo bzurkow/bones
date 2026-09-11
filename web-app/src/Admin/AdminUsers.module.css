@@ -38,3 +38,28 @@
   font-size: 13px;
   color: var(--bones-muted);
 }
+
+/* Role/Status cells' Menu.Target -- looks like the plain text/status label
+   it replaces, plus a chevron, rather than a standard button box (no
+   border/background of its own; CLAUDE.md rule 3 is borders not shadows,
+   and a bordered pill on every row of a dense table reads noisier than
+   the rest of this Table's plain cells). */
+.cellDropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.cellDropdown:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.cellDropdown svg {
+  color: var(--bones-subtle);
+}
