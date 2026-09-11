@@ -6,8 +6,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "email dev --port 3010",
-    "build": "tsc -p tsconfig.build.json",
+    "generate-tokens": "node scripts/generate-tokens.js",
+    "dev": "yarn generate-tokens && email dev --port 3010",
+    "build": "yarn generate-tokens && tsc -p tsconfig.build.json",
     "lint": "oxlint -c ../.oxlintrc.json ."
   },
   "dependencies": {

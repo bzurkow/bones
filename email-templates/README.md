@@ -45,11 +45,19 @@ to send real emails; it never touches the `.tsx` source.
 - **shared-ui's actual components** (`Button`, `BrandLockup`, ...) can't be
   imported here -- they depend on Mantine and CSS Modules, neither of which
   runs in the plain Node process backend executes this package's compiled
-  output in (no bundler in the loop). `tokens.ts` instead duplicates the
-  *light-mode-only* subset of `shared-ui/src/tokens.css`'s values by hand
-  (commented as such) -- same cross-runtime-boundary duplication this repo
-  already has between `backend/src/auth.ts` and `web-app/src/AuthHelpers/
-  password-rules.ts`, and for the identical underlying reason.
+  output in (no bundler in the loop). Its *tokens* are a different story,
+  though: `tokens.css` is plain CSS text with no framework dependency, so
+  `tokens.ts` is a **generated file** (`scripts/generate-tokens.js`,
+  run automatically before both `dev` and `build` -- see its own header
+  comment) that parses the light-mode subset of `shared-ui/src/tokens.css`'s
+  values straight out of the source `:root` block. There is exactly one
+  place to change a color, font, or radius across the whole app: edit
+  `tokens.css`; email-templates picks it up the next time it runs `dev` or
+  `build`, nothing to hand-sync. (This is *not* the same class of
+  cross-runtime-boundary duplication `backend/src/auth.ts` still has with
+  `web-app/src/AuthHelpers/password-rules.ts` -- that pair has no shared
+  plain-text source to generate from, just two independent
+  implementations.)
 - **`@react-email/components`** (and every individual `@react-email/*`
   component package) is deprecated npm-wide in favor of importing
   components from the unified `react-email` package -- but that pulls
