@@ -2,7 +2,7 @@ import { Avatar, Menu } from "@mantine/core";
 import { IconLogout2, IconSettings, IconShieldLock, IconUser } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import { isAdmin } from "./AuthHelpers/roles";
+import { hasFeature } from "./AuthHelpers/permissions";
 import { BrandLockup } from "./components";
 import styles from "./TopBar.module.css";
 
@@ -52,7 +52,7 @@ export function TopBar() {
             <Menu.Item component={Link} to="/settings" leftSection={<IconSettings size={16} />}>
               Settings
             </Menu.Item>
-            {isAdmin(session?.user) && (
+            {hasFeature(session, "page.admin.view") && (
               <>
                 <Menu.Divider />
                 <Menu.Item component={Link} to="/admin" leftSection={<IconShieldLock size={16} />}>

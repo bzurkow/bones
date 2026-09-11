@@ -2,9 +2,8 @@ import { asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { users } from "../../db/schema.js";
+import { roles, users } from "../../db/schema.js";
 import { resolveAvatarUrl } from "../../storage/index.js";
-import { USER_ROLES } from "../../user-fields.js";
 import { adminProcedure, router } from "../trpc.js";
 
 // Allowlist, not a raw column-name lookup straight from client input --
@@ -77,10 +76,22 @@ export const adminRouter = router({
   // from. Role/profile changes to your own account already go through
   // ApplicationProfile.tsx instead.
   setUserRole: adminProcedure
-    .input(z.object({ userId: z.string(), role: z.enum(USER_ROLES) }))
+    .input(z.object({ userId: z.string(), role: z.string() }))
     .mutation(async ({ ctx, input }) => {
       if (input.userId === ctx.session.user.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "You can't change your own role here." });
+      }
+
+      // role is a plain string now, not a fixed z.enum -- roles are
+      // admin-creatable/deletable at runtime (db/roles-schema.ts), so this
+      // is the real existence check that USER_ROLES' static enum used to
+      // give for free. users.role also has a real DB-level FK onto
+      // roles.name (added by hand in that table's migration), so this
+      // isn't the only thing standing between a bad value and the row --
+      // it's just a clearer error than a raw constraint-violation would be.
+      const [role] = await db.select({ name: roles.name }).from(roles).where(eq(roles.name, input.role));
+      if (!role) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "That role doesn't exist." });
       }
 
       const [updated] = await db

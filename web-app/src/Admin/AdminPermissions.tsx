@@ -1,19 +1,125 @@
-import styles from "./AdminPanel.module.css";
+import { useEffect, useState } from "react";
+import { Checkbox } from "@mantine/core";
+import { ErrorMessage } from "../components";
+import { trpc } from "../trpc";
+import panelStyles from "./AdminPanel.module.css";
+import styles from "./AdminPermissions.module.css";
 
-// Placeholder -- combines what were two separate tabs (feature flags,
-// RBAC) into one, but the two concepts underneath stay distinct: feature
-// flags are whole-feature on/off (rollout, kill switch), RBAC is per-role
-// access on a feature that's already on (none/read/write, the feature x
-// role join-table work -- deliberately deferred, see the roadmap notes).
-// Gap, not margin (CLAUDE.md rule 5), for the space between the two.
+type Feature = Awaited<ReturnType<typeof trpc.features.list.query>>[number];
+type Role = Awaited<ReturnType<typeof trpc.roles.list.query>>[number];
+type Grant = Awaited<ReturnType<typeof trpc.featureRoles.listAll.query>>[number];
+
+// Every feature in the app (the "Enabled" column -- a global kill switch,
+// independent of any role) crossed with every role's own grant for it (the
+// rest of the row) -- both concepts live in one table by design, not two
+// kept in sync (see the RBAC migration's own comment on features-schema.ts).
 export function AdminPermissions() {
+  const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [grants, setGrants] = useState<Grant[]>([]);
+  // Which single cell has a change in flight -- "enabled:<key>" for the
+  // kill switch, "<key>:<role>" for a grant -- disables just that
+  // checkbox so a second click can't fire before the first resolves.
+  const [updatingCell, setUpdatingCell] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    const [featuresResult, rolesResult, grantsResult] = await Promise.all([
+      trpc.features.list.query(),
+      trpc.roles.list.query(),
+      trpc.featureRoles.listAll.query(),
+    ]);
+    setFeatures(featuresResult);
+    setRoles(rolesResult);
+    setGrants(grantsResult);
+  }
+
+  useEffect(() => {
+    // Same legitimate fetch-on-mount case AdminSiteSettings.tsx's own
+    // load() effect documents.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void load();
+  }, []);
+
+  function isGranted(featureKey: string, role: string): boolean {
+    return grants.some((grant) => grant.featureKey === featureKey && grant.role === role && grant.granted);
+  }
+
+  async function handleEnabledChange(feature: Feature, enabled: boolean) {
+    setError(null);
+    setUpdatingCell(`enabled:${feature.key}`);
+    try {
+      await trpc.features.setEnabled.mutate({ key: feature.key, enabled });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that feature.");
+    } finally {
+      setUpdatingCell(null);
+    }
+  }
+
+  async function handleGrantChange(featureKey: string, role: string, granted: boolean) {
+    setError(null);
+    setUpdatingCell(`${featureKey}:${role}`);
+    try {
+      await trpc.featureRoles.setGranted.mutate({ featureKey, role, granted });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update that permission.");
+    } finally {
+      setUpdatingCell(null);
+    }
+  }
+
   return (
-    <div className={styles.stack}>
-      <p className={styles.body}>
-        Feature flags -- ship behind a toggle, roll out gradually, or switch off instantly -- will
-        live here.
+    <div className={panelStyles.stack}>
+      <p className={panelStyles.body}>
+        Every feature in the app, whether it&apos;s on at all, and which roles have access to it. A role with
+        no explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
       </p>
-      <p className={styles.body}>Each feature, with per-role access -- none, read, write -- will live here.</p>
+
+      <ErrorMessage message={error} />
+
+      {features && (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Enabled</th>
+                {roles.map((role) => (
+                  <th key={role.name}>{role.name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {features.map((feature) => (
+                <tr key={feature.key}>
+                  <td>{feature.label}</td>
+                  <td>
+                    <Checkbox
+                      aria-label={`${feature.label} enabled`}
+                      checked={feature.enabled}
+                      disabled={updatingCell === `enabled:${feature.key}`}
+                      onChange={(event) => void handleEnabledChange(feature, event.currentTarget.checked)}
+                    />
+                  </td>
+                  {roles.map((role) => (
+                    <td key={role.name}>
+                      <Checkbox
+                        aria-label={`${feature.label} for ${role.name}`}
+                        checked={isGranted(feature.key, role.name)}
+                        disabled={updatingCell === `${feature.key}:${role.name}`}
+                        onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

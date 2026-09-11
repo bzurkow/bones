@@ -4,7 +4,6 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import type { UserRole } from "backend";
 import { authClient } from "../AuthHelpers/auth-client";
-import { ROLE_LABELS } from "../AuthHelpers/roles";
 import { ErrorMessage, Table } from "../components";
 import type { TableColumn } from "../components";
 import { trpc } from "../trpc";
@@ -18,12 +17,6 @@ type UserRow = ListUsersResult["users"][number];
 type SortKey = "name" | "email" | "role" | "active" | "createdAt";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
-// Object.keys preserves insertion order for string keys (none of these are
-// integer-like), so this always renders owner/administrator/standard/demo
-// in the same order ROLE_LABELS defines them -- no separate literal list
-// to keep in sync. ROLE_LABELS' keys are UserRole by construction; the cast
-// just tells TS that, since Object.keys itself only ever returns string[].
-const ROLE_OPTIONS = Object.keys(ROLE_LABELS) as UserRole[];
 
 // Role/status are now live editable dropdowns (setUserRole/setUserActive
 // below) -- everything else (name, email, joined) stays read-only,
@@ -50,6 +43,16 @@ export function AdminUsers() {
   // dropdowns so a second click can't fire before the first one resolves.
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Roles are admin-creatable/deletable now (see AdminRoles.tsx), so this
+  // dropdown's options come from a live query instead of the old hardcoded
+  // ROLE_LABELS map -- fetched once on mount, same "doesn't need to be
+  // reactive to a role being added/removed in another tab right now" scope
+  // as the rest of this page.
+  const [roles, setRoles] = useState<{ name: string }[]>([]);
+
+  useEffect(() => {
+    void trpc.roles.list.query().then(setRoles);
+  }, []);
 
   // A new search term always starts back at page 1 -- staying on, say,
   // page 3 of an old, wider result set would silently show nothing once
@@ -143,28 +146,34 @@ export function AdminUsers() {
       key: "role",
       header: "Role",
       enableSort: true,
-      // Fits "Administrator" (the longest ROLE_LABELS value) plus the
-      // dropdown chevron, in the mono font its cell actually renders in.
+      // Fits "Administrator" plus the dropdown chevron, in the mono font
+      // its cell actually renders in. A custom role could in principle be
+      // named longer than that -- this stays a starting width, not a cap
+      // (Table columns are always drag-resizable).
       width: 170,
       render: (user) => {
         // admin.ts rejects a caller targeting their own row (self-lockout
         // guard) -- so your own row just shows the plain value instead of
         // a dropdown that would only ever fail when used.
         if (user.id === session?.user.id) {
-          return <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>;
+          return <span className={styles.mono}>{user.role}</span>;
         }
         return (
           <Menu width={190} position="bottom-start" disabled={updatingUserId === user.id}>
             <Menu.Target>
               <button type="button" className={styles.cellDropdown}>
-                <span className={styles.mono}>{ROLE_LABELS[user.role]}</span>
+                <span className={styles.mono}>{user.role}</span>
                 <IconChevronDown size={14} stroke={1.75} />
               </button>
             </Menu.Target>
             <Menu.Dropdown>
-              {ROLE_OPTIONS.map((role) => (
-                <Menu.Item key={role} disabled={role === user.role} onClick={() => void handleRoleChange(user, role)}>
-                  {ROLE_LABELS[role]}
+              {roles.map((role) => (
+                <Menu.Item
+                  key={role.name}
+                  disabled={role.name === user.role}
+                  onClick={() => void handleRoleChange(user, role.name)}
+                >
+                  {role.name}
                 </Menu.Item>
               ))}
             </Menu.Dropdown>

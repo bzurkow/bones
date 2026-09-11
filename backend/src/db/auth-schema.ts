@@ -12,9 +12,7 @@ export const users = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["owner", "administrator", "standard", "demo"] })
-    .default("standard")
-    .notNull(),
+  role: text("role").default("standard").notNull(),
   deletedAt: timestamp("deleted_at"),
   active: boolean("active").default(true).notNull(),
   inheritViewModeFromBrowser: boolean("inherit_view_mode_from_browser")

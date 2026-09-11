@@ -1,0 +1,44 @@
+/* A real <table>, not the app's usual Table component -- that one's built
+   for a single fixed-width-per-column entity list; this is a genuinely
+   different shape, a feature x role matrix whose column count is dynamic
+   (as many roles as exist). border-collapse/cellpadding are the correct
+   primitive for real tabular data like this, not CLAUDE.md's usual
+   gap-driven layout. */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--bones-font-sans);
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+  white-space: normal;
+}
+
+/* Header rule opens the table (CLAUDE.md rule 4: 1px solid ink). */
+.table thead th {
+  border-bottom: 1px solid var(--bones-border-strong);
+  font-weight: 600;
+  color: var(--bones-ink);
+}
+
+/* Every other rule is the faint border. */
+.table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid var(--bones-border);
+}
+
+.table tbody td:first-child {
+  color: var(--bones-ink);
+}

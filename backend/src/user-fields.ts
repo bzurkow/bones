@@ -1,9 +1,15 @@
-// Single source of truth for user.role / user.viewMode's allowed values --
-// fed into auth.ts's additionalFields (which is what `db:auth:generate`
-// turns into auth-schema.ts's generated enum columns), and re-exported
-// type-only from trpc/router.ts for the web app.
-export const USER_ROLES = ["owner", "administrator", "standard", "demo"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
+// Single source of truth for user.viewMode's allowed values -- fed into
+// auth.ts's additionalFields (which is what `db:auth:generate` turns into
+// auth-schema.ts's generated enum columns), and re-exported type-only from
+// trpc/router.ts for the web app.
+//
+// user.role used to live here too (a fixed USER_ROLES union), but roles are
+// admin-creatable/deletable now (db/roles-schema.ts) -- a plain string,
+// validated by a real FK onto roles.name instead of a compile-time enum.
+// UserRole stays as an alias (not just inlining `string` at every call
+// site) purely for readability -- it carries zero extra type safety over
+// `string` now.
+export type UserRole = string;
 
 export const VIEW_MODES = ["light", "dark"] as const;
 export type ViewMode = (typeof VIEW_MODES)[number];

@@ -3,7 +3,6 @@ import { Avatar, TextInput } from "@mantine/core";
 import { IconCamera } from "@tabler/icons-react";
 import { isAllowedAvatarFile } from "./AuthHelpers/avatar-rules";
 import { authClient } from "./AuthHelpers/auth-client";
-import { ROLE_LABELS } from "./AuthHelpers/roles";
 import { Button, ErrorMessage, PageHeader, Row, RowCard } from "./components";
 import { trpc } from "./trpc";
 import styles from "./ApplicationProfile.module.css";
@@ -129,7 +128,7 @@ export function ApplicationProfile() {
         <Row label="Role">
           <span className={styles.status}>
             <span className={styles.statusDot} />
-            {session ? ROLE_LABELS[session.user.role] : ""}
+            {session?.user.role ?? ""}
           </span>
         </Row>
         <Row label="Member since">

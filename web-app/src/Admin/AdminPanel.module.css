@@ -27,3 +27,14 @@
   line-height: 1.6;
   color: var(--bones-muted);
 }
+
+.createForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.createForm > *:first-child {
+  max-width: 320px;
+  flex: 1;
+}

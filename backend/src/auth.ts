@@ -7,10 +7,11 @@ import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { sendEmail } from "./email/index.js";
 import { renderVerificationEmail } from "./email/templates.js";
+import { getEnabledFeatures } from "./permissions.js";
 import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
 import { trustedOrigins } from "./trusted-origins.js";
-import { USER_ROLES, VIEW_MODES } from "./user-fields.js";
+import { VIEW_MODES } from "./user-fields.js";
 import type { UserRole, ViewMode } from "./user-fields.js";
 
 // Pure decision logic pulled out of the databaseHooks.user.create.before
@@ -131,8 +132,16 @@ export const auth = betterAuth({
       // Assigned server-side only (see databaseHooks below) -- input: false
       // keeps it out of the client-facing sign-up payload entirely, so
       // there's no role a client could self-assign.
+      //
+      // Plain "string", not a fixed enum -- roles are admin-creatable/
+      // deletable at runtime (db/roles-schema.ts), so a static array here
+      // would reject any newly-created role the moment someone tried to
+      // assign it. Real validation is a DB-level FK from this column onto
+      // roles.name instead (added by hand in that table's own migration,
+      // since this file can't declare it without db:auth:generate wiping
+      // it on the next run).
       role: {
-        type: [...USER_ROLES],
+        type: "string",
         required: true,
         input: false,
         defaultValue: "standard",
@@ -250,6 +259,12 @@ export const auth = betterAuth({
         user: { ...typedUser, avatarUrl: await resolveAvatarUrl(typedUser.avatarUrl) },
         session,
         hasAcceptedTermsAndConditions: await getHasAcceptedTermsAndConditions(typedUser.id),
+        // Every feature key this session's role currently has access to
+        // (features.enabled + feature_roles.granted, see permissions.ts's
+        // getEnabledFeatures) -- lets web-app render or redirect a
+        // page/button without a round trip per check. Resolved centrally
+        // here for the same reason hasAcceptedTermsAndConditions is.
+        enabledFeatures: await getEnabledFeatures(typedUser.role),
       };
     }),
   ],

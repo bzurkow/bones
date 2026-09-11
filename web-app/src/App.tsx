@@ -2,7 +2,7 @@ import "@mantine/core/styles.css";
 import { Center, Loader, MantineProvider } from "@mantine/core";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
-import { isAdmin } from "./AuthHelpers/roles";
+import { hasFeature } from "./AuthHelpers/permissions";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
 import { ApplicationProfile } from "./ApplicationProfile";
@@ -11,6 +11,7 @@ import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
 import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminPermissions } from "./Admin/AdminPermissions";
+import { AdminRoles } from "./Admin/AdminRoles";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
@@ -61,7 +62,7 @@ function RequireAdmin() {
     );
   }
 
-  if (!isAdmin(session?.user)) {
+  if (!hasFeature(session, "page.admin.view")) {
     return <Navigate to="/" replace />;
   }
 
@@ -93,6 +94,7 @@ export function App() {
                   <Route index element={<Navigate to="users" replace />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="permissions" element={<AdminPermissions />} />
+                  <Route path="roles" element={<AdminRoles />} />
                   <Route path="site-settings" element={<AdminSiteSettings />} />
                   <Route path="terms" element={<AdminTerms />} />
                 </Route>

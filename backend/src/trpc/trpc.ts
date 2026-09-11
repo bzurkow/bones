@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { auth } from "../auth.js";
 import { toFetchHeaders } from "../lib/fetch-headers.js";
+import { hasPermission } from "../permissions.js";
 
 // Better Auth owns sessions/cookies; it isn't wired into tRPC's own request
 // pipeline, so procedures ask it directly via auth.api.getSession() (its
@@ -35,16 +36,29 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   return next({ ctx: { ...ctx, session: ctx.session } });
 });
 
-// Same role check as web-app/src/AuthHelpers/roles.ts's isAdmin -- kept
-// separate rather than shared, since that one reads a client-side session
-// object and this one reads ctx.session.user server-side; duplicating a
-// two-branch check is cheaper than a shared module neither side otherwise
-// needs. FORBIDDEN (not UNAUTHORIZED) since protectedProcedure below
-// already established there's a valid session -- this is "you're signed
-// in, but not allowed," a different failure than "you're not signed in."
-export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.session.user.role !== "owner" && ctx.session.user.role !== "administrator") {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-  return next({ ctx });
-});
+// The RBAC primitive (see permissions.ts's hasPermission) -- one procedure
+// builder per required feature key, rather than a single hardcoded
+// role-name check, since roles are admin-creatable/deletable at runtime
+// (db/roles-schema.ts): there's no fixed set of "privileged" role names to
+// compare against anymore. FORBIDDEN (not UNAUTHORIZED) since
+// protectedProcedure below already established there's a valid session --
+// this is "you're signed in, but not allowed," a different failure than
+// "you're not signed in."
+export function requirePermission(featureKey: string) {
+  return protectedProcedure.use(async ({ ctx, next }) => {
+    if (!(await hasPermission(ctx.session.user.role, featureKey))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next({ ctx });
+  });
+}
+
+// The umbrella "can this session even reach the admin area" gate every
+// admin.* procedure already builds on -- now permission-aware rather than
+// a hardcoded owner/administrator string compare. That matters concretely,
+// not just architecturally: an owner could create a brand-new role and
+// grant it page.admin.view through the new AdminPermissions UI, and that
+// role has to actually be let in here, not just past web-app's own
+// client-side nav filtering (session.enabledFeatures), or it'd see the
+// admin nav render and then get FORBIDDEN on every real request.
+export const adminProcedure = requirePermission("page.admin.view");
