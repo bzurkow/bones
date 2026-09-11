@@ -126,17 +126,26 @@ export function AdminUsers() {
     {
       key: "avatar",
       header: "",
-      minWidth: 56,
+      width: 56,
       render: (user) => (
         <Avatar src={user.avatarUrl ?? user.image ?? undefined} alt={user.name} size={32} radius="xl" />
       ),
     },
+    // Name/Email are the only two columns left flexible -- they're the
+    // only content here of genuinely variable length (a full name, a full
+    // email address), so they're also the only ones that should absorb
+    // the table's leftover width. Every other column below gets a fixed
+    // `width` sized to its actual content (a role label, a status pill, a
+    // date) instead of stretching to an equal, mostly-empty share.
     { key: "name", header: "Name", enableSort: true, render: (user) => user.name },
     { key: "email", header: "Email", enableSort: true, render: (user) => user.email },
     {
       key: "role",
       header: "Role",
       enableSort: true,
+      // Fits "Administrator" (the longest ROLE_LABELS value) plus the
+      // dropdown chevron, in the mono font its cell actually renders in.
+      width: 170,
       render: (user) => {
         // admin.ts rejects a caller targeting their own row (self-lockout
         // guard) -- so your own row just shows the plain value instead of
@@ -167,6 +176,9 @@ export function AdminUsers() {
       key: "active",
       header: "Status",
       enableSort: true,
+      // Fits "INACTIVE" (the longer of the two, uppercased via
+      // styles.status) plus the dot and dropdown chevron.
+      width: 150,
       render: (user) => {
         const label = (
           <span className={styles.status}>
@@ -207,6 +219,8 @@ export function AdminUsers() {
       key: "createdAt",
       header: "Joined",
       enableSort: true,
+      // Fits "September 11, 2026" (longest month name) in mono.
+      width: 180,
       render: (user) => (
         <span className={styles.mono}>
           {new Date(user.createdAt).toLocaleDateString(undefined, {

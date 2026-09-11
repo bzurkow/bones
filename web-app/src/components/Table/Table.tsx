@@ -11,8 +11,18 @@ export interface TableColumn<T> {
   header: ReactNode;
   render: (row: T) => ReactNode;
   // px floor a dragged-narrow column can't go below. Also the width used
-  // for its flex track (minmax(minWidth, 1fr)) before it's ever resized.
+  // for its flex track (minmax(minWidth, 1fr)) before it's ever resized,
+  // for a column with no `width` of its own (see below).
   minWidth?: number;
+  // Starting width in px, for a column whose content is roughly
+  // consistent (a status pill, a role label, a date) and shouldn't
+  // stretch to fill space a variable-length column (a name, an email)
+  // actually needs. Every column defaults to flexible (minmax(minWidth,
+  // 1fr)), splitting the table's full width evenly regardless of what
+  // each one actually holds -- `width` opts a column out of that into a
+  // fixed starting track instead. Still user-resizable afterward, exactly
+  // like every other column; this only changes where it starts.
+  width?: number;
   enableSort?: boolean;
 }
 
@@ -70,7 +80,11 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
   const gridTemplateColumns = useMemo(
     () =>
       columns
-        .map((col) => (columnWidths[col.key] ? `${columnWidths[col.key]}px` : `minmax(${col.minWidth ?? DEFAULT_MIN_WIDTH}px, 1fr)`))
+        .map((col) => {
+          if (columnWidths[col.key]) return `${columnWidths[col.key]}px`;
+          if (col.width) return `${col.width}px`;
+          return `minmax(${col.minWidth ?? DEFAULT_MIN_WIDTH}px, 1fr)`;
+        })
         .join(" "),
     [columns, columnWidths],
   );
