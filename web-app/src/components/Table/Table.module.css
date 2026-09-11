@@ -83,19 +83,27 @@
   touch-action: none;
 }
 
+/* A quiet hairline divider at rest -- signals "columns end here, and are
+   adjustable" without needing hover to discover it, same weight as the
+   hairline rules used everywhere else in this system (RowCard's row
+   dividers, etc.). Thickens to a full ink-strength bar on hover/drag as
+   stronger feedback that this specific boundary is now interactive --
+   CLAUDE.md rule 4's "rule weight carries hierarchy," applied to the two
+   states of one element instead of two different rules. */
 .resizeHandle::after {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 6px;
+  width: 1px;
   transform: translateX(-50%);
-  background: transparent;
+  background: var(--bones-border);
 }
 
 .resizeHandle:hover::after {
-  background: var(--bones-border);
+  width: 6px;
+  background: var(--bones-border-strong);
 }
 
 .bodyCell {
