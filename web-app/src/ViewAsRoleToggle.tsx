@@ -16,6 +16,14 @@ import styles from "./ViewAsRoleToggle.module.css";
 // treatment as auth.ts's nextUserRole. Visibility beyond that gate is a
 // per-user setting (ApplicationSettings.tsx's "Show view as role toggle"
 // switch), same shape as ColorSchemeToggle's own showViewModeToggle.
+//
+// Deliberately never reads useEffectivePermissions()/the simulated
+// feature list for anything -- its own gating and role list are always
+// the *real* session (session.user.role, trpc.roles.list, unaffected by
+// any active preview). Otherwise the one control that can turn a preview
+// off could itself become unreachable while previewing a low-access role
+// -- exactly the lockout this app's RBAC self-lockout guards exist to
+// prevent elsewhere, so the same invariant applies here.
 export function ViewAsRoleToggle() {
   const { data: session } = authClient.useSession();
   const { previewRole, setPreviewRole } = useViewAsRole();

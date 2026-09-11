@@ -15,9 +15,18 @@ export interface ViewAsRoleContextValue {
   // hooks/useEffectivePermissions.ts.
   previewRole: string | null;
   setPreviewRole: (role: string | null) => void;
+  // The previewed role's derived feature list -- fetched and computed
+  // exactly once per previewRole change, here in the Provider, not
+  // per-consumer (every page.*-gated check used to fetch its own copy,
+  // which piled up into an ever-growing batched request and eventually a
+  // real 414). undefined only while previewRole is set but that fetch
+  // hasn't resolved yet; meaningless (and unused) while previewRole is
+  // null.
+  previewFeatures: string[] | undefined;
 }
 
 export const ViewAsRoleContext = createContext<ViewAsRoleContextValue>({
   previewRole: null,
   setPreviewRole: () => {},
+  previewFeatures: undefined,
 });

@@ -55,9 +55,14 @@ function RequireAuth() {
 // app home rather than /login (they're logged in, just not authorized).
 function RequireAdmin() {
   const { isPending } = authClient.useSession();
-  const effectiveFeatures = useEffectivePermissions();
+  const { features: effectiveFeatures, isLoading } = useEffectivePermissions();
 
-  if (isPending) {
+  // isLoading (not just isPending) matters here specifically -- while a
+  // view-as-role preview's derived feature list is still being fetched,
+  // it's genuinely unknown whether the previewed role has access yet.
+  // Redirecting on that empty-but-not-final state would boot a role that
+  // *does* have page.admin.view before ever finding out.
+  if (isPending || isLoading) {
     return (
       <Center mih="100vh">
         <Loader />

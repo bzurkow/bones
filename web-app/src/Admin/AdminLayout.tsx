@@ -30,7 +30,7 @@ const TABS = [
 // RBAC) into one -- see AdminPermissions.tsx for why the underlying
 // concepts still stay distinct.
 export function AdminLayout() {
-  const effectiveFeatures = useEffectivePermissions();
+  const { features: effectiveFeatures } = useEffectivePermissions();
   const visibleTabs = TABS.filter((tab) => hasFeature(effectiveFeatures, tab.feature));
 
   return (

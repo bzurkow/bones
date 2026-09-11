@@ -15,7 +15,7 @@ import styles from "./TopBar.module.css";
 export function TopBar() {
   const { data: session, refetch } = authClient.useSession();
   const navigate = useNavigate();
-  const effectiveFeatures = useEffectivePermissions();
+  const { features: effectiveFeatures } = useEffectivePermissions();
 
   async function handleSignOut() {
     await authClient.signOut();
