@@ -1,38 +1,3 @@
-/* Same treatment as ApplicationProfile.module.css's .status/.statusDot/
-   .mono -- duplicated rather than shared (second real usage, not a third
-   yet; extract once one more consumer needs it, same precedent as the
-   Table component itself). */
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--bones-font-mono);
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--bones-muted);
-}
-
-.statusDot {
-  width: 6px;
-  height: 6px;
-  flex-shrink: 0;
-  border-radius: 999px;
-}
-
-/* Green/red, not grayscale -- an explicit, user-authorized one-off
-   exception to CLAUDE.md rule 1 (tokens.css's --bones-status-active/
-   --bones-status-inactive carry the same note). Not a general license to
-   add accent colors elsewhere -- this stays scoped to status dots until
-   told otherwise. */
-.statusDotActive {
-  background: var(--bones-status-active);
-}
-
-.statusDotInactive {
-  background: var(--bones-status-inactive);
-}
-
 .mono {
   font-family: var(--bones-font-mono);
   font-size: 13px;
@@ -62,4 +27,57 @@
 
 .cellDropdown svg {
   color: var(--bones-subtle);
+}
+
+/* The settings column's own Menu.Target -- an icon-only square button,
+   distinct from .cellDropdown above (that one wraps a text label + chevron;
+   this one is just the icon). No border/background at rest (CLAUDE.md rule
+   3 -- a bordered box on every row reads noisier than this table's plain
+   cells), a plain surface-fill hover like Table's own .pageButton. */
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--bones-radius-sm);
+  background: none;
+  color: var(--bones-subtle);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--bones-surface);
+  color: var(--bones-ink);
+}
+
+/* Inactive row background -- the grayscale replacement for the old green/
+   red status dot (removed 2026-09-14 along with the Status column itself;
+   --bones-status-active/--bones-status-inactive retired from tokens.css in
+   the same pass, since this was their only call site). Anyone who can see
+   this table sees it -- no permission of its own, unlike the settings
+   column's activate/deactivate action. */
+.inactiveRow {
+  background: var(--bones-surface);
+}
+
+/* Activate/deactivate confirmation modal */
+.confirmBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.confirmText {
+  /* Zeroed, not left to the <p> default -- CLAUDE.md's "gaps not margins":
+     .confirmBody's own gap already spaces this from the actions row. */
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--bones-muted);
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
 }

@@ -63,6 +63,11 @@ export interface TableProps<T> {
   search?: TableSearchProps;
   sort?: TableSortProps;
   pagination?: TablePaginationProps;
+  // Extra class(es) applied to every cell in a row, for whole-row state
+  // (e.g. AdminUsers.tsx greying out an inactive user) -- per-cell, not on
+  // a row wrapper element, since .bodyRowContents is `display: contents`
+  // (see Table.module.css's own comment) and paints nothing itself.
+  rowClassName?: (row: T) => string | undefined;
 }
 
 // Presentational only -- this component never fetches anything. search/
@@ -71,7 +76,7 @@ export interface TableProps<T> {
 // Table just renders it and reports interactions upward. Same
 // presentational/data-wiring split this repo already uses for
 // MarkdownEditor/MarkdownViewer, BrandLockup, ColorSchemeToggleButton.
-export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing here yet.", search, sort, pagination }: TableProps<T>) {
+export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing here yet.", search, sort, pagination, rowClassName }: TableProps<T>) {
   // Only resized columns get an entry -- an absent key means "still flex
   // (minmax(minWidth, 1fr))," the starting state for every column.
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
@@ -198,15 +203,22 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
             {emptyLabel}
           </div>
         ) : (
-          rows.map((row) => (
-            <div role="row" className={styles.bodyRowContents} key={rowKey(row)}>
-              {columns.map((column) => (
-                <div key={column.key} role="cell" className={styles.bodyCell}>
-                  {column.render(row)}
-                </div>
-              ))}
-            </div>
-          ))
+          rows.map((row) => {
+            const extraClassName = rowClassName?.(row);
+            return (
+              <div role="row" className={styles.bodyRowContents} key={rowKey(row)}>
+                {columns.map((column) => (
+                  <div
+                    key={column.key}
+                    role="cell"
+                    className={extraClassName ? `${styles.bodyCell} ${extraClassName}` : styles.bodyCell}
+                  >
+                    {column.render(row)}
+                  </div>
+                ))}
+              </div>
+            );
+          })
         )}
       </div>
 

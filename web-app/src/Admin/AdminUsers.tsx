@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Avatar, Menu } from "@mantine/core";
+import { Avatar, Menu, Modal } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconSettings } from "@tabler/icons-react";
 import type { AuthProtocolName, UserRole } from "backend";
 import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
-import { ErrorMessage, Table } from "../components";
+import { Button, ErrorMessage, Table } from "../components";
 import type { TableColumn } from "../components";
 import { trpc } from "../trpc";
 import styles from "./AdminUsers.module.css";
@@ -14,8 +14,12 @@ type ListUsersResult = Awaited<ReturnType<typeof trpc.admin.listUsers.query>>;
 type UserRow = ListUsersResult["users"][number];
 // Matches admin.ts's own SORTABLE_COLUMNS keys -- kept as a plain local
 // union rather than derived from the router's input type, since this file
-// already owns the column definitions those keys come from anyway.
-type SortKey = "name" | "email" | "role" | "active" | "createdAt";
+// already owns the column definitions those keys come from anyway. "active"
+// dropped 2026-09-14 along with the Status column itself (folded into the
+// settings-button column below, which has no clickable header to sort
+// from) -- admin.ts's own allowlist keeps the entry regardless, unrelated
+// to whether this page currently has UI to request it.
+type SortKey = "name" | "email" | "role" | "createdAt";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -41,6 +45,15 @@ export function AdminUsers() {
   const canUpdateRole = hasFeature(session?.enabledFeatures, "admin.users.update-role");
   const canUpdateOwner = hasFeature(session?.enabledFeatures, "admin.users.update-owner");
   const canUpdateStatus = hasFeature(session?.enabledFeatures, "admin.users.update-status");
+  // The settings-button column's own visibility rule (per the feature
+  // permissions checklist): shown if the caller can view OR update
+  // anything it holds. Right now that's a single item -- activate/
+  // deactivate, update-gated only, no separate "view status" permission
+  // (active/inactive is conveyed ambiently via the inactive row background
+  // below, visible to anyone who can reach this page at all) -- so this
+  // reduces to canUpdateStatus alone. Extend this boolean, not the
+  // rendering logic below, as more permission-gated items land in the menu.
+  const canSeeSettingsColumn = canUpdateStatus;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState("");
@@ -54,6 +67,10 @@ export function AdminUsers() {
   // dropdowns so a second click can't fire before the first one resolves.
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The user pending activate/deactivate confirmation -- non-null opens the
+  // modal below. Holding the row itself (not just an id) means the modal
+  // can read its current name/active state directly, no separate lookup.
+  const [confirmUser, setConfirmUser] = useState<UserRow | null>(null);
   // Roles are admin-creatable/deletable now (see AdminRoles.tsx), so this
   // dropdown's options come from a live query instead of the old hardcoded
   // ROLE_LABELS map -- fetched once on mount, same "doesn't need to be
@@ -147,6 +164,15 @@ export function AdminUsers() {
     }
   }
 
+  // The confirmation modal's own Confirm button -- closes either way once
+  // handleActiveChange settles; a failure still surfaces via the page-level
+  // ErrorMessage below, same as every other mutation on this page.
+  async function confirmToggleActive() {
+    if (!confirmUser) return;
+    await handleActiveChange(confirmUser, !confirmUser.active);
+    setConfirmUser(null);
+  }
+
   const columns: TableColumn<UserRow>[] = [
     {
       key: "avatar",
@@ -226,51 +252,46 @@ export function AdminUsers() {
         );
       },
     },
-    {
-      key: "active",
-      header: "Status",
-      enableSort: true,
-      // Fits "INACTIVE" (the longer of the two, uppercased via
-      // styles.status) plus the dot and dropdown chevron.
-      width: 150,
-      render: (user) => {
-        const label = (
-          <span className={styles.status}>
-            <span
-              className={`${styles.statusDot} ${user.active ? styles.statusDotActive : styles.statusDotInactive}`}
-            />
-            {user.active ? "Active" : "Inactive"}
-          </span>
-        );
-        // Same plain-text disabled treatment as the role dropdown above --
-        // self-lockout guard, or genuinely no admin.users.update-status.
-        if (user.id === session?.user.id || !canUpdateStatus) return label;
-        return (
-          <Menu width={150} position="bottom-start" disabled={updatingUserId === user.id}>
-            <Menu.Target>
-              <button type="button" className={styles.cellDropdown}>
-                {label}
-                <IconChevronDown size={14} stroke={1.75} />
-              </button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item disabled={user.active} onClick={() => void handleActiveChange(user, true)}>
-                <span className={styles.status}>
-                  <span className={`${styles.statusDot} ${styles.statusDotActive}`} />
-                  Active
-                </span>
-              </Menu.Item>
-              <Menu.Item disabled={!user.active} onClick={() => void handleActiveChange(user, false)}>
-                <span className={styles.status}>
-                  <span className={`${styles.statusDot} ${styles.statusDotInactive}`} />
-                  Inactive
-                </span>
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        );
-      },
-    },
+    // Active/inactive itself is no longer a column value -- conveyed
+    // ambiently by the inactive row background below (rowClassName),
+    // visible to anyone who can see the table at all. This column is just
+    // the row's actions; today that's one item, activate/deactivate. The
+    // whole column is conditional on canSeeSettingsColumn (view-or-update
+    // of anything it holds) -- a spread, not a ternary returning a column
+    // or null, so TableColumn<UserRow>[]'s element type never has to widen
+    // to include null.
+    ...(canSeeSettingsColumn
+      ? [
+          {
+            key: "settings",
+            header: "",
+            width: 52,
+            render: (user) => {
+              const isSelf = user.id === session?.user.id;
+              // Disabled, not hidden -- same "present but inert" treatment
+              // as the owner-lock Menu.Item in the role dropdown above, so
+              // the button/menu itself stays a consistent, always-there
+              // affordance for whatever else lands in it later, even on a
+              // row where activate/deactivate specifically doesn't apply.
+              const activateItemDisabled = isSelf || !canUpdateStatus || updatingUserId === user.id;
+              return (
+                <Menu width={200} position="bottom-end">
+                  <Menu.Target>
+                    <button type="button" className={styles.iconButton} aria-label={`Settings for ${user.name}`}>
+                      <IconSettings size={16} stroke={1.75} />
+                    </button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item disabled={activateItemDisabled} onClick={() => setConfirmUser(user)}>
+                      {user.active ? "Deactivate" : "Activate"}
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              );
+            },
+          } satisfies TableColumn<UserRow>,
+        ]
+      : []),
     {
       key: "createdAt",
       header: "Joined",
@@ -311,7 +332,35 @@ export function AdminUsers() {
             setPage(1);
           },
         }}
+        // The one grayscale-only way to convey active/inactive now (see the
+        // settings column's own comment) -- everyone who can see this table
+        // sees it, no permission of its own to gate.
+        rowClassName={(user) => (user.active ? undefined : styles.inactiveRow)}
       />
+
+      <Modal
+        opened={confirmUser !== null}
+        onClose={() => setConfirmUser(null)}
+        title={confirmUser ? `${confirmUser.active ? "Deactivate" : "Activate"} ${confirmUser.name}?` : ""}
+      >
+        {confirmUser && (
+          <div className={styles.confirmBody}>
+            <p className={styles.confirmText}>
+              {confirmUser.active
+                ? "They won't be able to sign in until reactivated."
+                : "They'll be able to sign in again."}
+            </p>
+            <div className={styles.confirmActions}>
+              <Button onClick={() => void confirmToggleActive()} loading={updatingUserId === confirmUser.id}>
+                {confirmUser.active ? "Deactivate" : "Activate"}
+              </Button>
+              <Button variant="quiet" onClick={() => setConfirmUser(null)} disabled={updatingUserId === confirmUser.id}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </>
   );
 }

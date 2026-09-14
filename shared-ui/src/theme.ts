@@ -1,4 +1,4 @@
-import { Button, Checkbox, Switch, createTheme } from "@mantine/core";
+import { Button, Checkbox, Modal, Switch, createTheme } from "@mantine/core";
 import type { MantineColorsTuple } from "@mantine/core";
 
 // The design system's whole palette, in one Mantine color scale (lightest
@@ -144,6 +144,18 @@ export const theme = createTheme({
     }),
     Checkbox: Checkbox.extend({
       vars: () => ({ root: { "--checkbox-color": "var(--bones-ink)" } }),
+    }),
+    // Mantine's own shadow ("xl" by default) is already zeroed globally
+    // (shadows above), so the panel needs only what "borders, not shadows"
+    // (CLAUDE.md rule 3) actually calls for: a real border, plus this
+    // system's card radius instead of Mantine's own default (its Modal
+    // isn't in the radius map above, since nothing had used it until now).
+    Modal: Modal.extend({
+      defaultProps: { radius: "lg", centered: true },
+      styles: {
+        content: { border: "1px solid var(--bones-border)" },
+        header: { borderBottom: "1px solid var(--bones-border)" },
+      },
     }),
   },
 });
