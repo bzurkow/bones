@@ -172,6 +172,21 @@ export const adminRouter = router({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
+      // Owner can't be deactivated by anyone, not even another owner -- same
+      // "no code-level bypass for owner" precedent as roles.ts's delete
+      // guard and feature-roles.ts's un-revokable owner grant, applied here
+      // ad hoc rather than through a permission (this isn't gated behind
+      // admin.users.update-status at all; it's a hard floor under it, same
+      // category as the self-lockout check above). Only the deactivate
+      // direction is blocked -- reactivating one (input.active: true) never
+      // hits this branch at all. Change their role first.
+      if (!input.active) {
+        const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId));
+        if (target?.role === "owner") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Owner accounts can't be deactivated -- change their role first." });
+        }
+      }
+
       const [updated] = await db
         .update(users)
         .set({ active: input.active })

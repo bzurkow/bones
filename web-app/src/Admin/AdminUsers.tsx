@@ -286,12 +286,20 @@ export function AdminUsers() {
             width: 52,
             render: (user) => {
               const isSelf = user.id === session?.user.id;
+              // Matches admin.ts's own hard floor: owner can't be
+              // deactivated by anyone, not even another owner -- only the
+              // deactivate direction on a currently-active owner is
+              // blocked, so a (hypothetically) inactive owner can still be
+              // reactivated. UI-side reflection of that rule, not the only
+              // thing enforcing it -- the backend guard is real.
+              const isOwnerDeactivate = user.role === "owner" && user.active;
               // Disabled, not hidden -- same "present but inert" treatment
               // as the owner-lock Menu.Item in the role dropdown above, so
               // the button/menu itself stays a consistent, always-there
               // affordance for whatever else lands in it later, even on a
               // row where activate/deactivate specifically doesn't apply.
-              const activateItemDisabled = isSelf || !canUpdateStatus || updatingUserId === user.id;
+              const activateItemDisabled =
+                isSelf || !canUpdateStatus || updatingUserId === user.id || isOwnerDeactivate;
               return (
                 <Menu width={200} position="bottom-end">
                   <Menu.Target>

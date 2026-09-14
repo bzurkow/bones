@@ -221,4 +221,30 @@ describe("admin.setUserActive", () => {
       code: "FORBIDDEN",
     });
   });
+
+  it("refuses to deactivate an owner, even when the caller is another owner", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const targetOwner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+
+    await expect(caller.setUserActive({ userId: targetOwner.id, active: false })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    const [row] = await db.select().from(users).where(eq(users.id, targetOwner.id));
+    expect(row?.active).toBe(true);
+  });
+
+  it("still allows reactivating an owner (only the deactivate direction is blocked)", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const targetOwner = await createTestUser({ role: "owner" });
+    // Bypasses the guard directly, the same way an old/migrated row could
+    // in principle end up here, since setUserActive itself can never
+    // produce an inactive owner to begin with.
+    await db.update(users).set({ active: false }).where(eq(users.id, targetOwner.id));
+    const caller = createCaller(contextFor(owner));
+
+    const result = await caller.setUserActive({ userId: targetOwner.id, active: true });
+
+    expect(result).toEqual({ id: targetOwner.id, active: true });
+  });
 });
