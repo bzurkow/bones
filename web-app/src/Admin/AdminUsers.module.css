@@ -33,7 +33,11 @@
    distinct from .cellDropdown above (that one wraps a text label + chevron;
    this one is just the icon). No border/background at rest (CLAUDE.md rule
    3 -- a bordered box on every row reads noisier than this table's plain
-   cells), a plain surface-fill hover like Table's own .pageButton. */
+   cells), a plain surface-fill hover like Table's own .pageButton.
+   --bones-ink at rest (not --bones-subtle) -- full ink/white contrast per
+   scheme, not the muted gray every other icon here defaults to; this one's
+   meant to read as more prominent, a standing action affordance rather
+   than a quiet label glyph. */
 .iconButton {
   display: inline-flex;
   align-items: center;
@@ -43,13 +47,12 @@
   border: none;
   border-radius: var(--bones-radius-sm);
   background: none;
-  color: var(--bones-subtle);
+  color: var(--bones-ink);
   cursor: pointer;
 }
 
 .iconButton:hover {
   background: var(--bones-surface);
-  color: var(--bones-ink);
 }
 
 /* Inactive row background -- the grayscale replacement for the old green/
@@ -57,9 +60,15 @@
    --bones-status-active/--bones-status-inactive retired from tokens.css in
    the same pass, since this was their only call site). Anyone who can see
    this table sees it -- no permission of its own, unlike the settings
-   column's activate/deactivate action. */
+   column's activate/deactivate action.
+   --bones-disabled-bg, not --bones-surface -- one step further from
+   --bones-bg in both directions (darker in light mode, lighter in dark),
+   for a shade that actually reads instead of nearly disappearing against
+   the page background; --bones-disabled-bg already carries this exact
+   "one step past surface" meaning elsewhere (disabled buttons, dense
+   sub-list rules). */
 .inactiveRow {
-  background: var(--bones-surface);
+  background: var(--bones-disabled-bg);
 }
 
 /* Activate/deactivate confirmation modal */

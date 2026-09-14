@@ -252,14 +252,32 @@ export function AdminUsers() {
         );
       },
     },
+    {
+      key: "createdAt",
+      header: "Joined",
+      enableSort: true,
+      // Fits "September 11, 2026" (longest month name) in mono.
+      width: 180,
+      render: (user) => (
+        <span className={styles.mono}>
+          {new Date(user.createdAt).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
+      ),
+    },
     // Active/inactive itself is no longer a column value -- conveyed
     // ambiently by the inactive row background below (rowClassName),
     // visible to anyone who can see the table at all. This column is just
-    // the row's actions; today that's one item, activate/deactivate. The
-    // whole column is conditional on canSeeSettingsColumn (view-or-update
-    // of anything it holds) -- a spread, not a ternary returning a column
-    // or null, so TableColumn<UserRow>[]'s element type never has to widen
-    // to include null.
+    // the row's actions; today that's one item, activate/deactivate.
+    // Furthest right, last column -- a row's own actions read as a
+    // trailing affordance, not a data field competing with the rest of the
+    // row. The whole column is conditional on canSeeSettingsColumn
+    // (view-or-update of anything it holds) -- a spread, not a ternary
+    // returning a column or null, so TableColumn<UserRow>[]'s element type
+    // never has to widen to include null.
     ...(canSeeSettingsColumn
       ? [
           {
@@ -292,22 +310,6 @@ export function AdminUsers() {
           } satisfies TableColumn<UserRow>,
         ]
       : []),
-    {
-      key: "createdAt",
-      header: "Joined",
-      enableSort: true,
-      // Fits "September 11, 2026" (longest month name) in mono.
-      width: 180,
-      render: (user) => (
-        <span className={styles.mono}>
-          {new Date(user.createdAt).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </span>
-      ),
-    },
   ];
 
   return (
@@ -346,9 +348,8 @@ export function AdminUsers() {
         {confirmUser && (
           <div className={styles.confirmBody}>
             <p className={styles.confirmText}>
-              {confirmUser.active
-                ? "They won't be able to sign in until reactivated."
-                : "They'll be able to sign in again."}
+              Confirm that you want to {confirmUser.active ? "deactivate" : "activate"} user account for{" "}
+              {confirmUser.email}
             </p>
             <div className={styles.confirmActions}>
               <Button onClick={() => void confirmToggleActive()} loading={updatingUserId === confirmUser.id}>
