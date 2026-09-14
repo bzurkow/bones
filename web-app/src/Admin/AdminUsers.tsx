@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Avatar, Menu } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
-import type { UserRole } from "backend";
+import type { AuthProtocolName, UserRole } from "backend";
 import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Table } from "../components";
@@ -18,6 +18,16 @@ type UserRow = ListUsersResult["users"][number];
 type SortKey = "name" | "email" | "role" | "active" | "createdAt";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+// Short table-cell labels, distinct from AdminSiteSettings.tsx's own
+// PROTOCOL_INFO (label + a full sentence description, sized for a settings
+// row not a table column). Keyed by AuthProtocolName for the same reason
+// that map is -- a protocol added to auth-protocols.ts with no matching
+// entry here is a type error, not a silently blank cell.
+const PROTOCOL_LABELS: Record<AuthProtocolName, string> = {
+  email: "Email",
+  google: "Google",
+};
 
 // Role/status are live editable dropdowns (setUserRole/setUserActive
 // below) -- everything else (name, email, joined) stays read-only.
@@ -154,6 +164,25 @@ export function AdminUsers() {
     // date) instead of stretching to an equal, mostly-empty share.
     { key: "name", header: "Name", enableSort: true, render: (user) => user.name },
     { key: "email", header: "Email", enableSort: true, render: (user) => user.email },
+    {
+      key: "authProtocols",
+      header: "Auth Protocol",
+      // Not sortable/searchable -- a user's own multi-valued list, not a
+      // single backing column admin.ts's SORTABLE_COLUMNS could point at
+      // (same reasoning that map's own comment gives for a future
+      // calculated column).
+      // Fits "Email, Google" (both known protocols linked) in mono, same
+      // treatment as every other machine-produced value in this table
+      // (CLAUDE.md rule 2).
+      width: 160,
+      render: (user) => (
+        <span className={styles.mono}>
+          {user.authProtocols.length > 0
+            ? user.authProtocols.map((protocol) => PROTOCOL_LABELS[protocol] ?? protocol).join(", ")
+            : "—"}
+        </span>
+      ),
+    },
     {
       key: "role",
       header: "Role",

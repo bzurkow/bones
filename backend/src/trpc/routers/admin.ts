@@ -1,11 +1,23 @@
-import { asc, count, desc, eq, ilike, or } from "drizzle-orm";
+import { asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import type { AuthProtocolName } from "../../auth-protocols.js";
 import { db } from "../../db/index.js";
-import { roles, users } from "../../db/schema.js";
+import { accounts, roles, users } from "../../db/schema.js";
 import { hasPermission } from "../../permissions.js";
 import { resolveAvatarUrl } from "../../storage/index.js";
 import { protectedProcedure, requirePermission, router } from "../trpc.js";
+
+// better-auth's own provider id for email+password specifically -- not
+// "email" (confirmed in node_modules/better-auth/dist/api/routes/sign-up.mjs's
+// internalAdapter.linkAccount call), so this maps it to the name
+// auth-protocols.ts's AUTH_PROTOCOLS actually uses everywhere else in this
+// app. Every other providerId (currently just "google") already matches an
+// AuthProtocolName as-is.
+const PROVIDER_TO_PROTOCOL: Record<string, AuthProtocolName> = {
+  credential: "email",
+  google: "google",
+};
 
 // Allowlist, not a raw column-name lookup straight from client input --
 // both for safety (an unvalidated column name straight into orderBy is a
@@ -63,9 +75,35 @@ export const adminRouter = router({
           .where(condition),
       ]);
 
+      // Second query, not a join against users -- a user can have more than
+      // one linked account (better-auth's default account linking, e.g.
+      // email+password now, Google later on the same email), and a join
+      // would either duplicate the user row per account or need a messy
+      // GROUP BY/array_agg on top of the pagination query above. Scoped to
+      // just this page's rows, same shape as avatarUrl's per-row resolution
+      // below.
+      const rowIds = rows.map((user) => user.id);
+      const accountRows = rowIds.length
+        ? await db
+            .select({ userId: accounts.userId, providerId: accounts.providerId })
+            .from(accounts)
+            .where(inArray(accounts.userId, rowIds))
+        : [];
+      const protocolsByUserId = new Map<string, AuthProtocolName[]>();
+      for (const { userId, providerId } of accountRows) {
+        const protocol = PROVIDER_TO_PROTOCOL[providerId] ?? (providerId as AuthProtocolName);
+        const existing = protocolsByUserId.get(userId) ?? [];
+        existing.push(protocol);
+        protocolsByUserId.set(userId, existing);
+      }
+
       return {
         users: await Promise.all(
-          rows.map(async (user) => ({ ...user, avatarUrl: await resolveAvatarUrl(user.avatarUrl) })),
+          rows.map(async (user) => ({
+            ...user,
+            avatarUrl: await resolveAvatarUrl(user.avatarUrl),
+            authProtocols: protocolsByUserId.get(user.id) ?? [],
+          })),
         ),
         total: totalRow?.total ?? 0,
       };
