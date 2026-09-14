@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@mantine/core";
 import type { AuthProtocolName } from "backend";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Row, RowCard } from "../components";
+import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
 
@@ -17,6 +19,13 @@ const PROTOCOL_INFO: Record<AuthProtocolName, { label: string; description: stri
 };
 
 export function AdminSiteSettings() {
+  const { features: effectiveFeatures } = useEffectivePermissions();
+  // Section-level, on top of page.admin.site-settings (getting to this page
+  // at all) -- same layering as AdminUsers.tsx's canUpdateRole/etc. A role
+  // without this (e.g. "standard", if it ever reached this page) just
+  // doesn't see the section, same treatment as a hidden nav item.
+  const canView = hasFeature(effectiveFeatures, "admin.auth-protocols.view");
+  const canUpdate = hasFeature(effectiveFeatures, "admin.auth-protocols.update");
   const [protocols, setProtocols] = useState<AuthProtocol[] | undefined>(undefined);
   const [updatingName, setUpdatingName] = useState<AuthProtocolName | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +35,15 @@ export function AdminSiteSettings() {
   }
 
   useEffect(() => {
-    // Same legitimate fetch-on-mount case AdminTerms.tsx's own load()
-    // effect documents -- see that file's comment.
+    // Gated on canView -- list itself is public (Login.tsx/SignUp.tsx call
+    // it with no session at all), but there's no reason for this page to
+    // fetch it for a role that won't render the section anyway. Same
+    // legitimate fetch-on-mount case AdminTerms.tsx's own load() effect
+    // documents -- see that file's comment.
+    if (!canView) return;
     // oxlint-disable-next-line react/set-state-in-effect
     void load();
-  }, []);
+  }, [canView]);
 
   async function handleToggle(protocol: AuthProtocol, enabled: boolean) {
     setError(null);
@@ -52,34 +65,39 @@ export function AdminSiteSettings() {
         here.
       </p>
 
-      <section>
-        <h2 className={styles.sectionTitle}>Authorization Protocols</h2>
-        <p className={styles.sectionDescription}>
-          Which sign-up and sign-in methods are available. Disabling one also hides it from the sign-in and
-          sign-up pages.
-        </p>
+      {canView && (
+        <section>
+          <h2 className={styles.sectionTitle}>Authorization Protocols</h2>
+          <p className={styles.sectionDescription}>
+            Which sign-up and sign-in methods are available. Disabling one also hides it from the sign-in and
+            sign-up pages.
+          </p>
 
-        {protocols && (
-          <RowCard>
-            {protocols.map((protocol) => (
-              <Row
-                key={protocol.name}
-                label={PROTOCOL_INFO[protocol.name].label}
-                description={PROTOCOL_INFO[protocol.name].description}
-              >
-                <Switch
-                  aria-label={PROTOCOL_INFO[protocol.name].label}
-                  checked={protocol.enabled}
-                  disabled={updatingName === protocol.name}
-                  onChange={(event) => void handleToggle(protocol, event.currentTarget.checked)}
-                />
-              </Row>
-            ))}
-          </RowCard>
-        )}
+          {protocols && (
+            <RowCard>
+              {protocols.map((protocol) => (
+                <Row
+                  key={protocol.name}
+                  label={PROTOCOL_INFO[protocol.name].label}
+                  description={PROTOCOL_INFO[protocol.name].description}
+                >
+                  <Switch
+                    aria-label={PROTOCOL_INFO[protocol.name].label}
+                    checked={protocol.enabled}
+                    // Same plain-disabled treatment as AdminUsers.tsx's
+                    // canUpdateRole/canUpdateStatus -- a view-only role (e.g.
+                    // "demo") sees the switches, just can't flip them.
+                    disabled={!canUpdate || updatingName === protocol.name}
+                    onChange={(event) => void handleToggle(protocol, event.currentTarget.checked)}
+                  />
+                </Row>
+              ))}
+            </RowCard>
+          )}
 
-        <ErrorMessage message={error} />
-      </section>
+          <ErrorMessage message={error} />
+        </section>
+      )}
     </div>
   );
 }

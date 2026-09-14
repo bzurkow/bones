@@ -45,6 +45,23 @@ describe("authProtocols.setEnabled", () => {
     });
   });
 
+  it("rejects a view-only caller (demo has admin.auth-protocols.view but not .update per the seed)", async () => {
+    const demo = await createTestUser({ role: "demo" });
+    const caller = createCaller(contextFor(demo));
+    await expect(caller.setEnabled({ name: "google", enabled: true })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("allows an administrator, not just owner, to update", async () => {
+    const administrator = await createTestUser({ role: "administrator" });
+    const caller = createCaller(contextFor(administrator));
+
+    const result = await caller.setEnabled({ name: "google", enabled: true });
+
+    expect(result).toEqual({ name: "google", enabled: true });
+  });
+
   it("turns a protocol on", async () => {
     const admin = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(admin));

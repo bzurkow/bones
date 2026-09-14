@@ -4,14 +4,21 @@ import { z } from "zod";
 import { AUTH_PROTOCOLS } from "../../auth-protocols.js";
 import { db } from "../../db/index.js";
 import { authProtocols } from "../../db/schema.js";
-import { adminProcedure, publicProcedure, router } from "../trpc.js";
+import { publicProcedure, requirePermission, router } from "../trpc.js";
 
 export const authProtocolsRouter = router({
   // Public/unauthenticated -- Login.tsx and SignUp.tsx need this before a
-  // session exists at all, to know which auth methods to show.
+  // session exists at all, to know which auth methods to show. The admin
+  // site-settings page's own view of this list is separately gated
+  // client-side (admin.auth-protocols.view, AdminSiteSettings.tsx) -- that's
+  // about whether the section renders on the page, not this query itself,
+  // which every unauthenticated visitor already needs.
   list: publicProcedure.query(() => db.select().from(authProtocols)),
 
-  setEnabled: adminProcedure
+  // admin.auth-protocols.update, not the umbrella adminProcedure -- see the
+  // RBAC migration's comment (0014_admin-auth-protocols-rbac.sql): only
+  // owner/administrator get this, same granularity as admin.terms.update.
+  setEnabled: requirePermission("admin.auth-protocols.update")
     .input(z.object({ name: z.enum(AUTH_PROTOCOLS), enabled: z.boolean() }))
     .mutation(async ({ input }) => {
       if (!input.enabled) {
