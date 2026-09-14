@@ -77,8 +77,16 @@ export function TermsAndConditions() {
   }
 
   async function handleLogout() {
+    // Same ordering as TopBar.tsx's own handleSignOut, same reason --
+    // refetch() *after* navigate(), not before, since this page is also
+    // inside RequireAuth's subtree (App.tsx's route tree -- a sibling of
+    // AuthenticatedLayout, not nested inside it, but still a child of the
+    // RequireAuth-wrapped route). Awaiting refetch() first would race
+    // RequireAuth's own competing redirect for this same page, the exact
+    // "signs back in and lands right back on this page" bug.
     await authClient.signOut();
     navigate("/login", { replace: true });
+    await refetch();
   }
 
   if (!terms) return null;

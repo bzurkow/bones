@@ -17,15 +17,31 @@ export function TopBar() {
 
   async function handleSignOut() {
     await authClient.signOut();
-    await refetch();
     // Explicit navigation, not left to RequireAuth's own reactive redirect
     // -- that redirect passes state: { from: location }, where location is
     // still whatever page you were on when you clicked Log Out (e.g.
     // /profile), so signing back in would send you right back there. A
     // deliberate logout isn't "trying to reach a page" the way an
     // unauthenticated visit is, so there's nothing to return to -- always
-    // land on /login with no `from`, so Login.tsx defaults back to "/".
+    // land on /login with no `from`.
     navigate("/login", { replace: true });
+    // refetch() *after* navigate(), not before -- authClient.useSession()
+    // is one shared store across the whole app (better-auth/dist/client),
+    // so calling it here updates what every mounted useSession() consumer
+    // sees, not just this component's own. Awaiting it before navigate()
+    // (the previous order) let RequireAuth -- still mounted on whatever
+    // page you signed out from -- see session flip to null while it could
+    // still fire its *own* competing redirect (the exact one this comment
+    // used to describe, with `from` set to that old page), racing this
+    // function's own navigate() for the same history entry. Moving it
+    // after means RequireAuth for that page has already unmounted by the
+    // time this fires -- no race left to lose, by construction, not
+    // timing luck. (signOut() alone does eventually broadcast a session
+    // invalidation on its own, but via an internal ~10ms setTimeout in
+    // better-auth's client -- relying on that instead of an explicit,
+    // awaited refetch() would just trade one accident-of-timing fix for
+    // another.)
+    await refetch();
   }
 
   return (
