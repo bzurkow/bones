@@ -1,0 +1,41 @@
+{
+  "projectId": "56b7adba-dbc4-412a-83d0-158ff7ae8d07",
+  "shape": "package",
+  "pkg": "shared-ui",
+  "globalName": "Bones",
+  "buildCmd": "node .design-sync/local/prebuild-extra.mjs",
+  "entry": "./shared-ui/src/index.ts",
+  "cssEntry": "src/tokens.css",
+  "provider": {
+    "component": "MantineProvider",
+    "props": { "theme": { "$ref": "theme" } }
+  },
+  "extraEntries": [
+    "../.design-sync/local/mantine-provider-entry.mjs",
+    "../.design-sync/.cache/extra-prebuilt/PageHeader/PageHeader.js",
+    "../.design-sync/.cache/extra-prebuilt/ErrorMessage/ErrorMessage.js",
+    "../.design-sync/.cache/extra-prebuilt/RowCard/RowCard.js",
+    "../.design-sync/.cache/extra-prebuilt/Table/Table.js",
+    "../.design-sync/.cache/extra-prebuilt/TextField/TextField.js",
+    "../.design-sync/.cache/extra-prebuilt/ColorSchemeToggle/ColorSchemeToggle.js"
+  ],
+  "componentSrcMap": {
+    "PageHeader": "../web-app/src/components/PageHeader/PageHeader.tsx",
+    "ErrorMessage": "../web-app/src/components/ErrorMessage/ErrorMessage.tsx",
+    "RowCard": "../web-app/src/components/RowCard/RowCard.tsx",
+    "Row": "../web-app/src/components/RowCard/RowCard.tsx",
+    "Table": "../web-app/src/components/Table/Table.tsx",
+    "TextField": "../web-app/src/components/TextField/TextField.tsx",
+    "ColorSchemeToggle": "../web-static/app/ColorSchemeToggle.tsx"
+  },
+  "dtsPropsFor": {
+    "PageHeader": "eyebrow: React.ReactNode;\ntitle: React.ReactNode;\nchildren: React.ReactNode;",
+    "ErrorMessage": "message: string | null | undefined;",
+    "RowCard": "children: React.ReactNode;",
+    "Row": "label: React.ReactNode;\ndescription?: React.ReactNode;\nchildren: React.ReactNode;",
+    "Table": "columns: Array<{ key: string; header: React.ReactNode; render: (row: any) => React.ReactNode; minWidth?: number; width?: number; enableSort?: boolean }>;\nrows: any[];\nrowKey: (row: any) => string;\nloading?: boolean;\nemptyLabel?: string;\nsearch?: { value: string; onChange: (value: string) => void; placeholder?: string };\nsort?: { activeKey: string | null; direction: \"asc\" | \"desc\"; onChange: (key: string) => void };\npagination?: { page: number; pageSize: number; total: number; pageSizeOptions?: number[]; onPageChange: (page: number) => void; onPageSizeChange: (pageSize: number) => void };",
+    "TextField": "label: string;\nhelperText?: string;\nerror?: string | null;\ntype?: string;\nplaceholder?: string;\nvalue?: string;\ndefaultValue?: string;\nonChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;\ndisabled?: boolean;\nrequired?: boolean;\nname?: string;\nautoComplete?: string;",
+    "ColorSchemeToggle": ""
+  },
+  "extraFonts": "../.design-sync/local/fonts/fonts.css"
+}
