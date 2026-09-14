@@ -13,8 +13,10 @@ import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminPermissions } from "./Admin/AdminPermissions";
 import { AdminRoles } from "./Admin/AdminRoles";
 import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
+import { ForgotPassword } from "./ForgotPassword";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
+import { ResetPassword } from "./ResetPassword";
 import { SignUp } from "./SignUp";
 import { TermsAndConditions } from "./TermsAndConditions";
 import { theme } from "shared-ui";
@@ -81,6 +83,8 @@ export function App() {
         <Routes>
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/" element={<RequireAuth />}>
             {/* Sibling to AuthenticatedLayout, not nested inside it -- see
                 AuthenticatedLayout.tsx's comment. */}

@@ -3,6 +3,5 @@
 // `yarn email-templates:dev`) -- re-exported from here so auth.ts imports
 // from backend's own email/ module like sendEmail, rather than reaching
 // into a sibling workspace package directly. Add the next render function
-// (password reset, invitations) here the same way once email-templates
-// has one.
-export { renderVerificationEmail } from "email-templates";
+// (invitations) here the same way once email-templates has one.
+export { renderResetPasswordEmail, renderVerificationEmail } from "email-templates";

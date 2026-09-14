@@ -6,7 +6,7 @@ import { isAuthProtocolEnabled } from "./auth-protocols.js";
 import { db } from "./db/index.js";
 import { users } from "./db/schema.js";
 import { sendEmail } from "./email/index.js";
-import { renderVerificationEmail } from "./email/templates.js";
+import { renderResetPasswordEmail, renderVerificationEmail } from "./email/templates.js";
 import { getEnabledFeatures } from "./permissions.js";
 import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
@@ -68,6 +68,23 @@ export const auth = betterAuth({
     // SES in production, Mailpit in dev), so this can require verification
     // instead of trusting whatever address a sign-up form was given.
     requireEmailVerification: true,
+    // Enables /request-password-reset and /reset-password outright --
+    // better-auth logs an error and refuses both (RESET_PASSWORD_DISABLED)
+    // if this callback isn't set at all, per
+    // node_modules/better-auth/dist/api/routes/password.mjs. `url` is
+    // better-auth's own GET /reset-password/:token callback link (this
+    // server, not web-app directly) -- it validates the token then
+    // redirects to whatever redirectTo web-app's own
+    // requestPasswordReset call passed, with ?token=... appended; this
+    // callback never needs to construct that link itself, just mail
+    // whatever url it's handed, same shape as sendVerificationEmail above.
+    // resetPasswordTokenExpiresIn/onPasswordReset/revokeSessionsOnPasswordReset
+    // all left at better-auth's own defaults (1 hour; no hook; other
+    // sessions stay alive) -- not asked for, and this is enough for the
+    // flow to work end to end.
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail(user.email, "Reset your password", await renderResetPasswordEmail(url));
+    },
   },
   // sendVerificationEmail builds the actual message; the three trigger
   // flags below are the policy for when Better Auth calls it.

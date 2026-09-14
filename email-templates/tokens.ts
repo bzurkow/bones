@@ -34,8 +34,6 @@ export const emailTokens = {
   block2: "#EAEAEA",
   block3: "#D8D8D8",
   danger: "#B42318",
-  statusActive: "#15803D",
-  statusInactive: "#B42318",
   fontSans: "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
   fontMono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   radiusSm: "8px",
