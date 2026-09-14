@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { authClient } from "../AuthHelpers/auth-client";
+import { hasFeature } from "../AuthHelpers/permissions";
 import { Button, ErrorMessage, Row, RowCard, TextField } from "../components";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
@@ -11,6 +13,17 @@ type Role = Awaited<ReturnType<typeof trpc.roles.list.query>>[number];
 const PROTECTED_ROLES = new Set(["owner", "standard"]);
 
 export function AdminRoles() {
+  const { data: session } = authClient.useSession();
+  // Both were previously ungated client-side -- this page's Delete/Create
+  // buttons stayed fully enabled for any role that could merely *reach*
+  // /admin/roles (page.admin.roles), even without admin.roles.delete/
+  // .create, relying entirely on the backend's own requirePermission to
+  // reject the click. Disabled, not hidden -- same "present but inert"
+  // treatment as every other permission-gated control in this admin
+  // section (AdminUsers.tsx's settings menu, AdminPermissions.tsx's
+  // checkboxes).
+  const canCreate = hasFeature(session?.enabledFeatures, "admin.roles.create");
+  const canDelete = hasFeature(session?.enabledFeatures, "admin.roles.delete");
   const [roles, setRoles] = useState<Role[] | undefined>(undefined);
   const [newRoleName, setNewRoleName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -74,7 +87,7 @@ export function AdminRoles() {
                   <Button
                     variant="text"
                     size="sm"
-                    disabled={deletingName === role.name}
+                    disabled={!canDelete || deletingName === role.name}
                     onClick={() => void handleDelete(role.name)}
                   >
                     Delete
@@ -98,7 +111,7 @@ export function AdminRoles() {
             value={newRoleName}
             onChange={(event) => setNewRoleName(event.currentTarget.value)}
           />
-          <Button type="submit" disabled={creating}>
+          <Button type="submit" disabled={!canCreate || creating}>
             {creating ? "Creating…" : "Create role"}
           </Button>
         </form>
