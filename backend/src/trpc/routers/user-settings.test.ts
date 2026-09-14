@@ -47,7 +47,6 @@ describe("userSettings.updateUserSettings", () => {
       viewMode: "dark",
       inheritViewModeFromBrowser: false,
       showViewModeToggle: true,
-      showViewAsRoleToggle: true,
     });
 
     // The other user's row is untouched.
@@ -68,21 +67,6 @@ describe("userSettings.updateUserSettings", () => {
       viewMode: user.viewMode,
       inheritViewModeFromBrowser: user.inheritViewModeFromBrowser,
       showViewModeToggle: false,
-      showViewAsRoleToggle: user.showViewAsRoleToggle,
-    });
-  });
-
-  it("updates showViewAsRoleToggle independently of the view-mode fields", async () => {
-    const user = await createTestUser();
-    const caller = createCaller(contextFor(user));
-
-    const result = await caller.updateUserSettings({ showViewAsRoleToggle: false });
-
-    expect(result).toEqual({
-      viewMode: user.viewMode,
-      inheritViewModeFromBrowser: user.inheritViewModeFromBrowser,
-      showViewModeToggle: user.showViewModeToggle,
-      showViewAsRoleToggle: false,
     });
   });
 });

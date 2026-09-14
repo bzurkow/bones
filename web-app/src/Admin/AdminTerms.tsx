@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { TextInput } from "@mantine/core";
+import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { Button, ErrorMessage, MarkdownEditor, MarkdownViewer } from "../components";
-import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
 import termsStyles from "./AdminTerms.module.css";
@@ -24,8 +24,8 @@ interface TermsAndConditions {
 type Mode = "view" | "edit";
 
 export function AdminTerms() {
-  const { features: effectiveFeatures } = useEffectivePermissions();
-  const canUpdate = hasFeature(effectiveFeatures, "admin.terms.update");
+  const { data: session } = authClient.useSession();
+  const canUpdate = hasFeature(session?.enabledFeatures, "admin.terms.update");
   const [current, setCurrent] = useState<TermsAndConditions | null | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("view");
   const [attribution, setAttribution] = useState("");

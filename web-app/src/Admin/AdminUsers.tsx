@@ -7,7 +7,6 @@ import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Table } from "../components";
 import type { TableColumn } from "../components";
-import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminUsers.module.css";
 
@@ -29,10 +28,9 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50];
 // bones-roadmap-notes.md item 3) not to fold the two together this pass.
 export function AdminUsers() {
   const { data: session } = authClient.useSession();
-  const { features: effectiveFeatures } = useEffectivePermissions();
-  const canUpdateRole = hasFeature(effectiveFeatures, "admin.users.update-role");
-  const canUpdateOwner = hasFeature(effectiveFeatures, "admin.users.update-owner");
-  const canUpdateStatus = hasFeature(effectiveFeatures, "admin.users.update-status");
+  const canUpdateRole = hasFeature(session?.enabledFeatures, "admin.users.update-role");
+  const canUpdateOwner = hasFeature(session?.enabledFeatures, "admin.users.update-owner");
+  const canUpdateStatus = hasFeature(session?.enabledFeatures, "admin.users.update-status");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState("");

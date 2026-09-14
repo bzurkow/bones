@@ -17,7 +17,6 @@ export const userSettingsRouter = router({
           inheritViewModeFromBrowser: z.boolean().optional(),
           viewMode: z.enum(VIEW_MODES).optional(),
           showViewModeToggle: z.boolean().optional(),
-          showViewAsRoleToggle: z.boolean().optional(),
         })
         .refine((input) => Object.keys(input).length > 0, "Provide at least one field to update."),
     )
@@ -34,7 +33,6 @@ export const userSettingsRouter = router({
           inheritViewModeFromBrowser: users.inheritViewModeFromBrowser,
           viewMode: users.viewMode,
           showViewModeToggle: users.showViewModeToggle,
-          showViewAsRoleToggle: users.showViewAsRoleToggle,
         });
 
       return updated;

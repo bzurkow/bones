@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { hasFeature } from "./AuthHelpers/permissions";
 import { BrandLockup } from "./components";
-import { useEffectivePermissions } from "./hooks/useEffectivePermissions";
 import styles from "./TopBar.module.css";
 
 // COMPONENTS.md's Header, app variant (62px, gap 26px, avatar as the
@@ -15,7 +14,6 @@ import styles from "./TopBar.module.css";
 export function TopBar() {
   const { data: session, refetch } = authClient.useSession();
   const navigate = useNavigate();
-  const { features: effectiveFeatures } = useEffectivePermissions();
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -54,7 +52,7 @@ export function TopBar() {
             <Menu.Item component={Link} to="/settings" leftSection={<IconSettings size={16} />}>
               Settings
             </Menu.Item>
-            {hasFeature(effectiveFeatures, "page.admin.view") && (
+            {hasFeature(session?.enabledFeatures, "page.admin.view") && (
               <>
                 <Menu.Divider />
                 <Menu.Item component={Link} to="/admin" leftSection={<IconShieldLock size={16} />}>

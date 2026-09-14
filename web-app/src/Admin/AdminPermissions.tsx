@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Checkbox } from "@mantine/core";
+import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage } from "../components";
-import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import panelStyles from "./AdminPanel.module.css";
 import styles from "./AdminPermissions.module.css";
@@ -16,10 +16,10 @@ type Grant = Awaited<ReturnType<typeof trpc.featureRoles.listAll.query>>[number]
 // rest of the row) -- both concepts live in one table by design, not two
 // kept in sync (see the RBAC migration's own comment on features-schema.ts).
 export function AdminPermissions() {
-  const { features: effectiveFeatures } = useEffectivePermissions();
-  const canEnable = hasFeature(effectiveFeatures, "admin.features.enable");
-  const canDisable = hasFeature(effectiveFeatures, "admin.features.disable");
-  const canUpdateGrants = hasFeature(effectiveFeatures, "admin.role-permissions.update");
+  const { data: session } = authClient.useSession();
+  const canEnable = hasFeature(session?.enabledFeatures, "admin.features.enable");
+  const canDisable = hasFeature(session?.enabledFeatures, "admin.features.disable");
+  const canUpdateGrants = hasFeature(session?.enabledFeatures, "admin.role-permissions.update");
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const [roles, setRoles] = useState<Role[]>([]);
   const [grants, setGrants] = useState<Grant[]>([]);

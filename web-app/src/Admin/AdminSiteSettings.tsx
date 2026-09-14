@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@mantine/core";
 import type { AuthProtocolName } from "backend";
+import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
 import { ErrorMessage, Row, RowCard } from "../components";
-import { useEffectivePermissions } from "../hooks/useEffectivePermissions";
 import { trpc } from "../trpc";
 import styles from "./AdminPanel.module.css";
 
@@ -19,13 +19,13 @@ const PROTOCOL_INFO: Record<AuthProtocolName, { label: string; description: stri
 };
 
 export function AdminSiteSettings() {
-  const { features: effectiveFeatures } = useEffectivePermissions();
+  const { data: session } = authClient.useSession();
   // Section-level, on top of page.admin.site-settings (getting to this page
   // at all) -- same layering as AdminUsers.tsx's canUpdateRole/etc. A role
   // without this (e.g. "standard", if it ever reached this page) just
   // doesn't see the section, same treatment as a hidden nav item.
-  const canView = hasFeature(effectiveFeatures, "admin.auth-protocols.view");
-  const canUpdate = hasFeature(effectiveFeatures, "admin.auth-protocols.update");
+  const canView = hasFeature(session?.enabledFeatures, "admin.auth-protocols.view");
+  const canUpdate = hasFeature(session?.enabledFeatures, "admin.auth-protocols.update");
   const [protocols, setProtocols] = useState<AuthProtocol[] | undefined>(undefined);
   const [updatingName, setUpdatingName] = useState<AuthProtocolName | null>(null);
   const [error, setError] = useState<string | null>(null);

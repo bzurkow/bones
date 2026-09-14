@@ -3,7 +3,6 @@ import { Center, Loader, MantineProvider } from "@mantine/core";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { hasFeature } from "./AuthHelpers/permissions";
-import { useEffectivePermissions } from "./hooks/useEffectivePermissions";
 import { AuthenticatedLayout } from "./AuthenticatedLayout";
 import { ApplicationHome } from "./ApplicationHome";
 import { ApplicationProfile } from "./ApplicationProfile";
@@ -20,7 +19,6 @@ import { SignUp } from "./SignUp";
 import { TermsAndConditions } from "./TermsAndConditions";
 import { theme } from "shared-ui";
 import { useColorScheme } from "./hooks/useColorScheme";
-import { ViewAsRoleProvider } from "./ViewAsRoleContext";
 
 // Gates only the route subtree it wraps (via <Outlet />), rather than the
 // whole <Routes> tree -- so which routes require auth is declared in the
@@ -54,15 +52,9 @@ function RequireAuth() {
 // here -- this only adds the role check, and sends non-admins back to the
 // app home rather than /login (they're logged in, just not authorized).
 function RequireAdmin() {
-  const { isPending } = authClient.useSession();
-  const { features: effectiveFeatures, isLoading } = useEffectivePermissions();
+  const { data: session, isPending } = authClient.useSession();
 
-  // isLoading (not just isPending) matters here specifically -- while a
-  // view-as-role preview's derived feature list is still being fetched,
-  // it's genuinely unknown whether the previewed role has access yet.
-  // Redirecting on that empty-but-not-final state would boot a role that
-  // *does* have page.admin.view before ever finding out.
-  if (isPending || isLoading) {
+  if (isPending) {
     return (
       <Center mih="100vh">
         <Loader />
@@ -70,7 +62,7 @@ function RequireAdmin() {
     );
   }
 
-  if (!hasFeature(effectiveFeatures, "page.admin.view")) {
+  if (!hasFeature(session?.enabledFeatures, "page.admin.view")) {
     return <Navigate to="/" replace />;
   }
 
@@ -85,35 +77,33 @@ export function App() {
 
   return (
     <MantineProvider theme={theme} defaultColorScheme="auto" forceColorScheme={forceColorScheme}>
-      <ViewAsRoleProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<RequireAuth />}>
-              {/* Sibling to AuthenticatedLayout, not nested inside it -- see
-                  AuthenticatedLayout.tsx's comment. */}
-              <Route path="terms-and-conditions" element={<TermsAndConditions />} />
-              <Route element={<AuthenticatedLayout />}>
-                <Route index element={<ApplicationHome />} />
-                <Route path="profile" element={<ApplicationProfile />} />
-                <Route path="settings" element={<ApplicationSettings />} />
-                <Route path="admin" element={<RequireAdmin />}>
-                  <Route element={<AdminLayout />}>
-                    <Route index element={<Navigate to="users" replace />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="permissions" element={<AdminPermissions />} />
-                    <Route path="roles" element={<AdminRoles />} />
-                    <Route path="site-settings" element={<AdminSiteSettings />} />
-                    <Route path="terms" element={<AdminTerms />} />
-                  </Route>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<RequireAuth />}>
+            {/* Sibling to AuthenticatedLayout, not nested inside it -- see
+                AuthenticatedLayout.tsx's comment. */}
+            <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+            <Route element={<AuthenticatedLayout />}>
+              <Route index element={<ApplicationHome />} />
+              <Route path="profile" element={<ApplicationProfile />} />
+              <Route path="settings" element={<ApplicationSettings />} />
+              <Route path="admin" element={<RequireAdmin />}>
+                <Route element={<AdminLayout />}>
+                  <Route index element={<Navigate to="users" replace />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="permissions" element={<AdminPermissions />} />
+                  <Route path="roles" element={<AdminRoles />} />
+                  <Route path="site-settings" element={<AdminSiteSettings />} />
+                  <Route path="terms" element={<AdminTerms />} />
                 </Route>
               </Route>
             </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </ViewAsRoleProvider>
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </MantineProvider>
   );
 }
