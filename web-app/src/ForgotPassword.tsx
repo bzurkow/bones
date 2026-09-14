@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
+import { ColorSchemeToggle } from "./ColorSchemeToggle";
 import { BrandLockup, Button, TextField } from "./components";
 import styles from "./ForgotPassword.module.css";
 
@@ -38,48 +39,51 @@ export function ForgotPassword() {
   }
 
   return (
-    <div className={styles.page}>
-      <Link to="/" className={styles.brand}>
-        <BrandLockup />
-      </Link>
+    <>
+      <ColorSchemeToggle />
+      <div className={styles.page}>
+        <Link to="/" className={styles.brand}>
+          <BrandLockup />
+        </Link>
 
-      <div className={styles.center}>
-        <div className={styles.card}>
-          <h1 className={styles.heading}>Reset your password</h1>
+        <div className={styles.center}>
+          <div className={styles.card}>
+            <h1 className={styles.heading}>Reset your password</h1>
 
-          {sent ? (
-            <p className={styles.notice}>
-              If an account exists for {email}, check it for a link to reset your password.
-            </p>
-          ) : (
-            <>
-              <p className={styles.body}>Enter the email address on your account and we'll send you a reset link.</p>
-              <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
-                <TextField
-                  label="Email"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.currentTarget.value)}
-                />
-                <Button type="submit" fullWidth disabled={submitting}>
-                  {submitting ? "Sending…" : "Send reset link"}
-                </Button>
-              </form>
-            </>
-          )}
+            {sent ? (
+              <p className={styles.notice}>
+                If an account exists for {email}, check it for a link to reset your password.
+              </p>
+            ) : (
+              <>
+                <p className={styles.body}>Enter the email address on your account and we'll send you a reset link.</p>
+                <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
+                  <TextField
+                    label="Email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.currentTarget.value)}
+                  />
+                  <Button type="submit" fullWidth disabled={submitting}>
+                    {submitting ? "Sending…" : "Send reset link"}
+                  </Button>
+                </form>
+              </>
+            )}
 
-          <Link to="/login" className={styles.switchLink}>
-            Back to sign in
-          </Link>
+            <Link to="/login" className={styles.switchLink}>
+              Back to sign in
+            </Link>
+          </div>
+        </div>
+
+        <div className={styles.footer}>
+          <span>© 2026 Bones</span>
         </div>
       </div>
-
-      <div className={styles.footer}>
-        <span>© 2026 Bones</span>
-      </div>
-    </div>
+    </>
   );
 }

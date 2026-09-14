@@ -51,6 +51,21 @@
   color: var(--bones-muted);
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--bones-font-mono);
+  font-size: 11px;
+  color: var(--bones-subtle);
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: var(--bones-border);
+}
+
 .switchLink {
   align-self: center;
   font-family: var(--bones-font-mono);
