@@ -12,6 +12,7 @@ import styles from "./AdminLayout.module.css";
 // only shown if the current session actually has it.
 const TABS = [
   { to: "users", label: "Users", feature: "page.admin.users" },
+  { to: "organizations", label: "Organizations", feature: "page.admin.organizations" },
   { to: "permissions", label: "Feature Flags & Permissions", feature: "page.admin.permissions" },
   { to: "roles", label: "Roles", feature: "page.admin.roles" },
   { to: "site-settings", label: "Site Settings", feature: "page.admin.site-settings" },

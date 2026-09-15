@@ -10,6 +10,8 @@ export * from "./auth-protocols-schema.js";
 export * from "./roles-schema.js";
 export * from "./features-schema.js";
 export * from "./feature-roles-schema.js";
+export * from "./organizations-schema.js";
+export * from "./organization-users-schema.js";
 
 // user.viewMode's allowed values live in ../user-fields.ts (imported
 // directly from there, not re-exported here) -- it's the one place that

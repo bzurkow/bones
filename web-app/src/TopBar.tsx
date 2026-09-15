@@ -1,5 +1,5 @@
 import { Avatar, Menu } from "@mantine/core";
-import { IconLogout2, IconSettings, IconShieldLock, IconUser } from "@tabler/icons-react";
+import { IconLogout2, IconSettings, IconShieldLock, IconUser, IconUsers } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { hasFeature } from "./AuthHelpers/permissions";
@@ -67,6 +67,13 @@ export function TopBar() {
             </Menu.Item>
             <Menu.Item component={Link} to="/settings" leftSection={<IconSettings size={16} />}>
               Settings
+            </Menu.Item>
+            {/* Unconditional, no permission check -- what shows up on
+                /organizations is entirely membership-driven (see
+                OrganizationsIndex.tsx's own comment), so there's no
+                page.* feature key to gate this nav item on either. */}
+            <Menu.Item component={Link} to="/organizations" leftSection={<IconUsers size={16} />}>
+              Organizations
             </Menu.Item>
             {hasFeature(session?.enabledFeatures, "page.admin.view") && (
               <>
