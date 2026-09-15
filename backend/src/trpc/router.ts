@@ -5,6 +5,7 @@ import { healthRouter } from "./routers/health.js";
 import { dbRouter } from "./routers/db.js";
 import { featureRolesRouter } from "./routers/feature-roles.js";
 import { featuresRouter } from "./routers/features.js";
+import { organizationsRouter } from "./routers/organizations.js";
 import { profileRouter } from "./routers/profile.js";
 import { rolesRouter } from "./routers/roles.js";
 import { termsAndConditionsRouter } from "./routers/terms-and-conditions.js";
@@ -21,6 +22,7 @@ export const appRouter = router({
   features: featuresRouter,
   featureRoles: featureRolesRouter,
   roles: rolesRouter,
+  organizations: organizationsRouter,
 });
 
 export type AppRouter = typeof appRouter;
@@ -38,3 +40,9 @@ export type { auth } from "../auth.js";
 // than this re-export it needs.
 export type { UserRole, ViewMode } from "../user-fields.js";
 export type { AuthProtocolName } from "../auth-protocols.js";
+// Type-only, like every other re-export here (backend's package exports
+// are types-only -- see this block's own comment above) -- the actual
+// ORGANIZATION_MEMBER_ROLES array is duplicated client-side instead, same
+// precedent user-fields.ts's own comment documents for avatar-rules.ts/
+// password-rules.ts.
+export type { OrganizationMemberRole } from "../db/organization-users-schema.js";
