@@ -24,24 +24,24 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1128.0",
-    "@aws-sdk/client-sesv2": "^3.1128.0",
-    "@aws-sdk/s3-request-presigner": "^3.1128.0",
+    "@aws-sdk/client-s3": "^3.1132.0",
+    "@aws-sdk/client-sesv2": "^3.1132.0",
+    "@aws-sdk/s3-request-presigner": "^3.1132.0",
     "@fastify/cors": "^11.3.0",
     "@trpc/server": "^11.18.0",
-    "better-auth": "^1.7.2",
+    "better-auth": "^1.7.5",
     "drizzle-orm": "^0.45.2",
     "email-templates": "0.1.0",
-    "fastify": "^5.12.1",
-    "nodemailer": "^10.0.6",
+    "fastify": "^5.12.4",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@testcontainers/postgresql": "^12.1.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
-    "auth": "^1.7.2",
+    "auth": "^1.7.5",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.13",
