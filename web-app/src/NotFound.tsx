@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
-import { BrandLockup, Button, ConfusedIcon } from "./components";
-import styles from "./NotFound.module.css";
+import { NotFoundPage } from "./components";
 
 // Catch-all for any route that doesn't match -- wired in App.tsx as
 // path="*", the last route in the tree, outside RequireAuth entirely, so
@@ -12,22 +11,7 @@ export function NotFound() {
   return (
     <>
       <ColorSchemeToggle />
-      <div className={styles.page}>
-        <Link to="/" className={styles.brand}>
-          <BrandLockup />
-        </Link>
-
-        <div className={styles.center}>
-          <div className={styles.card}>
-            <ConfusedIcon size={88} />
-            <h1 className={styles.heading}>Page not found</h1>
-            <p className={styles.body}>The page you're looking for doesn't exist or has moved.</p>
-            <Button component={Link} to="/">
-              Back to Bones
-            </Button>
-          </div>
-        </div>
-      </div>
+      <NotFoundPage linkComponent={Link} linkProps={{ to: "/" }} />
     </>
   );
 }

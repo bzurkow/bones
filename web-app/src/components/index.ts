@@ -1,15 +1,7 @@
-// Bones component library -- built against COMPONENTS.md's specs as pages
-// need them, not all speculatively up front. Add the rest (Chip, standalone
-// Card, etc.) in their own folders here as the pages that need them get
-// built.
-//
-// Button/BonesMark/Eyebrow/CardGrid/CodePanel/ConfusedIcon moved to the
-// shared "shared-ui" package once the marketing site (a separate Next.js
-// app) needed them too -- re-exported here so every existing `from
-// "./components"` import in this app keeps working unchanged.
+// Bones component library -- now lives entirely in the shared "shared-ui"
+// package (component dev work defaults there, not here, so a second app
+// never has to wait for a hoist). This file stays only as a re-export
+// barrel so every existing `from "./components"` import in this app keeps
+// working unchanged; add nothing new here -- new components go straight
+// into shared-ui/src/components instead.
 export * from "shared-ui";
-export * from "./PageHeader";
-export * from "./ErrorMessage";
-export * from "./RowCard";
-export * from "./Table";
-export * from "./TextField";
