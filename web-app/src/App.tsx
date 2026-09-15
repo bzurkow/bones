@@ -17,6 +17,8 @@ import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { ForgotPassword } from "./ForgotPassword";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
+import { OrganizationDetail } from "./Organizations/OrganizationDetail";
+import { OrganizationsIndex } from "./Organizations/OrganizationsIndex";
 import { ResetPassword } from "./ResetPassword";
 import { SignUp } from "./SignUp";
 import { TermsAndConditions } from "./TermsAndConditions";
@@ -94,6 +96,12 @@ export function App() {
               <Route index element={<ApplicationHome />} />
               <Route path="profile" element={<ApplicationProfile />} />
               <Route path="settings" element={<ApplicationSettings />} />
+              {/* No RequireX wrapper -- reachable by any signed-in user,
+                  access to a specific org is membership-driven and checked
+                  server-side (organizations.getByName), not a static
+                  page.* feature key like /admin's routes below. */}
+              <Route path="organizations" element={<OrganizationsIndex />} />
+              <Route path="organizations/:orgName" element={<OrganizationDetail />} />
               <Route path="admin" element={<RequireAdmin />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<Navigate to="users" replace />} />

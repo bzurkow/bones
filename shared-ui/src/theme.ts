@@ -1,4 +1,4 @@
-import { Button, Checkbox, Modal, Switch, createTheme } from "@mantine/core";
+import { Button, Checkbox, Modal, Switch, Tooltip, createTheme } from "@mantine/core";
 import type { MantineColorsTuple } from "@mantine/core";
 
 // The design system's whole palette, in one Mantine color scale (lightest
@@ -155,6 +155,27 @@ export const theme = createTheme({
       styles: {
         content: { border: "1px solid var(--bones-border)" },
         header: { borderBottom: "1px solid var(--bones-border)" },
+      },
+    }),
+    // An inverted (ink-filled, light text) pill, not Mantine's own default
+    // dark-shadow bubble -- shadows are already zeroed globally above, and
+    // ink-on-page contrast alone reads clearly without needing a border on
+    // top the way an on-white card would (CLAUDE.md rule 3's actual
+    // concern is drop-shadows/blur, not "every floating element needs a
+    // border regardless of contrast"). Sans, not mono -- tooltip content
+    // here is descriptive text (e.g. a truncated blurb), not a machine
+    // value.
+    Tooltip: Tooltip.extend({
+      defaultProps: { radius: "sm", openDelay: 200 },
+      styles: {
+        tooltip: {
+          background: "var(--bones-ink)",
+          color: "var(--bones-bg)",
+          fontFamily: "var(--bones-font-sans)",
+          fontSize: "13px",
+          lineHeight: 1.5,
+          padding: "6px 10px",
+        },
       },
     }),
   },

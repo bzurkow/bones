@@ -12,6 +12,17 @@
   color: var(--bones-muted);
 }
 
+/* The Blurb column's cell -- truncates to its column's fixed width
+   (single line + ellipsis) rather than wrapping or stretching the row;
+   the full text is always available via the Tooltip wrapping this. */
+.blurbCell {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* The settings column's own Menu.Target -- same treatment as
    AdminUsers.module.css's own .iconButton (no border/background at rest
    per CLAUDE.md rule 3, a plain surface-fill hover). */
@@ -38,15 +49,6 @@
    comment for why Organizations never had one to begin with). */
 .inactiveRow {
   background: var(--bones-disabled-bg);
-}
-
-/* The Members modal's role toggle + Remove button, right side of each row
-   -- Row's own children slot takes whatever's passed, so both live in one
-   flex wrapper here rather than Row itself growing a second slot. */
-.rowEnd {
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .editBody {

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Menu, Modal, Switch } from "@mantine/core";
+import { Avatar, Menu, Modal } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconSettings } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 import { authClient } from "../AuthHelpers/auth-client";
 import { hasFeature } from "../AuthHelpers/permissions";
-import { Button, ErrorMessage, Row, RowCard, TextField } from "../components";
+import { Button, ErrorMessage, Row, RowCard, TextField, Tooltip } from "../components";
 import type { TableColumn } from "../components";
 import { Table } from "../components";
 import { trpc } from "../trpc";
@@ -12,26 +13,27 @@ import panelStyles from "./AdminPanel.module.css";
 import styles from "./AdminOrganizations.module.css";
 
 type Organization = Awaited<ReturnType<typeof trpc.organizations.list.query>>[number];
-type Member = Awaited<ReturnType<typeof trpc.organizations.listMembers.query>>[number];
-// searchAddableUsers and searchUsers return the same {id, name, email}
-// shape -- one picker-result type for both, rather than two identical
-// interfaces.
 type PickableUser = Awaited<ReturnType<typeof trpc.organizations.searchUsers.query>>[number];
 
-// A group of users, with membership (organization_users, "admin"/
-// "standard" per member). Four permissions gate this page, same layering
-// as every other admin tab (AdminSiteSettings.tsx's canView/canUpdate):
-// page.admin.organizations just reaches the tab; admin.organizations.view
-// is the real view gate (a role can have the former without the latter --
-// see trpc/routers/organizations.ts's own comment) and governs the table
-// plus the Members modal's member list; admin.organizations.update gates
-// Edit, activate/deactivate, and every membership change (add/remove/
-// re-role). Create is different on purpose: it's gated by
-// application.organizations.create, not an admin-prefixed key -- there's
-// no admin.organizations.create at all (a deliberate correction mid-build,
-// see the seed migration's comment). This tab is currently the only
-// surface that calls it, but the permission itself isn't admin-only.
+// The site-wide overview: every organization, admin.organizations.view/
+// .update-gated. Editing one (name/blurb/avatar) and managing its
+// membership both live on its own page now (/organizations/<name>,
+// OrganizationDetail.tsx) instead of a modal here -- this table's own gear
+// just navigates there, plus the still-modal-based Activate/Deactivate
+// (a quick, list-level action that doesn't need the full page). Four
+// permissions gate this page, same layering as every other admin tab
+// (AdminSiteSettings.tsx's canView/canUpdate): page.admin.organizations
+// just reaches the tab; admin.organizations.view is the real view gate (a
+// role can have the former without the latter -- see
+// trpc/routers/organizations.ts's own comment); admin.organizations.update
+// gates Activate/Deactivate here and everything on the detail page. Create
+// is different on purpose: it's gated by application.organizations.create,
+// not an admin-prefixed key -- there's no admin.organizations.create at
+// all (a deliberate correction mid-build, see the seed migration's
+// comment). This tab is currently the only surface that calls it, but the
+// permission itself isn't admin-only.
 export function AdminOrganizations() {
+  const navigate = useNavigate();
   const { data: session } = authClient.useSession();
   const canView = hasFeature(session?.enabledFeatures, "admin.organizations.view");
   const canUpdate = hasFeature(session?.enabledFeatures, "admin.organizations.update");
@@ -55,40 +57,14 @@ export function AdminOrganizations() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // The org pending edit (name/blurb only -- see update's own comment on
-  // why active isn't part of this form) -- non-null opens the modal below.
-  // Holding the row itself (not just an id) lets the form seed its fields
-  // directly, no separate lookup.
-  const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editBlurb, setEditBlurb] = useState("");
-  const [saving, setSaving] = useState(false);
-
   // Activate/deactivate confirmation -- same shape as AdminUsers.tsx's own
-  // confirmUser/confirmToggleActive.
+  // confirmUser/confirmToggleActive. Kept as a quick, list-level modal
+  // (unlike Edit/Members, which moved to the detail page) since it's a
+  // single boolean with nothing else to fill in.
   const [confirmOrg, setConfirmOrg] = useState<Organization | null>(null);
   const [togglingActive, setTogglingActive] = useState(false);
 
-  // The org whose Members modal is open -- separate from editingOrg above
-  // so editing attributes (a batch, Save/Cancel'd) and managing membership
-  // (each add/remove/re-role applies immediately, no batch) never share
-  // one modal with two different commit models.
-  const [membersOrg, setMembersOrg] = useState<Organization | null>(null);
-  const [members, setMembers] = useState<Member[] | undefined>(undefined);
-  const [memberSearch, setMemberSearch] = useState("");
-  const [debouncedMemberSearch] = useDebouncedValue(memberSearch, 300);
-  const [addableUsers, setAddableUsers] = useState<PickableUser[]>([]);
-  // Which user's add/remove/re-role is in flight -- disables just that
-  // row's control, same "can't double-fire" reasoning as AdminUsers.tsx's
-  // own updatingUserId.
-  const [memberActionUserId, setMemberActionUserId] = useState<string | null>(null);
-  const [membersError, setMembersError] = useState<string | null>(null);
-
   const load = useCallback(() => trpc.organizations.list.query(), []);
-  const loadMembers = useCallback(
-    (organizationId: string) => trpc.organizations.listMembers.query({ organizationId }),
-    [],
-  );
 
   useEffect(() => {
     // Gated on canView, same reasoning as AdminSiteSettings.tsx's own load
@@ -159,27 +135,6 @@ export function AdminOrganizations() {
     }
   }
 
-  function openEdit(org: Organization) {
-    setEditingOrg(org);
-    setEditName(org.name);
-    setEditBlurb(org.blurb);
-  }
-
-  async function handleSaveEdit() {
-    if (!editingOrg) return;
-    setError(null);
-    setSaving(true);
-    try {
-      await trpc.organizations.update.mutate({ id: editingOrg.id, name: editName.trim(), blurb: editBlurb.trim() });
-      setEditingOrg(null);
-      setOrganizations(await load());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't update that organization.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function confirmToggleActive() {
     if (!confirmOrg) return;
     setError(null);
@@ -195,101 +150,29 @@ export function AdminOrganizations() {
     }
   }
 
-  function openMembers(org: Organization) {
-    setMembersOrg(org);
-    setMembers(undefined);
-    setMemberSearch("");
-    setAddableUsers([]);
-    setMembersError(null);
-  }
-
-  useEffect(() => {
-    if (!membersOrg) return;
-    let cancelled = false;
-    // oxlint-disable-next-line react/set-state-in-effect
-    void loadMembers(membersOrg.id)
-      .then((result) => {
-        if (!cancelled) setMembers(result);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setMembersError(err instanceof Error ? err.message : "Couldn't load members.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [membersOrg, loadMembers]);
-
-  useEffect(() => {
-    // No state reset here for the empty-search case -- addableUsers is
-    // cleared directly from the event that causes it instead (the search
-    // field's own onChange below, and openMembers on open), same "update
-    // it from the event that caused the change" idiom AdminUsers.tsx's
-    // handleSearchChange already uses, rather than reactively in this
-    // effect (oxlint's react/set-state-in-effect).
-    const search = debouncedMemberSearch.trim();
-    if (!membersOrg || !canUpdate || search.length === 0) return;
-    let cancelled = false;
-    // oxlint-disable-next-line react/set-state-in-effect
-    void trpc.organizations.searchAddableUsers
-      .query({ organizationId: membersOrg.id, search })
-      .then((result) => {
-        if (!cancelled) setAddableUsers(result);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setMembersError(err instanceof Error ? err.message : "Couldn't search users.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [membersOrg, canUpdate, debouncedMemberSearch]);
-
-  async function handleAddMember(user: PickableUser) {
-    if (!membersOrg) return;
-    setMembersError(null);
-    setMemberActionUserId(user.id);
-    try {
-      await trpc.organizations.addMember.mutate({ organizationId: membersOrg.id, userId: user.id });
-      setMembers(await loadMembers(membersOrg.id));
-      setAddableUsers((current) => current.filter((candidate) => candidate.id !== user.id));
-      setOrganizations(await load());
-    } catch (err) {
-      setMembersError(err instanceof Error ? err.message : "Couldn't add that member.");
-    } finally {
-      setMemberActionUserId(null);
-    }
-  }
-
-  async function handleRemoveMember(member: Member) {
-    if (!membersOrg) return;
-    setMembersError(null);
-    setMemberActionUserId(member.id);
-    try {
-      await trpc.organizations.removeMember.mutate({ organizationId: membersOrg.id, userId: member.id });
-      setMembers(await loadMembers(membersOrg.id));
-      setOrganizations(await load());
-    } catch (err) {
-      setMembersError(err instanceof Error ? err.message : "Couldn't remove that member.");
-    } finally {
-      setMemberActionUserId(null);
-    }
-  }
-
-  async function handleMemberRoleChange(member: Member, role: "admin" | "standard") {
-    if (!membersOrg || role === member.role) return;
-    setMembersError(null);
-    setMemberActionUserId(member.id);
-    try {
-      await trpc.organizations.setMemberRole.mutate({ organizationId: membersOrg.id, userId: member.id, role });
-      setMembers(await loadMembers(membersOrg.id));
-    } catch (err) {
-      setMembersError(err instanceof Error ? err.message : "Couldn't update that member's role.");
-    } finally {
-      setMemberActionUserId(null);
-    }
-  }
-
   const columns: TableColumn<Organization>[] = [
+    {
+      key: "avatar",
+      header: "",
+      width: 56,
+      render: (org) => <Avatar src={org.avatarUrl ?? undefined} alt={org.name} size={32} radius="xl" />,
+    },
     { key: "name", header: "Name", render: (org) => org.name },
+    {
+      key: "blurb",
+      header: "Blurb",
+      // A fixed track, not flexible -- name is the column that should
+      // absorb extra width; a long blurb truncates in place instead.
+      width: 220,
+      render: (org) =>
+        org.blurb ? (
+          <Tooltip label={org.blurb} multiline maw={320}>
+            <span className={styles.blurbCell}>{org.blurb}</span>
+          </Tooltip>
+        ) : (
+          <span className={styles.mono}>—</span>
+        ),
+    },
     {
       key: "memberCount",
       header: "Users",
@@ -308,10 +191,7 @@ export function AdminOrganizations() {
             </button>
           </Menu.Target>
           <Menu.Dropdown>
-            <Menu.Item onClick={() => openMembers(org)}>Members</Menu.Item>
-            <Menu.Item disabled={!canUpdate} onClick={() => openEdit(org)}>
-              Edit
-            </Menu.Item>
+            <Menu.Item onClick={() => navigate(`/organizations/${encodeURIComponent(org.name)}`)}>Open</Menu.Item>
             <Menu.Divider />
             <Menu.Item disabled={!canUpdate} onClick={() => setConfirmOrg(org)}>
               {org.active ? "Deactivate" : "Activate"}
@@ -421,34 +301,6 @@ export function AdminOrganizations() {
         </form>
       </Modal>
 
-      <Modal opened={editingOrg !== null} onClose={() => setEditingOrg(null)} title={editingOrg ? `Edit ${editingOrg.name}` : ""}>
-        {editingOrg && (
-          <div className={styles.editBody}>
-            <TextField
-              label="Name"
-              name="editName"
-              required
-              value={editName}
-              onChange={(event) => setEditName(event.currentTarget.value)}
-            />
-            <TextField
-              label="Blurb"
-              name="editBlurb"
-              value={editBlurb}
-              onChange={(event) => setEditBlurb(event.currentTarget.value)}
-            />
-            <div className={styles.editActions}>
-              <Button onClick={() => void handleSaveEdit()} loading={saving}>
-                Save
-              </Button>
-              <Button variant="quiet" onClick={() => setEditingOrg(null)} disabled={saving}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       <Modal
         opened={confirmOrg !== null}
         onClose={() => setConfirmOrg(null)}
@@ -467,85 +319,6 @@ export function AdminOrganizations() {
                 Cancel
               </Button>
             </div>
-          </div>
-        )}
-      </Modal>
-
-      <Modal
-        opened={membersOrg !== null}
-        onClose={() => setMembersOrg(null)}
-        title={membersOrg ? `Members of ${membersOrg.name}` : ""}
-      >
-        {membersOrg && (
-          <div className={styles.editBody}>
-            {members !== undefined &&
-              (members.length === 0 ? (
-                <p className={panelStyles.body}>No members yet.</p>
-              ) : (
-                <RowCard>
-                  {members.map((member) => (
-                    <Row key={member.id} label={member.name} description={member.email}>
-                      <div className={styles.rowEnd}>
-                        {canUpdate ? (
-                          <Switch
-                            aria-label={`${member.name} is admin`}
-                            label="Admin"
-                            checked={member.role === "admin"}
-                            disabled={memberActionUserId === member.id}
-                            onChange={(event) =>
-                              void handleMemberRoleChange(member, event.currentTarget.checked ? "admin" : "standard")
-                            }
-                          />
-                        ) : (
-                          <span className={styles.mono}>{member.role === "admin" ? "Admin" : "Standard"}</span>
-                        )}
-                        <Button
-                          variant="text"
-                          size="sm"
-                          disabled={!canUpdate || memberActionUserId === member.id}
-                          onClick={() => void handleRemoveMember(member)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </Row>
-                  ))}
-                </RowCard>
-              ))}
-
-            {canUpdate && (
-              <div className={styles.addMemberSection}>
-                <TextField
-                  label="Add a member"
-                  name="memberSearch"
-                  placeholder="Search by name or email"
-                  value={memberSearch}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMemberSearch(value);
-                    if (value.trim().length === 0) setAddableUsers([]);
-                  }}
-                />
-                {addableUsers.length > 0 && (
-                  <RowCard>
-                    {addableUsers.map((user) => (
-                      <Row key={user.id} label={user.name} description={user.email}>
-                        <Button
-                          variant="text"
-                          size="sm"
-                          disabled={memberActionUserId === user.id}
-                          onClick={() => void handleAddMember(user)}
-                        >
-                          Add
-                        </Button>
-                      </Row>
-                    ))}
-                  </RowCard>
-                )}
-              </div>
-            )}
-
-            <ErrorMessage message={membersError} />
           </div>
         )}
       </Modal>

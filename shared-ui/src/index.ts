@@ -18,4 +18,5 @@ export * from "./components/PageHeader";
 export * from "./components/RowCard";
 export * from "./components/Table";
 export * from "./components/TextField";
+export * from "./components/Tooltip";
 export * from "./theme";

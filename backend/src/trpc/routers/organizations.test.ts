@@ -40,23 +40,104 @@ describe("organizations.list", () => {
   });
 });
 
-describe("organizations.searchUsers", () => {
-  it("rejects a caller without application.organizations.create", async () => {
-    const standardUser = await createTestUser({ role: "standard" });
-    const caller = createCaller(contextFor(standardUser));
-    await expect(caller.searchUsers({ search: "x" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+describe("organizations.listForCurrentUser", () => {
+  it("rejects an unauthenticated caller", async () => {
+    const caller = createCaller(noSessionCtx);
+    await expect(caller.listForCurrentUser()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  it("matches by name or email", async () => {
+  it("a non-override caller sees only orgs they're a member of", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const memberOrg = await ownerCaller.create({
+      name: `test-org-${randomUUID()}`,
+      blurb: "",
+      initialAdminUserId: owner.id,
+    });
+    await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const standardUser = await createTestUser({ role: "standard" });
+    await ownerCaller.addMember({ organizationId: memberOrg!.id, userId: standardUser.id });
+    const standardCaller = createCaller(contextFor(standardUser));
+
+    const result = await standardCaller.listForCurrentUser();
+
+    expect(result.map((row) => row.id)).toEqual([memberOrg!.id]);
+  });
+
+  it("a caller with admin.organizations.update sees every org, member or not", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
-    const searchTag = randomUUID();
-    const match = await createTestUser({ name: `Findable-${searchTag}` });
-    await createTestUser({ name: "Someone Else" });
+    const orgA = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const orgB = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
 
-    const result = await caller.searchUsers({ search: searchTag });
+    const result = await caller.listForCurrentUser();
 
-    expect(result.map((row) => row.id)).toEqual([match.id]);
+    expect(result.map((row) => row.id)).toEqual(expect.arrayContaining([orgA!.id, orgB!.id]));
+  });
+});
+
+describe("organizations.getByName", () => {
+  it("rejects an unauthenticated caller", async () => {
+    const caller = createCaller(noSessionCtx);
+    await expect(caller.getByName({ name: "irrelevant" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("404s on an unknown name", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    await expect(caller.getByName({ name: `unknown-${randomUUID()}` })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("matches case-insensitively", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const name = `Test-Org-${randomUUID()}`;
+    await caller.create({ name, blurb: "", initialAdminUserId: owner.id });
+
+    const result = await caller.getByName({ name: name.toUpperCase() });
+
+    expect(result.name).toBe(name);
+  });
+
+  it("rejects a non-member without admin.organizations.update", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const outsider = await createTestUser({ role: "standard" });
+    const outsiderCaller = createCaller(contextFor(outsider));
+
+    await expect(outsiderCaller.getByName({ name: org!.name })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("a member can view without admin.organizations.update, but canEdit is false", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const member = await createTestUser({ role: "standard" });
+    await ownerCaller.addMember({ organizationId: org!.id, userId: member.id });
+    const memberCaller = createCaller(contextFor(member));
+
+    const result = await memberCaller.getByName({ name: org!.name });
+
+    expect(result.id).toBe(org!.id);
+    expect(result.canEdit).toBe(false);
+  });
+
+  it("a non-member with admin.organizations.update can view, and canEdit is true", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const otherOwner = await createTestUser({ role: "owner" });
+    const otherOwnerCaller = createCaller(contextFor(otherOwner));
+
+    const result = await otherOwnerCaller.getByName({ name: org!.name });
+
+    expect(result.id).toBe(org!.id);
+    expect(result.canEdit).toBe(true);
   });
 });
 
@@ -77,6 +158,17 @@ describe("organizations.create", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
+  it("rejects a name that already exists, case-insensitively", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const name = `Test-Org-${randomUUID()}`;
+    await caller.create({ name, blurb: "", initialAdminUserId: owner.id });
+
+    await expect(
+      caller.create({ name: name.toUpperCase(), blurb: "", initialAdminUserId: owner.id }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
   it("creates a new organization, active by default, with the given user as admin", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
@@ -91,7 +183,7 @@ describe("organizations.create", () => {
     expect(row).toBeDefined();
 
     const members = await caller.listMembers({ organizationId: result!.id });
-    expect(members).toEqual([expect.objectContaining({ id: owner.id, role: "admin" })]);
+    expect(members.members).toEqual([expect.objectContaining({ id: owner.id, role: "admin" })]);
   });
 });
 
@@ -110,6 +202,28 @@ describe("organizations.update", () => {
     await expect(caller.update({ id: randomUUID(), name: "x", blurb: "" })).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
+  });
+
+  it("rejects renaming to a name that already exists, case-insensitively", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const takenName = `Test-Org-${randomUUID()}`;
+    await caller.create({ name: takenName, blurb: "", initialAdminUserId: owner.id });
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    await expect(caller.update({ id: org!.id, name: takenName.toUpperCase(), blurb: "" })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("allows updating an organization's own name to itself (no-op rename)", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "Before.", initialAdminUserId: owner.id });
+
+    const result = await caller.update({ id: org!.id, name: org!.name, blurb: "After." });
+
+    expect(result?.blurb).toBe("After.");
   });
 
   it("updates name and blurb", async () => {
@@ -149,14 +263,67 @@ describe("organizations.setActive", () => {
   });
 });
 
-describe("organizations.listMembers", () => {
-  it("rejects a caller without admin.organizations.view", async () => {
+describe("organizations.requestAvatarUpload / confirmAvatarUpload", () => {
+  it("rejects a caller without admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
-    await expect(caller.listMembers({ organizationId: "irrelevant" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      caller.requestAvatarUpload({ organizationId: "irrelevant", contentType: "image/png" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      caller.confirmAvatarUpload({ organizationId: "irrelevant", key: "irrelevant" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("lists only users added to that organization", async () => {
+  it("rejects confirming a key that doesn't belong to this organization", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    await expect(
+      caller.confirmAvatarUpload({ organizationId: org!.id, key: `org/${randomUUID()}/x.png` }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("issues an upload URL keyed by organizationId", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const result = await caller.requestAvatarUpload({ organizationId: org!.id, contentType: "image/png" });
+
+    expect(result.key.startsWith(`org/${org!.id}/`)).toBe(true);
+    expect(result.uploadUrl).toEqual(expect.any(String));
+  });
+});
+
+describe("organizations.listMembers", () => {
+  it("rejects a caller without membership or admin.organizations.update", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const outsider = await createTestUser({ role: "standard" });
+    const outsiderCaller = createCaller(contextFor(outsider));
+
+    await expect(outsiderCaller.listMembers({ organizationId: org!.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("a plain member can list members of their own org", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const member = await createTestUser({ name: "Member One", role: "standard" });
+    await ownerCaller.addMember({ organizationId: org!.id, userId: member.id });
+    const memberCaller = createCaller(contextFor(member));
+
+    const result = await memberCaller.listMembers({ organizationId: org!.id });
+
+    expect(result.members.map((row) => row.id)).toEqual(expect.arrayContaining([owner.id, member.id]));
+    expect(result.total).toBe(2);
+  });
+
+  it("lists only members of that organization", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
     const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
@@ -166,8 +333,22 @@ describe("organizations.listMembers", () => {
     await caller.addMember({ organizationId: org!.id, userId: member.id });
 
     const result = await caller.listMembers({ organizationId: org!.id });
-    expect(result.map((row) => row.id)).toEqual(expect.arrayContaining([owner.id, member.id]));
-    expect(result).toHaveLength(2);
+    expect(result.members.map((row) => row.id)).toEqual(expect.arrayContaining([owner.id, member.id]));
+    expect(result.total).toBe(2);
+  });
+
+  it("filters by search", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const searchTag = randomUUID();
+    const match = await createTestUser({ name: `Findable-${searchTag}` });
+    await caller.addMember({ organizationId: org!.id, userId: match.id });
+
+    const result = await caller.listMembers({ organizationId: org!.id, search: searchTag });
+
+    expect(result.members.map((row) => row.id)).toEqual([match.id]);
+    expect(result.total).toBe(1);
   });
 });
 
@@ -216,7 +397,9 @@ describe("organizations.addMember / removeMember", () => {
     await caller.addMember({ organizationId: org!.id, userId: member.id });
 
     const result = await caller.listMembers({ organizationId: org!.id });
-    expect(result).toEqual(expect.arrayContaining([expect.objectContaining({ id: member.id, role: "standard" })]));
+    expect(result.members).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: member.id, role: "standard" })]),
+    );
   });
 
   it("adding twice is a no-op, not an error", async () => {
@@ -230,7 +413,7 @@ describe("organizations.addMember / removeMember", () => {
 
     const result = await caller.listMembers({ organizationId: org!.id });
     // owner (initial admin) + member, no duplicate row for member.
-    expect(result).toHaveLength(2);
+    expect(result.total).toBe(2);
   });
 
   it("removes a member", async () => {
@@ -243,7 +426,7 @@ describe("organizations.addMember / removeMember", () => {
     await caller.removeMember({ organizationId: org!.id, userId: member.id });
 
     const result = await caller.listMembers({ organizationId: org!.id });
-    expect(result.map((row) => row.id)).toEqual([owner.id]);
+    expect(result.members.map((row) => row.id)).toEqual([owner.id]);
   });
 });
 
