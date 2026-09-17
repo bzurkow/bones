@@ -140,7 +140,7 @@ export function AdminOrganizations() {
     setError(null);
     setTogglingActive(true);
     try {
-      await trpc.organizations.setActive.mutate({ id: confirmOrg.id, active: !confirmOrg.active });
+      await trpc.organizations.setActive.mutate({ organizationId: confirmOrg.id, active: !confirmOrg.active });
       setConfirmOrg(null);
       setOrganizations(await load());
     } catch (err) {

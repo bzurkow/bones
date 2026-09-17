@@ -1,0 +1,35 @@
+/* Same shape as Admin/AdminPanel.module.css's own stack/body/sectionTitle/
+   createForm -- duplicated here rather than imported across folders,
+   matching how every other page in this app owns its own CSS module. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.body {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--bones-muted);
+}
+
+.sectionTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--bones-ink);
+}
+
+.createForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.createForm > *:first-child {
+  max-width: 320px;
+  flex: 1;
+}

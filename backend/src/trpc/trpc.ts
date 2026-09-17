@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { auth } from "../auth.js";
 import { toFetchHeaders } from "../lib/fetch-headers.js";
+import { canUpdateOrg } from "../organization-permissions.js";
 import { hasPermission } from "../permissions.js";
 
 // Better Auth owns sessions/cookies; it isn't wired into tRPC's own request
@@ -47,6 +48,45 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 export function requirePermission(featureKey: string) {
   return protectedProcedure.use(async ({ ctx, next }) => {
     if (!(await hasPermission(ctx.session.user.role, featureKey))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next({ ctx });
+  });
+}
+
+// The per-organization RBAC primitive (see organization-permissions.ts's
+// canUpdateOrg) -- shaped to read like requirePermission above, but it
+// can't just check ctx.session the way that one does: which organization
+// applies isn't known until the procedure's own input is parsed, and a
+// `.use()` middleware runs *before* `.input()`'s validation in tRPC's
+// pipeline. getRawInput() (tRPC's own escape hatch for exactly this -- a
+// middleware that needs to inspect input before it's been validated)
+// reads organizationId off the raw, not-yet-parsed input instead. Every
+// procedure built on this must therefore accept a top-level
+// `organizationId` field in its own zod input -- there's no compile-time
+// enforcement of that pairing, just this convention.
+//
+// canUpdateOrg (not the narrower hasOrganizationPermission) is the actual
+// check: "if a user has admin organization update permission, then yes,
+// they can update, OR they have to have the organization update
+// permission" -- the global admin.organizations.update override always
+// applies on top of whatever this org's own feature_roles say, for every
+// key built on this primitive.
+function extractOrganizationId(rawInput: unknown): string | undefined {
+  if (typeof rawInput !== "object" || rawInput === null || !("organizationId" in rawInput)) {
+    return undefined;
+  }
+  const value = (rawInput as { organizationId?: unknown }).organizationId;
+  return typeof value === "string" ? value : undefined;
+}
+
+export function requireOrganizationPermission(featureKey: string) {
+  return protectedProcedure.use(async ({ ctx, next, getRawInput }) => {
+    const organizationId = extractOrganizationId(await getRawInput());
+    if (!organizationId) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "organizationId is required." });
+    }
+    if (!(await canUpdateOrg(organizationId, ctx.session.user.id, ctx.session.user.role, featureKey))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     return next({ ctx });

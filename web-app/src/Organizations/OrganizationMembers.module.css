@@ -1,0 +1,61 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mono {
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  color: var(--bones-muted);
+}
+
+.sectionTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--bones-ink);
+}
+
+/* Members table's Organization Role cell -- same treatment as
+   AdminUsers.module.css's own .cellDropdown (looks like the plain label
+   it replaces plus a chevron, no border/background of its own). */
+.cellDropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.cellDropdown:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.cellDropdown svg {
+  color: var(--bones-subtle);
+}
+
+/* The settings column's own Menu.Target -- same treatment as
+   AdminUsers.module.css's own .iconButton. */
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--bones-radius-sm);
+  background: none;
+  color: var(--bones-ink);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--bones-surface);
+}

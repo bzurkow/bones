@@ -11,6 +11,9 @@ export * from "./roles-schema.js";
 export * from "./features-schema.js";
 export * from "./feature-roles-schema.js";
 export * from "./organizations-schema.js";
+export * from "./organization-roles-schema.js";
+export * from "./organization-features-schema.js";
+export * from "./organization-feature-roles-schema.js";
 export * from "./organization-users-schema.js";
 
 // user.viewMode's allowed values live in ../user-fields.ts (imported

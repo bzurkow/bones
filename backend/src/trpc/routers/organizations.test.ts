@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "../../db/index.js";
-import { organizations } from "../../db/schema.js";
+import { organizationFeatureRoles, organizationRoles, organizationUsers, organizations } from "../../db/schema.js";
 import { contextFor, createTestUser } from "../../test/context.js";
 import { resetDb } from "../../test/reset-db.js";
 import { createCallerFactory, type Context } from "../trpc.js";
@@ -111,7 +111,7 @@ describe("organizations.getByName", () => {
     await expect(outsiderCaller.getByName({ name: org!.name })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("a member can view without admin.organizations.update, but canEdit is false", async () => {
+  it("a plain member can view, but every canUpdate* flag is false", async () => {
     const owner = await createTestUser({ role: "owner" });
     const ownerCaller = createCaller(contextFor(owner));
     const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
@@ -123,10 +123,26 @@ describe("organizations.getByName", () => {
     const result = await memberCaller.getByName({ name: org!.name });
 
     expect(result.id).toBe(org!.id);
-    expect(result.canEdit).toBe(false);
+    expect(result.canUpdateProfile).toBe(false);
+    expect(result.canUpdateMembers).toBe(false);
+    expect(result.canUpdateRoles).toBe(false);
+    expect(result.canUpdatePermissions).toBe(false);
   });
 
-  it("a non-member with admin.organizations.update can view, and canEdit is true", async () => {
+  it("the initial admin can view and update every tab", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const result = await ownerCaller.getByName({ name: org!.name });
+
+    expect(result.canUpdateProfile).toBe(true);
+    expect(result.canUpdateMembers).toBe(true);
+    expect(result.canUpdateRoles).toBe(true);
+    expect(result.canUpdatePermissions).toBe(true);
+  });
+
+  it("a non-member with admin.organizations.update can view and update every tab", async () => {
     const owner = await createTestUser({ role: "owner" });
     const ownerCaller = createCaller(contextFor(owner));
     const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
@@ -137,7 +153,31 @@ describe("organizations.getByName", () => {
     const result = await otherOwnerCaller.getByName({ name: org!.name });
 
     expect(result.id).toBe(org!.id);
-    expect(result.canEdit).toBe(true);
+    expect(result.canUpdateProfile).toBe(true);
+    expect(result.canUpdateMembers).toBe(true);
+    expect(result.canUpdateRoles).toBe(true);
+    expect(result.canUpdatePermissions).toBe(true);
+  });
+
+  it("a member granted only members.update can update members but not profile", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const member = await createTestUser({ role: "standard" });
+    await ownerCaller.addMember({ organizationId: org!.id, userId: member.id });
+    await db.insert(organizationFeatureRoles).values({
+      organizationId: org!.id,
+      featureKey: "members.update",
+      role: "standard",
+      granted: true,
+    });
+    const memberCaller = createCaller(contextFor(member));
+
+    const result = await memberCaller.getByName({ name: org!.name });
+
+    expect(result.canUpdateMembers).toBe(true);
+    expect(result.canUpdateProfile).toBe(false);
   });
 });
 
@@ -185,13 +225,23 @@ describe("organizations.create", () => {
     const members = await caller.listMembers({ organizationId: result!.id });
     expect(members.members).toEqual([expect.objectContaining({ id: owner.id, role: "admin" })]);
   });
+
+  it("seeds admin/standard/viewer organization_roles for a new org", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+
+    const result = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const roleRows = await db.select().from(organizationRoles).where(eq(organizationRoles.organizationId, result!.id));
+    expect(roleRows.map((row) => row.name).sort()).toEqual(["admin", "standard", "viewer"]);
+  });
 });
 
 describe("organizations.update", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
-    await expect(caller.update({ id: "irrelevant", name: "x", blurb: "" })).rejects.toMatchObject({
+    await expect(caller.update({ organizationId: "irrelevant", name: "x", blurb: "" })).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
@@ -199,7 +249,7 @@ describe("organizations.update", () => {
   it("404s on an unknown id", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
-    await expect(caller.update({ id: randomUUID(), name: "x", blurb: "" })).rejects.toMatchObject({
+    await expect(caller.update({ organizationId: randomUUID(), name: "x", blurb: "" })).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
   });
@@ -211,9 +261,9 @@ describe("organizations.update", () => {
     await caller.create({ name: takenName, blurb: "", initialAdminUserId: owner.id });
     const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
 
-    await expect(caller.update({ id: org!.id, name: takenName.toUpperCase(), blurb: "" })).rejects.toMatchObject({
-      code: "BAD_REQUEST",
-    });
+    await expect(
+      caller.update({ organizationId: org!.id, name: takenName.toUpperCase(), blurb: "" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("allows updating an organization's own name to itself (no-op rename)", async () => {
@@ -221,7 +271,7 @@ describe("organizations.update", () => {
     const caller = createCaller(contextFor(owner));
     const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "Before.", initialAdminUserId: owner.id });
 
-    const result = await caller.update({ id: org!.id, name: org!.name, blurb: "After." });
+    const result = await caller.update({ organizationId: org!.id, name: org!.name, blurb: "After." });
 
     expect(result?.blurb).toBe("After.");
   });
@@ -232,24 +282,48 @@ describe("organizations.update", () => {
     const created = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "Before.", initialAdminUserId: owner.id });
 
     const updatedName = `test-org-${randomUUID()}`;
-    const result = await caller.update({ id: created!.id, name: updatedName, blurb: "After." });
+    const result = await caller.update({ organizationId: created!.id, name: updatedName, blurb: "After." });
 
     expect(result?.name).toBe(updatedName);
     expect(result?.blurb).toBe("After.");
   });
+
+  it("a member granted profile.update can update without the global override", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const member = await createTestUser({ role: "standard" });
+    await ownerCaller.addMember({ organizationId: org!.id, userId: member.id });
+    await db.insert(organizationFeatureRoles).values({
+      organizationId: org!.id,
+      featureKey: "profile.update",
+      role: "standard",
+      granted: true,
+    });
+    const memberCaller = createCaller(contextFor(member));
+
+    const result = await memberCaller.update({ organizationId: org!.id, name: org!.name, blurb: "Updated by a member." });
+
+    expect(result?.blurb).toBe("Updated by a member.");
+  });
 });
 
 describe("organizations.setActive", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
-    await expect(caller.setActive({ id: "irrelevant", active: false })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.setActive({ organizationId: "irrelevant", active: false })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   it("404s on an unknown id", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
-    await expect(caller.setActive({ id: randomUUID(), active: false })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.setActive({ organizationId: randomUUID(), active: false })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 
   it("toggles active", async () => {
@@ -257,14 +331,14 @@ describe("organizations.setActive", () => {
     const caller = createCaller(contextFor(owner));
     const created = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
 
-    const result = await caller.setActive({ id: created!.id, active: false });
+    const result = await caller.setActive({ organizationId: created!.id, active: false });
 
     expect(result?.active).toBe(false);
   });
 });
 
 describe("organizations.requestAvatarUpload / confirmAvatarUpload", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
     await expect(
@@ -352,32 +426,95 @@ describe("organizations.listMembers", () => {
   });
 });
 
-describe("organizations.searchAddableUsers", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+describe("organizations.findAddableUserByEmail", () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
     await expect(
-      caller.searchAddableUsers({ organizationId: "irrelevant", search: "x" }),
+      caller.findAddableUserByEmail({ organizationId: "irrelevant", email: "someone@example.test" }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("excludes existing members from the results", async () => {
+  it("rejects a non-email string", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
     const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
-    const searchTag = randomUUID();
-    const member = await createTestUser({ name: `Findable-${searchTag} Member` });
-    const nonMember = await createTestUser({ name: `Findable-${searchTag} Stranger` });
+
+    await expect(
+      caller.findAddableUserByEmail({ organizationId: org!.id, email: "not-an-email" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("returns null for an email that matches no user", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const result = await caller.findAddableUserByEmail({ organizationId: org!.id, email: `${randomUUID()}@example.test` });
+
+    expect(result).toBeNull();
+  });
+
+  it("finds an exact match, case-insensitively", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const email = `${randomUUID()}@Example.test`;
+    const target = await createTestUser({ email });
+
+    const result = await caller.findAddableUserByEmail({ organizationId: org!.id, email: email.toUpperCase() });
+
+    expect(result?.id).toBe(target.id);
+  });
+
+  it("does not match on a partial address -- exact match only, not a substring search", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const localPart = randomUUID();
+    await createTestUser({ email: `${localPart}@example.test` });
+
+    // A real, differently-shaped email that happens to contain the same
+    // local part as a substring -- must not match, unlike the old
+    // ilike-based search this replaced.
+    const result = await caller.findAddableUserByEmail({
+      organizationId: org!.id,
+      email: `prefix-${localPart}@example.test`,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null for an existing member (nothing to add)", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const email = `${randomUUID()}@example.test`;
+    const member = await createTestUser({ email });
     await caller.addMember({ organizationId: org!.id, userId: member.id });
 
-    const result = await caller.searchAddableUsers({ organizationId: org!.id, search: searchTag });
+    const result = await caller.findAddableUserByEmail({ organizationId: org!.id, email });
 
-    expect(result.map((row) => row.id)).toEqual([nonMember.id]);
+    expect(result).toBeNull();
+  });
+
+  it("finds a previously-removed member again -- removal is a soft delete, not a real one", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const email = `${randomUUID()}@example.test`;
+    const member = await createTestUser({ email });
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+    await caller.removeMember({ organizationId: org!.id, userId: member.id });
+
+    const result = await caller.findAddableUserByEmail({ organizationId: org!.id, email });
+
+    expect(result?.id).toBe(member.id);
   });
 });
 
 describe("organizations.addMember / removeMember", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
     await expect(caller.addMember({ organizationId: "irrelevant", userId: "irrelevant" })).rejects.toMatchObject({
@@ -428,10 +565,88 @@ describe("organizations.addMember / removeMember", () => {
     const result = await caller.listMembers({ organizationId: org!.id });
     expect(result.members.map((row) => row.id)).toEqual([owner.id]);
   });
+
+  it("removal is a soft delete -- the row survives, just inactive", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const member = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+
+    await caller.removeMember({ organizationId: org!.id, userId: member.id });
+
+    const [row] = await db
+      .select()
+      .from(organizationUsers)
+      .where(and(eq(organizationUsers.organizationId, org!.id), eq(organizationUsers.userId, member.id)));
+    expect(row).toMatchObject({ active: false });
+  });
+
+  it("re-adding a removed member reactivates them, reset to standard", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const member = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+    await caller.setMemberRole({ organizationId: org!.id, userId: member.id, role: "admin" });
+    await caller.removeMember({ organizationId: org!.id, userId: member.id });
+
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+
+    const result = await caller.listMembers({ organizationId: org!.id });
+    expect(result.members).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: member.id, role: "standard" })]),
+    );
+  });
+
+  it("rejects removing the organization's last active admin", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    await expect(caller.removeMember({ organizationId: org!.id, userId: owner.id })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("allows removing an admin once a second active admin exists", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const secondAdmin = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: secondAdmin.id });
+    await caller.setMemberRole({ organizationId: org!.id, userId: secondAdmin.id, role: "admin" });
+
+    await expect(caller.removeMember({ organizationId: org!.id, userId: owner.id })).resolves.toBeDefined();
+  });
+
+  it("a member granted members.update can add/remove without the global override", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const ownerCaller = createCaller(contextFor(owner));
+    const org = await ownerCaller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    const granted = await createTestUser({ role: "standard" });
+    await ownerCaller.addMember({ organizationId: org!.id, userId: granted.id });
+    await db.insert(organizationFeatureRoles).values({
+      organizationId: org!.id,
+      featureKey: "members.update",
+      role: "standard",
+      granted: true,
+    });
+    const grantedCaller = createCaller(contextFor(granted));
+
+    const newMember = await createTestUser();
+    await grantedCaller.addMember({ organizationId: org!.id, userId: newMember.id });
+    await grantedCaller.removeMember({ organizationId: org!.id, userId: newMember.id });
+
+    const result = await grantedCaller.listMembers({ organizationId: org!.id });
+    expect(result.members.map((row) => row.id)).toEqual(expect.arrayContaining([owner.id, granted.id]));
+    expect(result.members.map((row) => row.id)).not.toContain(newMember.id);
+  });
 });
 
 describe("organizations.setMemberRole", () => {
-  it("rejects a caller without admin.organizations.update", async () => {
+  it("rejects a caller who's neither a member nor holds admin.organizations.update", async () => {
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
     await expect(
@@ -460,5 +675,81 @@ describe("organizations.setMemberRole", () => {
     const result = await caller.setMemberRole({ organizationId: org!.id, userId: member.id, role: "admin" });
 
     expect(result?.role).toBe("admin");
+  });
+
+  it("assigns the seeded viewer role too, not just admin/standard", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const member = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+
+    const result = await caller.setMemberRole({ organizationId: org!.id, userId: member.id, role: "viewer" });
+
+    expect(result?.role).toBe("viewer");
+  });
+
+  it("rejects a role that doesn't exist for this org", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const member = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: member.id });
+
+    await expect(
+      caller.setMemberRole({ organizationId: org!.id, userId: member.id, role: `not-a-role-${randomUUID()}` }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("rejects demoting the organization's last active admin", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    await expect(
+      caller.setMemberRole({ organizationId: org!.id, userId: owner.id, role: "standard" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("allows demoting an admin once a second active admin exists", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const secondAdmin = await createTestUser();
+    await caller.addMember({ organizationId: org!.id, userId: secondAdmin.id });
+    await caller.setMemberRole({ organizationId: org!.id, userId: secondAdmin.id, role: "admin" });
+
+    const result = await caller.setMemberRole({ organizationId: org!.id, userId: owner.id, role: "standard" });
+
+    expect(result?.role).toBe("standard");
+  });
+
+  it("re-promoting to admin is never blocked by the last-admin guard", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+
+    // A no-op "demote" that isn't actually a demotion (already admin ->
+    // admin) shouldn't count as the one exception, but assigning admin
+    // itself should never be blocked regardless -- there's no way
+    // granting MORE admin standing could leave zero active admins.
+    const result = await caller.setMemberRole({ organizationId: org!.id, userId: owner.id, role: "admin" });
+
+    expect(result?.role).toBe("admin");
+  });
+
+  it("a deactivated admin's account doesn't count -- demoting the only real active admin is still blocked", async () => {
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
+    const deactivatedAdmin = await createTestUser({ active: false });
+    await caller.addMember({ organizationId: org!.id, userId: deactivatedAdmin.id });
+    await caller.setMemberRole({ organizationId: org!.id, userId: deactivatedAdmin.id, role: "admin" });
+
+    // Two "admin" rows exist, but only the owner's account is active --
+    // demoting the owner would still leave zero active admins.
+    await expect(
+      caller.setMemberRole({ organizationId: org!.id, userId: owner.id, role: "standard" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

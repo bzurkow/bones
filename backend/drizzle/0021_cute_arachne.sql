@@ -1,0 +1,1 @@
+ALTER TABLE "organization_users" ADD COLUMN "active" boolean DEFAULT true NOT NULL;

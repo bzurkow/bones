@@ -1,15 +1,31 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { ORGANIZATION_MEMBER_ROLES } from "../../db/organization-users-schema.js";
-import { organizationUsers, organizations, users } from "../../db/schema.js";
+import { organizationFeatureRoles, organizationFeatures, organizationRoles, organizationUsers, organizations, users } from "../../db/schema.js";
+import { ORGANIZATION_TAB_UPDATE_FEATURES, canUpdateOrg, canViewOrg } from "../../organization-permissions.js";
 import { hasPermission } from "../../permissions.js";
 import { AVATAR_BUCKET, getPresignedUploadUrl, resolveAvatarUrl } from "../../storage/index.js";
 import { ALLOWED_AVATAR_CONTENT_TYPES } from "../../user-fields.js";
-import { protectedProcedure, requirePermission, router } from "../trpc.js";
+import { protectedProcedure, requireOrganizationPermission, requirePermission, router } from "../trpc.js";
+import { organizationFeatureRolesRouter } from "./organization-feature-roles.js";
+import { organizationFeaturesRouter } from "./organization-features.js";
+import { organizationRolesRouter } from "./organization-roles.js";
 
-const memberRole = z.enum(ORGANIZATION_MEMBER_ROLES);
+// Every organization's starting role set -- see organization-roles-schema.ts's
+// own comment for what each one means/is protected for. Seeded here (a
+// new org, in the same transaction as the org row itself) and in this
+// table's own migration (every *existing* org, backfilled once).
+const DEFAULT_ORGANIZATION_ROLES = ["admin", "standard", "viewer"] as const;
+
+// Human-readable labels for ORGANIZATION_TAB_UPDATE_FEATURES -- keyed the
+// same way features-schema.ts's own seed data pairs a key with a label.
+const TAB_UPDATE_FEATURE_LABELS: Record<(typeof ORGANIZATION_TAB_UPDATE_FEATURES)[number], string> = {
+  "profile.update": "Profile > Update",
+  "members.update": "Members > Update",
+  "roles.update": "Roles > Update",
+  "permissions.update": "Permissions > Update",
+};
 
 const EXTENSION_FOR_CONTENT_TYPE: Record<(typeof ALLOWED_AVATAR_CONTENT_TYPES)[number], string> = {
   "image/jpeg": "jpg",
@@ -26,26 +42,6 @@ function byNameCaseInsensitive(name: string) {
   return sql`lower(${organizations.name}) = lower(${name})`;
 }
 
-async function isMember(organizationId: string, userId: string): Promise<boolean> {
-  const [row] = await db
-    .select({ userId: organizationUsers.userId })
-    .from(organizationUsers)
-    .where(and(eq(organizationUsers.organizationId, organizationId), eq(organizationUsers.userId, userId)))
-    .limit(1);
-  return Boolean(row);
-}
-
-// The /organizations/<name> page's own access rule, not a feature-flag
-// key: a member of the organization can view it, and admin.organizations.
-// update is a global override on top (an admin who isn't a member can
-// still open any org) -- see the redirect rule this was built from
-// ("if a user is not permissioned to an organization, route them back to
-// /organizations unless they have Admin > Organizations > Update").
-async function canViewOrg(organizationId: string, userId: string, role: string): Promise<boolean> {
-  if (await hasPermission(role, "admin.organizations.update")) return true;
-  return isMember(organizationId, userId);
-}
-
 const ORG_MEMBER_SORTABLE_COLUMNS = {
   name: users.name,
   email: users.email,
@@ -55,6 +51,56 @@ const orgMemberSortKeys = Object.keys(ORG_MEMBER_SORTABLE_COLUMNS) as [
   keyof typeof ORG_MEMBER_SORTABLE_COLUMNS,
   ...(keyof typeof ORG_MEMBER_SORTABLE_COLUMNS)[],
 ];
+
+// "Active org admin" means all three: an organization_users row with
+// role "admin", that row's own active flag (not soft-removed from the
+// org), and the underlying user's own global active flag (not
+// deactivated account-wide) -- a deactivated user shouldn't count toward
+// keeping the org staffed even if nobody's gotten around to removing
+// their membership yet. Backs the "an org can never be left with zero
+// active admins" guard setMemberRole/removeMember both enforce below.
+function activeOrgAdminCondition(organizationId: string) {
+  return and(
+    eq(organizationUsers.organizationId, organizationId),
+    eq(organizationUsers.role, "admin"),
+    eq(organizationUsers.active, true),
+    eq(users.active, true),
+  );
+}
+
+async function countActiveOrgAdmins(organizationId: string): Promise<number> {
+  const [row] = await db
+    .select({ total: count() })
+    .from(organizationUsers)
+    .innerJoin(users, eq(organizationUsers.userId, users.id))
+    .where(activeOrgAdminCondition(organizationId));
+  return row?.total ?? 0;
+}
+
+async function isActiveOrgAdmin(organizationId: string, userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ userId: organizationUsers.userId })
+    .from(organizationUsers)
+    .innerJoin(users, eq(organizationUsers.userId, users.id))
+    .where(and(activeOrgAdminCondition(organizationId), eq(organizationUsers.userId, userId)));
+  return Boolean(row);
+}
+
+// Shared by setMemberRole (demoting) and removeMember (removing) -- both
+// are "this member stops being an active admin" in different clothes, so
+// both need the exact same "would this leave zero left" check. Only
+// throws when the member being acted on is currently one of the admins
+// being counted (a no-op demote, or removing a non-admin, never needs to
+// count anything).
+async function assertNotLastActiveAdmin(organizationId: string, userId: string): Promise<void> {
+  if (!(await isActiveOrgAdmin(organizationId, userId))) return;
+  if ((await countActiveOrgAdmins(organizationId)) <= 1) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "An organization must always have at least one active admin.",
+    });
+  }
+}
 
 export const organizationsRouter = router({
   // admin.organizations.view, not merely protectedProcedure -- unlike
@@ -70,7 +116,11 @@ export const organizationsRouter = router({
   //
   // memberCount is a LEFT JOIN + count, not a per-row subquery -- one
   // query for the whole table, grouped by organization so an org with
-  // zero members still gets a row (LEFT, not INNER).
+  // zero members still gets a row (LEFT, not INNER). The join condition
+  // itself excludes soft-removed rows (organizationUsers.active) rather
+  // than filtering them in a WHERE -- a WHERE would turn the LEFT JOIN
+  // back into an effective INNER JOIN for any org that has ONLY removed
+  // members, dropping it from the result entirely.
   list: requirePermission("admin.organizations.view").query(async () => {
     const rows = await db
       .select({
@@ -82,7 +132,10 @@ export const organizationsRouter = router({
         memberCount: count(organizationUsers.userId),
       })
       .from(organizations)
-      .leftJoin(organizationUsers, eq(organizationUsers.organizationId, organizations.id))
+      .leftJoin(
+        organizationUsers,
+        and(eq(organizationUsers.organizationId, organizations.id), eq(organizationUsers.active, true)),
+      )
       .groupBy(organizations.id);
 
     return Promise.all(rows.map(async (row) => ({ ...row, avatarUrl: await resolveAvatarUrl(row.avatarUrl) })));
@@ -103,7 +156,7 @@ export const organizationsRouter = router({
       const memberRows = await db
         .select({ organizationId: organizationUsers.organizationId })
         .from(organizationUsers)
-        .where(eq(organizationUsers.userId, ctx.session.user.id));
+        .where(and(eq(organizationUsers.userId, ctx.session.user.id), eq(organizationUsers.active, true)));
       memberOrgIds = memberRows.map((row) => row.organizationId);
       if (memberOrgIds.length === 0) return [];
     }
@@ -118,7 +171,10 @@ export const organizationsRouter = router({
         memberCount: count(organizationUsers.userId),
       })
       .from(organizations)
-      .leftJoin(organizationUsers, eq(organizationUsers.organizationId, organizations.id))
+      .leftJoin(
+        organizationUsers,
+        and(eq(organizationUsers.organizationId, organizations.id), eq(organizationUsers.active, true)),
+      )
       .where(memberOrgIds ? inArray(organizations.id, memberOrgIds) : undefined)
       .groupBy(organizations.id);
 
@@ -128,15 +184,17 @@ export const organizationsRouter = router({
   // Backs /organizations/<name>. Case-insensitive lookup (see
   // byNameCaseInsensitive's own comment) -- NOT_FOUND if no such
   // organization exists at all, FORBIDDEN if it exists but the caller
-  // can't view it (canViewOrg above); the page itself catches either and
-  // redirects to /organizations, it doesn't distinguish them for the
-  // visitor. `canEdit` rides along so the page can gate its Save/avatar-
-  // upload/member-management controls without a second round-trip -- it's
-  // the same admin.organizations.update check as canViewOrg's override
-  // half, not a separate per-org "is this caller an admin of this specific
-  // org" check (organization_users.role is informational, it doesn't
-  // itself grant write access on this page -- see setMemberRole's own
-  // comment).
+  // can't view it (canViewOrg above, membership or the global override);
+  // the page itself catches either and redirects to /organizations, it
+  // doesn't distinguish them for the visitor.
+  //
+  // Everyone who can view the org can see all four tabs -- there's no
+  // per-tab *view* gate -- but each tab's own write controls need its own
+  // canUpdate<Tab> flag, computed the same way requireOrganizationPermission
+  // checks it server-side (canUpdateOrg: the global admin.organizations.
+  // update override, or this member's own org-scoped grant for that tab's
+  // update key), so the page doesn't need a round-trip per tab just to
+  // know what to render.
   getByName: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
@@ -145,12 +203,25 @@ export const organizationsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "No organization with that name." });
       }
 
-      const canEdit = await hasPermission(ctx.session.user.role, "admin.organizations.update");
-      if (!canEdit && !(await isMember(org.id, ctx.session.user.id))) {
+      if (!(await canViewOrg(org.id, ctx.session.user.id, ctx.session.user.role))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
-      return { ...org, avatarUrl: await resolveAvatarUrl(org.avatarUrl), canEdit };
+      const [canUpdateProfile, canUpdateMembers, canUpdateRoles, canUpdatePermissions] = await Promise.all([
+        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "profile.update"),
+        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "members.update"),
+        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "roles.update"),
+        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "permissions.update"),
+      ]);
+
+      return {
+        ...org,
+        avatarUrl: await resolveAvatarUrl(org.avatarUrl),
+        canUpdateProfile,
+        canUpdateMembers,
+        canUpdateRoles,
+        canUpdatePermissions,
+      };
     }),
 
   // Users matched by name/email, for the Create modal's initial-admin
@@ -208,6 +279,38 @@ export const organizationsRouter = router({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't create that organization." });
         }
 
+        // Roles before membership -- organization_users.role has a real
+        // FK onto organization_roles (see that file's own comment), so
+        // the role rows have to exist before the initial admin's
+        // membership row can reference one of them.
+        await tx
+          .insert(organizationRoles)
+          .values(DEFAULT_ORGANIZATION_ROLES.map((name) => ({ organizationId: created.id, name })));
+
+        // The four tab-update features (see organization-permissions.ts's
+        // own comment), seeded here rather than left for someone to
+        // create later -- same reasoning the global RBAC seed migration
+        // gives for admin.features.create/page.admin.roles being seeded
+        // rather than left absent. "admin" is granted all four,
+        // immediately and permanently (organization-feature-roles.ts's
+        // setGranted refuses to ever revoke them) -- "org admin must
+        // have all update permissions in the organization."
+        await tx.insert(organizationFeatures).values(
+          ORGANIZATION_TAB_UPDATE_FEATURES.map((key) => ({
+            organizationId: created.id,
+            key,
+            label: TAB_UPDATE_FEATURE_LABELS[key],
+          })),
+        );
+        await tx.insert(organizationFeatureRoles).values(
+          ORGANIZATION_TAB_UPDATE_FEATURES.map((key) => ({
+            organizationId: created.id,
+            featureKey: key,
+            role: "admin",
+            granted: true,
+          })),
+        );
+
         await tx.insert(organizationUsers).values({
           organizationId: created.id,
           userId: input.initialAdminUserId,
@@ -222,10 +325,16 @@ export const organizationsRouter = router({
   // same split as admin.ts's setUserRole/setUserActive: a settings-gear
   // confirm-modal action reads as a different kind of change than a plain
   // form field, even though both ultimately set a column on this table.
-  update: requirePermission("admin.organizations.update")
+  // Gated by the Profile tab's own update permission (requireOrganizationPermission,
+  // not the global-only requirePermission) -- the global
+  // admin.organizations.update still works too, as the override
+  // canUpdateOrg always checks first (see trpc.ts's own comment). The
+  // input field is `organizationId`, not `id` -- requireOrganizationPermission
+  // reads that exact field name off the raw input before it's parsed.
+  update: requireOrganizationPermission("profile.update")
     .input(
       z.object({
-        id: z.string().min(1),
+        organizationId: z.string().min(1),
         name: z.string().min(1),
         blurb: z.string(),
       }),
@@ -234,7 +343,7 @@ export const organizationsRouter = router({
       const [existing] = await db
         .select({ id: organizations.id })
         .from(organizations)
-        .where(and(byNameCaseInsensitive(input.name), ne(organizations.id, input.id)));
+        .where(and(byNameCaseInsensitive(input.name), ne(organizations.id, input.organizationId)));
       if (existing) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "An organization with that name already exists." });
       }
@@ -242,7 +351,7 @@ export const organizationsRouter = router({
       const [updated] = await db
         .update(organizations)
         .set({ name: input.name, blurb: input.blurb })
-        .where(eq(organizations.id, input.id))
+        .where(eq(organizations.id, input.organizationId))
         .returning();
 
       if (!updated) {
@@ -253,14 +362,14 @@ export const organizationsRouter = router({
     }),
 
   // The settings-gear confirm-modal action -- see update's own comment for
-  // why this is separate.
-  setActive: requirePermission("admin.organizations.update")
-    .input(z.object({ id: z.string().min(1), active: z.boolean() }))
+  // why this is separate (and for the organizationId field name/gating).
+  setActive: requireOrganizationPermission("profile.update")
+    .input(z.object({ organizationId: z.string().min(1), active: z.boolean() }))
     .mutation(async ({ input }) => {
       const [updated] = await db
         .update(organizations)
         .set({ active: input.active })
-        .where(eq(organizations.id, input.id))
+        .where(eq(organizations.id, input.organizationId))
         .returning();
 
       if (!updated) {
@@ -273,10 +382,10 @@ export const organizationsRouter = router({
   // Same pattern as profile.ts's requestAvatarUpload/confirmAvatarUpload
   // (a presigned PUT the browser uploads directly to, AWS creds never
   // reach the client), keyed by organizationId instead of the caller's
-  // own user id -- gated by admin.organizations.update (the org detail
-  // page's own canEdit), since this is an org attribute an editor sets,
-  // not a self-service upload like a user's own avatar.
-  requestAvatarUpload: requirePermission("admin.organizations.update")
+  // own user id -- gated by the Profile tab's own update permission, since
+  // this is an org attribute an editor sets, not a self-service upload
+  // like a user's own avatar.
+  requestAvatarUpload: requireOrganizationPermission("profile.update")
     .input(z.object({ organizationId: z.string().min(1), contentType: z.enum(ALLOWED_AVATAR_CONTENT_TYPES) }))
     .mutation(async ({ input }) => {
       const key = `org/${input.organizationId}/${crypto.randomUUID()}.${EXTENSION_FOR_CONTENT_TYPE[input.contentType]}`;
@@ -284,7 +393,7 @@ export const organizationsRouter = router({
       return { uploadUrl, key };
     }),
 
-  confirmAvatarUpload: requirePermission("admin.organizations.update")
+  confirmAvatarUpload: requireOrganizationPermission("profile.update")
     .input(z.object({ organizationId: z.string().min(1), key: z.string().min(1) }))
     .mutation(async ({ input }) => {
       if (!input.key.startsWith(`org/${input.organizationId}/`)) {
@@ -329,12 +438,13 @@ export const organizationsRouter = router({
       const trimmedSearch = input.search?.trim();
       const condition = and(
         eq(organizationUsers.organizationId, input.organizationId),
+        eq(organizationUsers.active, true),
         trimmedSearch ? or(ilike(users.name, `%${trimmedSearch}%`), ilike(users.email, `%${trimmedSearch}%`)) : undefined,
       );
       const sortColumn = ORG_MEMBER_SORTABLE_COLUMNS[input.sortBy ?? "name"];
       const order = input.sortDirection === "desc" ? desc(sortColumn) : asc(sortColumn);
 
-      const [rows, [totalRow]] = await Promise.all([
+      const [rows, [totalRow], activeAdminCount] = await Promise.all([
         db
           .select({
             id: users.id,
@@ -342,6 +452,15 @@ export const organizationsRouter = router({
             email: users.email,
             avatarUrl: users.avatarUrl,
             role: organizationUsers.role,
+            // Whether this member's own (global) account is active --
+            // not shown as its own column, just enough for the frontend
+            // to know if THIS row is one of the admins activeAdminCount
+            // below is counting (assertNotLastActiveAdmin's rule counts
+            // only role "admin" + active membership + active user, all
+            // three -- a role="admin" row here whose user account is
+            // deactivated doesn't count, so it shouldn't read as "the
+            // last admin" and get its own remove/demote blocked).
+            userActive: users.active,
           })
           .from(organizationUsers)
           .innerJoin(users, eq(organizationUsers.userId, users.id))
@@ -354,41 +473,56 @@ export const organizationsRouter = router({
           .from(organizationUsers)
           .innerJoin(users, eq(organizationUsers.userId, users.id))
           .where(condition),
+        // Org-wide, not paginated -- the Members tab uses this to decide,
+        // per row, whether that row is the org's last active admin (see
+        // assertNotLastActiveAdmin, the same rule enforced server-side on
+        // the actual write) so it can disable removing/demoting them
+        // before the request round-trips, not just after it 400s.
+        countActiveOrgAdmins(input.organizationId),
       ]);
 
       const members = await Promise.all(
         rows.map(async (row) => ({ ...row, avatarUrl: await resolveAvatarUrl(row.avatarUrl) })),
       );
 
-      return { members, total: totalRow?.total ?? 0 };
+      return { members, total: totalRow?.total ?? 0, activeAdminCount };
     }),
 
-  // Users not already a member, matched by name/email -- feeds the detail
-  // page's "add someone" search. Capped at 10: a picker, not a paginated
-  // table (listMembers above is that, for the org's actual roster).
-  searchAddableUsers: requirePermission("admin.organizations.update")
-    .input(z.object({ organizationId: z.string().min(1), search: z.string().min(1) }))
+  // Exact email match only, not a name/email substring search -- a
+  // members.update grant is meant to be a narrow "manage this org's
+  // roster" permission, not "browse the whole user directory." A live
+  // search-as-you-type (this procedure's original shape) let anyone with
+  // that one narrow grant enumerate every user's name and email by typing
+  // partial strings -- a real data leak, since browsing the user
+  // directory that way is otherwise an admin.users.view-level capability.
+  // Requiring the caller to already know the exact address closes that:
+  // it can confirm a guess, not power one. Returns null both when no such
+  // user exists and when they're already a member -- same non-
+  // distinguishing shape organizations.getByName uses for NOT_FOUND vs.
+  // FORBIDDEN, so this can't be used to enumerate which emails exist
+  // either. Case-insensitive, same reasoning as byNameCaseInsensitive.
+  findAddableUserByEmail: requireOrganizationPermission("members.update")
+    .input(z.object({ organizationId: z.string().min(1), email: z.string().email() }))
     .query(async ({ input }) => {
-      const memberRows = await db
-        .select({ userId: organizationUsers.userId })
-        .from(organizationUsers)
-        .where(eq(organizationUsers.organizationId, input.organizationId));
-      const memberIds = memberRows.map((row) => row.userId);
-
-      return db
+      const [user] = await db
         .select({ id: users.id, name: users.name, email: users.email })
         .from(users)
+        .where(sql`lower(${users.email}) = lower(${input.email})`);
+      if (!user) return null;
+
+      const [existingMember] = await db
+        .select({ userId: organizationUsers.userId })
+        .from(organizationUsers)
         .where(
           and(
-            or(ilike(users.name, `%${input.search}%`), ilike(users.email, `%${input.search}%`)),
-            // notInArray on an empty list would produce `NOT IN ()`, which
-            // Drizzle/Postgres don't accept -- skip the exclusion entirely
-            // when the org has no members yet rather than special-casing
-            // the query shape.
-            memberIds.length > 0 ? notInArray(users.id, memberIds) : undefined,
+            eq(organizationUsers.organizationId, input.organizationId),
+            eq(organizationUsers.userId, user.id),
+            eq(organizationUsers.active, true),
           ),
-        )
-        .limit(10);
+        );
+      if (existingMember) return null;
+
+      return user;
     }),
 
   // New members always start "standard" -- promoting one to "admin" is a
@@ -396,46 +530,101 @@ export const organizationsRouter = router({
   // role control), not an option exposed in the add-picker itself. Keeps
   // the add flow a single click; a freshly-added member is never
   // accidentally granted admin standing.
-  addMember: requirePermission("admin.organizations.update")
+  //
+  // Upsert, not onConflictDoNothing -- the composite PK is
+  // (organizationId, userId), and removeMember below is a soft delete
+  // (sets active false rather than deleting the row), so a previously-
+  // removed member re-added by email hits that same existing, now-
+  // inactive row. onConflictDoNothing would leave it inactive, silently
+  // failing to undo the earlier removal; this reactivates it (and resets
+  // the role to "standard," same as a brand-new membership -- an old
+  // admin grant doesn't survive being removed and re-added). A genuine
+  // double-click of Add before the row list refreshes just re-applies the
+  // same update, harmlessly.
+  addMember: requireOrganizationPermission("members.update")
     .input(z.object({ organizationId: z.string().min(1), userId: z.string().min(1) }))
     .mutation(async ({ input }) => {
-      // onConflictDoNothing, not a pre-check -- the composite PK already
-      // guarantees no duplicate row; this just makes a double-click (the
-      // add button firing twice before the row list refreshes) a no-op
-      // instead of a raw constraint-violation error.
       await db
         .insert(organizationUsers)
-        .values({ organizationId: input.organizationId, userId: input.userId, role: "standard" })
-        .onConflictDoNothing();
+        .values({ organizationId: input.organizationId, userId: input.userId, role: "standard", active: true })
+        .onConflictDoUpdate({
+          target: [organizationUsers.organizationId, organizationUsers.userId],
+          set: { active: true, role: "standard" },
+        });
       return { organizationId: input.organizationId, userId: input.userId };
     }),
 
   // "the status gear will allow [an editor] to remove users" -- gated by
-  // the same global admin.organizations.update as every other write on
-  // this router. organization_users.role ("admin"/"standard") is
-  // informational only -- being marked "admin" of an org doesn't itself
-  // grant the ability to remove members here; that's a real gap worth
-  // revisiting (a per-org admin who can't actually administer their own
-  // org's membership), not enforced this pass -- see setMemberRole's own
-  // comment.
-  removeMember: requirePermission("admin.organizations.update")
+  // the Members tab's own update permission (requireOrganizationPermission),
+  // same as every other Members-tab write. A member whose org role has
+  // been granted members.update (via the Permissions tab) can remove
+  // people from their own org now, without needing the global
+  // admin.organizations.update override -- the real gap the previous,
+  // global-only gate had is closed by this change.
+  //
+  // Soft delete (active: false), not a real DELETE -- see
+  // organization-users-schema.ts's own comment on why the row has to
+  // survive removal. assertNotLastActiveAdmin runs first: an org can
+  // never be left with zero active admins, this removal included -- no
+  // exception even via the global admin.organizations.update override,
+  // same "these cannot be removed" invariant the admin role's own grants
+  // have (organization-feature-roles.ts's setGranted).
+  removeMember: requireOrganizationPermission("members.update")
     .input(z.object({ organizationId: z.string().min(1), userId: z.string().min(1) }))
     .mutation(async ({ input }) => {
-      await db
-        .delete(organizationUsers)
-        .where(and(eq(organizationUsers.organizationId, input.organizationId), eq(organizationUsers.userId, input.userId)));
+      await assertNotLastActiveAdmin(input.organizationId, input.userId);
+
+      const [removed] = await db
+        .update(organizationUsers)
+        .set({ active: false })
+        .where(
+          and(
+            eq(organizationUsers.organizationId, input.organizationId),
+            eq(organizationUsers.userId, input.userId),
+            eq(organizationUsers.active, true),
+          ),
+        )
+        .returning();
+
+      if (!removed) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "That user isn't a member of this organization." });
+      }
+
       return { organizationId: input.organizationId, userId: input.userId };
     }),
 
-  // No "can't demote the last admin" guard yet -- a real gap (see
-  // organization-users-schema.ts's own comment), not enforced this pass.
-  setMemberRole: requirePermission("admin.organizations.update")
-    .input(z.object({ organizationId: z.string().min(1), userId: z.string().min(1), role: memberRole }))
+  // role is a plain string now, not a fixed z.enum -- organization roles
+  // are admin-creatable/deletable at runtime (organization-roles.ts), so
+  // this existence check gives the real error a raw FK-constraint
+  // violation wouldn't (same precedent admin.ts's setUserRole uses for
+  // the global users.role FK). assertNotLastActiveAdmin covers demotion
+  // the same way it covers removeMember's removal -- "unset the last
+  // active admin" is the same invariant violation either way round.
+  setMemberRole: requireOrganizationPermission("members.update")
+    .input(z.object({ organizationId: z.string().min(1), userId: z.string().min(1), role: z.string().min(1) }))
     .mutation(async ({ input }) => {
+      const [role] = await db
+        .select({ name: organizationRoles.name })
+        .from(organizationRoles)
+        .where(and(eq(organizationRoles.organizationId, input.organizationId), eq(organizationRoles.name, input.role)));
+      if (!role) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "That role doesn't exist." });
+      }
+
+      if (input.role !== "admin") {
+        await assertNotLastActiveAdmin(input.organizationId, input.userId);
+      }
+
       const [updated] = await db
         .update(organizationUsers)
         .set({ role: input.role })
-        .where(and(eq(organizationUsers.organizationId, input.organizationId), eq(organizationUsers.userId, input.userId)))
+        .where(
+          and(
+            eq(organizationUsers.organizationId, input.organizationId),
+            eq(organizationUsers.userId, input.userId),
+            eq(organizationUsers.active, true),
+          ),
+        )
         .returning();
 
       if (!updated) {
@@ -444,4 +633,8 @@ export const organizationsRouter = router({
 
       return updated;
     }),
+
+  roles: organizationRolesRouter,
+  features: organizationFeaturesRouter,
+  featureRoles: organizationFeatureRolesRouter,
 });

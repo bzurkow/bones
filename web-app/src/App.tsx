@@ -17,7 +17,11 @@ import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { ForgotPassword } from "./ForgotPassword";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
-import { OrganizationDetail } from "./Organizations/OrganizationDetail";
+import { OrganizationLayout } from "./Organizations/OrganizationLayout";
+import { OrganizationMembers } from "./Organizations/OrganizationMembers";
+import { OrganizationPermissions } from "./Organizations/OrganizationPermissions";
+import { OrganizationProfile } from "./Organizations/OrganizationProfile";
+import { OrganizationRoles } from "./Organizations/OrganizationRoles";
 import { OrganizationsIndex } from "./Organizations/OrganizationsIndex";
 import { ResetPassword } from "./ResetPassword";
 import { SignUp } from "./SignUp";
@@ -101,7 +105,13 @@ export function App() {
                   server-side (organizations.getByName), not a static
                   page.* feature key like /admin's routes below. */}
               <Route path="organizations" element={<OrganizationsIndex />} />
-              <Route path="organizations/:orgName" element={<OrganizationDetail />} />
+              <Route path="organizations/:orgName" element={<OrganizationLayout />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<OrganizationProfile />} />
+                <Route path="members" element={<OrganizationMembers />} />
+                <Route path="roles" element={<OrganizationRoles />} />
+                <Route path="permissions" element={<OrganizationPermissions />} />
+              </Route>
               <Route path="admin" element={<RequireAdmin />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<Navigate to="users" replace />} />

@@ -1,29 +1,41 @@
 import { relations } from "drizzle-orm";
-import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { boolean, foreignKey, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema.js";
+import { organizationRoles } from "./organization-roles-schema.js";
 import { organizations } from "./organizations-schema.js";
 
-// Single source of truth for organization_users.role's allowed values --
-// same VIEW_MODES-style precedent as user-fields.ts, just scoped to this
-// one table instead of a cross-cutting user field. Two values only (not
-// the app's global, admin-creatable/deletable `roles` table) -- this is
-// membership standing within one organization, a much smaller concept.
-// Every organization must have at least one "admin" from the moment it's
-// created (trpc/routers/organizations.ts's `create` inserts the initial
-// admin's row in the same transaction as the organization itself) --
-// there's currently no ongoing guard stopping every admin from later being
-// demoted to "standard," though; that's a real gap worth a follow-up, not
-// enforced this pass.
-export const ORGANIZATION_MEMBER_ROLES = ["admin", "standard"] as const;
-export type OrganizationMemberRole = (typeof ORGANIZATION_MEMBER_ROLES)[number];
-
-// Many-to-many join between organizations and users. `role` is this join's
-// own payload column (added once the admin tab needed to distinguish an
-// org's admin from its ordinary members -- see the migration that added
-// it), same reasoning feature_roles' `granted` boolean has for living on
-// the join row itself rather than a separate table. Composite primary key,
-// same reasoning as feature_roles/user_terms_and_conditions: nothing else
-// could meaningfully identify a row.
+// Many-to-many join between organizations and users. `role` used to be a
+// fixed two-value column (ORGANIZATION_MEMBER_ROLES, retired once
+// organization-roles-schema.ts landed) -- now a real FK onto
+// organization_roles, scoped by the same organizationId, same evolution
+// users.role itself went through when the global RBAC system replaced the
+// old fixed USER_ROLES union. "admin" and "standard" still always exist
+// as real rows (see organization-roles-schema.ts's own comment) and are
+// permanently undeletable, so this FK never dangles for existing data --
+// but a role can still be deleted out from under nothing (organization-
+// roles.ts's own delete guard checks for exactly that, the same "checked
+// explicitly rather than left to the FK to reject" precedent roles.ts
+// uses). `granted` is this join's own payload column (added once the
+// admin tab needed to distinguish an org's admin from its ordinary
+// members), same reasoning feature_roles' `granted` boolean has for
+// living on the join row itself rather than a separate table. Composite
+// primary key, same reasoning as feature_roles/user_terms_and_conditions:
+// nothing else could meaningfully identify a row.
+//
+// `active` is a soft-delete flag, not membership itself going away --
+// removeMember sets it false rather than deleting the row (same
+// boolean-status convention as users.active/organizations.active/
+// features.enabled). The row has to survive removal because the primary
+// key is (organizationId, userId): re-adding a previously-removed member
+// hits that same key, and a real delete would just let a plain re-insert
+// handle it -- soft-delete exists specifically so a removal is
+// reversible/auditable instead of silently forgetting the membership (and
+// whatever role it had) ever existed. Every read of this table that means
+// "is this a member right now" (isOrganizationMember, listMembers, the
+// org cards page, memberCount) filters on active = true; addMember
+// upserts (reactivating a matching inactive row) rather than
+// onConflictDoNothing, since a plain no-op there would leave a
+// re-add silently failing to undo the earlier removal.
 export const organizationUsers = pgTable(
   "organization_users",
   {
@@ -34,8 +46,15 @@ export const organizationUsers = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     role: text("role").notNull().default("standard"),
+    active: boolean("active").notNull().default(true),
   },
-  (table) => [primaryKey({ columns: [table.organizationId, table.userId] })],
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.userId] }),
+    foreignKey({
+      columns: [table.organizationId, table.role],
+      foreignColumns: [organizationRoles.organizationId, organizationRoles.name],
+    }),
+  ],
 );
 
 export const organizationUsersRelations = relations(organizationUsers, ({ one }) => ({

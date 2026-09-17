@@ -7,7 +7,17 @@ import { auth } from "./auth.js";
 import { toFetchHeaders } from "./lib/fetch-headers.js";
 import { trustedOrigins } from "./trusted-origins.js";
 
-const server = Fastify({ logger: true });
+// find-my-way's default maxParamLength (100) caps every route param,
+// including the one the tRPC fastify adapter registers for its catch-all
+// "/trpc/:path" route -- and tRPC's httpBatchLink puts every batched
+// procedure's dotted name, comma-joined, into that exact param (e.g. a
+// page batching organizations.listMembers + organizations.roles.list
+// together already exceeds 100 chars). Past the limit, find-my-way
+// doesn't 404 the route -- it 414s the whole request before tRPC's own
+// handler ever runs, which is indistinguishable from the network up
+// failing outright client-side. Raised well past anything a realistic
+// batch of procedure names could hit.
+const server = Fastify({ logger: true, maxParamLength: 5000 });
 
 await server.register(cors, { origin: trustedOrigins, credentials: true });
 
