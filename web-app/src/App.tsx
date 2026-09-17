@@ -9,6 +9,7 @@ import { ApplicationProfile } from "./ApplicationProfile";
 import { ApplicationSettings } from "./ApplicationSettings";
 import { AdminLayout } from "./Admin/AdminLayout";
 import { AdminUsers } from "./Admin/AdminUsers";
+import { AdminOrganizations } from "./Admin/AdminOrganizations";
 import { AdminTerms } from "./Admin/AdminTerms";
 import { AdminPermissions } from "./Admin/AdminPermissions";
 import { AdminRoles } from "./Admin/AdminRoles";
@@ -16,6 +17,12 @@ import { AdminSiteSettings } from "./Admin/AdminSiteSettings";
 import { ForgotPassword } from "./ForgotPassword";
 import { Login } from "./Login";
 import { NotFound } from "./NotFound";
+import { OrganizationLayout } from "./Organizations/OrganizationLayout";
+import { OrganizationMembers } from "./Organizations/OrganizationMembers";
+import { OrganizationPermissions } from "./Organizations/OrganizationPermissions";
+import { OrganizationProfile } from "./Organizations/OrganizationProfile";
+import { OrganizationRoles } from "./Organizations/OrganizationRoles";
+import { OrganizationsIndex } from "./Organizations/OrganizationsIndex";
 import { ResetPassword } from "./ResetPassword";
 import { SignUp } from "./SignUp";
 import { TermsAndConditions } from "./TermsAndConditions";
@@ -93,10 +100,23 @@ export function App() {
               <Route index element={<ApplicationHome />} />
               <Route path="profile" element={<ApplicationProfile />} />
               <Route path="settings" element={<ApplicationSettings />} />
+              {/* No RequireX wrapper -- reachable by any signed-in user,
+                  access to a specific org is membership-driven and checked
+                  server-side (organizations.getByName), not a static
+                  page.* feature key like /admin's routes below. */}
+              <Route path="organizations" element={<OrganizationsIndex />} />
+              <Route path="organizations/:orgName" element={<OrganizationLayout />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<OrganizationProfile />} />
+                <Route path="members" element={<OrganizationMembers />} />
+                <Route path="roles" element={<OrganizationRoles />} />
+                <Route path="permissions" element={<OrganizationPermissions />} />
+              </Route>
               <Route path="admin" element={<RequireAdmin />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<Navigate to="users" replace />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="organizations" element={<AdminOrganizations />} />
                   <Route path="permissions" element={<AdminPermissions />} />
                   <Route path="roles" element={<AdminRoles />} />
                   <Route path="site-settings" element={<AdminSiteSettings />} />

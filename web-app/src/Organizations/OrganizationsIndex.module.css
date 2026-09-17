@@ -1,0 +1,75 @@
+.empty {
+  margin: 0;
+  font-size: 15.5px;
+  color: var(--bones-muted);
+}
+
+/* Same "gap:1px over a border-color background" hairline-grid trick
+   CardGrid.module.css uses (CLAUDE.md rule 5) -- auto-fill instead of a
+   fixed column count, since the number of cards here is per-user and
+   unbounded, unlike CardGrid's marketing-page callers. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--bones-border);
+  border: 1px solid var(--bones-border);
+  border-radius: var(--bones-radius-lg);
+  overflow: hidden;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  background: var(--bones-bg);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  background: var(--bones-surface);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inactiveTag {
+  font-family: var(--bones-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bones-subtle);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--bones-ink);
+}
+
+.cardBlurb {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bones-muted);
+  /* Clamp to two lines -- cards stay a consistent height regardless of
+     blurb length. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMeta {
+  margin-top: auto;
+  font-family: var(--bones-font-mono);
+  font-size: 12.5px;
+  color: var(--bones-subtle);
+}

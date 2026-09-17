@@ -113,6 +113,48 @@
       "when": 1789391237761,
       "tag": "0015_powerful_ares",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789475045141,
+      "tag": "0016_serious_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789476180602,
+      "tag": "0017_dusty_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789481213606,
+      "tag": "0018_safe_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789558495872,
+      "tag": "0019_kind_the_leader",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789559000000,
+      "tag": "0020_organization_tab_update_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789600434432,
+      "tag": "0021_cute_arachne",
+      "breakpoints": true
     }
   ]
 }

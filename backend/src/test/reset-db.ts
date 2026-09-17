@@ -8,7 +8,13 @@ import { authProtocols } from "../db/schema.js";
 // grows large enough for that to matter. CASCADE handles the FK chain
 // (sessions/accounts -> users) without needing to order the table list.
 export async function resetDb() {
-  await db.execute(sql`TRUNCATE TABLE "users", "sessions", "accounts", "verifications" CASCADE`);
+  // organizations has no baseline seed rows (unlike auth_protocols below,
+  // or roles' owner/administrator/standard/demo) -- same reasoning as
+  // users/sessions/accounts/verifications, safe to truncate outright
+  // rather than reset-to-defaults. organization_users would already be
+  // empty from users' own CASCADE, but CASCADE here also reaches it via
+  // organizations' side of that FK.
+  await db.execute(sql`TRUNCATE TABLE "users", "sessions", "accounts", "verifications", "organizations" CASCADE`);
 
   // auth_protocols isn't part of that FK chain and isn't truncated -- its
   // rows are seeded once per test-container lifetime by the migration

@@ -1,0 +1,69 @@
+/* Above the Table -- just the Create button, right-aligned (there's
+   nothing else to put on this row now that Create is its own modal
+   instead of an inline form). */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mono {
+  font-family: var(--bones-font-mono);
+  font-size: 13px;
+  color: var(--bones-muted);
+}
+
+/* The Blurb column's cell -- truncates to its column's fixed width
+   (single line + ellipsis) rather than wrapping or stretching the row;
+   the full text is always available via the Tooltip wrapping this. */
+.blurbCell {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The settings column's own Menu.Target -- same treatment as
+   AdminUsers.module.css's own .iconButton (no border/background at rest
+   per CLAUDE.md rule 3, a plain surface-fill hover). */
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--bones-radius-sm);
+  background: none;
+  color: var(--bones-ink);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--bones-surface);
+}
+
+/* Inactive row background -- same grayscale-safe treatment
+   AdminUsers.module.css's own .inactiveRow uses (see that file's comment
+   for why this replaced a colored dot, and organizations-schema.ts's own
+   comment for why Organizations never had one to begin with). */
+.inactiveRow {
+  background: var(--bones-disabled-bg);
+}
+
+.editBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.addMemberSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editActions {
+  display: flex;
+  gap: 12px;
+}

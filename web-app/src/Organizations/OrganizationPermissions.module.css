@@ -1,0 +1,54 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.body {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--bones-muted);
+}
+
+/* A real <table>, not the app's usual Table component -- same reasoning
+   as Admin/AdminPermissions.module.css's own comment: a feature x role
+   matrix, dynamic column count, genuinely different shape than that
+   component's single fixed-width-per-column entity list. */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--bones-font-sans);
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+  white-space: normal;
+}
+
+.table thead th {
+  border-bottom: 1px solid var(--bones-border-strong);
+  font-weight: 600;
+  color: var(--bones-ink);
+}
+
+.table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid var(--bones-border);
+}
+
+.table tbody td:first-child {
+  color: var(--bones-ink);
+}
