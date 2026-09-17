@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
-import { BrandLockup, Button, ErrorMessage, TextField } from "./components";
+import { AuthDivider, AuthForm, AuthNotice, AuthPageShell, AuthSwitchLink, Button, ErrorMessage, TextField } from "./components";
 import { useAuthProtocols } from "./hooks/useAuthProtocols";
 import styles from "./Login.module.css";
 
@@ -85,96 +85,76 @@ export function Login() {
   return (
     <>
       <ColorSchemeToggle />
-      <div className={styles.page}>
-        <Link to="/" className={styles.brand}>
-          <BrandLockup />
-        </Link>
+      <AuthPageShell linkComponent={Link} linkProps={{ to: "/" }} heading="Sign in to Bones">
+        <ErrorMessage message={linkErrorMessage} />
 
-        <div className={styles.center}>
-          <div className={styles.card}>
-            <h1 className={styles.heading}>Sign in to Bones</h1>
-
-            <ErrorMessage message={linkErrorMessage} />
-
-            {/* Both start undefined while useAuthProtocols is still loading,
-                so neither method renders for that first beat -- see that
-                hook's own comment for why that's preferred over guessing. */}
-            {emailEnabled && (
-              <form className={styles.form} onSubmit={(event) => void handleCredentialSignIn(event)}>
-                <TextField
-                  label="Email"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.currentTarget.value)}
-                />
-                <TextField
-                  label="Password"
-                  type="password"
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.currentTarget.value)}
-                />
-                <Link to="/forgot-password" className={styles.forgotLink}>
-                  Forgot password?
-                </Link>
-                <ErrorMessage message={error} />
-                {unverifiedEmail &&
-                  (resent ? (
-                    <p className={styles.notice}>Check {unverifiedEmail} for a new link.</p>
-                  ) : (
-                    <p className={styles.notice}>
-                      Verify your email first.{" "}
-                      <button type="button" className={styles.linkButton} onClick={() => void handleResendVerification()}>
-                        Resend the link
-                      </button>
-                    </p>
-                  ))}
-                <Button type="submit" fullWidth disabled={submitting}>
-                  {submitting ? "Signing in…" : "Sign in"}
-                </Button>
-              </form>
-            )}
-
-            {emailEnabled && googleEnabled && (
-              <div className={styles.divider}>
-                <span className={styles.dividerLine} />
-                <span>OR</span>
-                <span className={styles.dividerLine} />
-              </div>
-            )}
-
-            {googleEnabled && (
-              // Text only, no logo -- CLAUDE.md rule 8: "No third-party brand
-              // logos. 'Continue with Google' is text. Keeps the page
-              // monochrome and sidesteps logo-usage terms."
-              <Button variant="quiet" fullWidth onClick={() => void handleGoogleSignIn()}>
-                Continue with Google
-              </Button>
-            )}
-
-            {protocols && !emailEnabled && !googleEnabled && (
-              // The admin-panel guard (authProtocols.setEnabled) shouldn't
-              // ever let this happen -- at least one method always stays
-              // enabled -- but render something coherent instead of a blank
-              // card if it somehow does.
-              <ErrorMessage message="Sign-in is currently unavailable." />
-            )}
-
-            <Link to="/signup" className={styles.switchLink}>
-              Don't have an account? Create one
+        {/* Both start undefined while useAuthProtocols is still loading,
+            so neither method renders for that first beat -- see that
+            hook's own comment for why that's preferred over guessing. */}
+        {emailEnabled && (
+          <AuthForm onSubmit={(event) => void handleCredentialSignIn(event)}>
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.currentTarget.value)}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.currentTarget.value)}
+            />
+            <Link to="/forgot-password" className={styles.forgotLink}>
+              Forgot password?
             </Link>
-          </div>
-        </div>
+            <ErrorMessage message={error} />
+            {unverifiedEmail &&
+              (resent ? (
+                <AuthNotice>Check {unverifiedEmail} for a new link.</AuthNotice>
+              ) : (
+                <AuthNotice>
+                  Verify your email first.{" "}
+                  <button type="button" className={styles.linkButton} onClick={() => void handleResendVerification()}>
+                    Resend the link
+                  </button>
+                </AuthNotice>
+              ))}
+            <Button type="submit" fullWidth disabled={submitting}>
+              {submitting ? "Signing in…" : "Sign in"}
+            </Button>
+          </AuthForm>
+        )}
 
-        <div className={styles.footer}>
-          <span>© 2026 Bones</span>
-        </div>
-      </div>
+        {emailEnabled && googleEnabled && <AuthDivider />}
+
+        {googleEnabled && (
+          // Text only, no logo -- CLAUDE.md rule 8: "No third-party brand
+          // logos. 'Continue with Google' is text. Keeps the page
+          // monochrome and sidesteps logo-usage terms."
+          <Button variant="quiet" fullWidth onClick={() => void handleGoogleSignIn()}>
+            Continue with Google
+          </Button>
+        )}
+
+        {protocols && !emailEnabled && !googleEnabled && (
+          // The admin-panel guard (authProtocols.setEnabled) shouldn't
+          // ever let this happen -- at least one method always stays
+          // enabled -- but render something coherent instead of a blank
+          // card if it somehow does.
+          <ErrorMessage message="Sign-in is currently unavailable." />
+        )}
+
+        <AuthSwitchLink linkComponent={Link} linkProps={{ to: "/signup" }}>
+          Don't have an account? Create one
+        </AuthSwitchLink>
+      </AuthPageShell>
     </>
   );
 }

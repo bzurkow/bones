@@ -2,6 +2,11 @@
 // possible now, not just the pieces a second app already needed. web-app's
 // own src/components stays only as a re-export barrel (see its index.ts)
 // so existing `from "./components"` imports keep working unchanged.
+export * from "./components/AuthDivider";
+export * from "./components/AuthForm";
+export * from "./components/AuthNotice";
+export * from "./components/AuthPageShell";
+export * from "./components/AuthSwitchLink";
 export * from "./components/BonesMark";
 export * from "./components/BrandLockup";
 export * from "./components/Button";

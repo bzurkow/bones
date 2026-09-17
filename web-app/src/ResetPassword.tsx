@@ -3,8 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { isStrongPassword, PASSWORD_RULES_MESSAGE } from "./AuthHelpers/password-rules";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
-import { BrandLockup, Button, ErrorMessage, TextField } from "./components";
-import styles from "./ResetPassword.module.css";
+import { AuthForm, AuthNotice, AuthPageShell, AuthSwitchLink, Button, ErrorMessage, TextField } from "./components";
 
 // Public, unauthenticated, same tier as Login/SignUp/ForgotPassword
 // (App.tsx). Landed on directly from the emailed reset link -- Better
@@ -65,64 +64,50 @@ export function ResetPassword() {
   return (
     <>
       <ColorSchemeToggle />
-      <div className={styles.page}>
-        <Link to="/" className={styles.brand}>
-          <BrandLockup />
-        </Link>
+      <AuthPageShell linkComponent={Link} linkProps={{ to: "/" }} heading="Choose a new password">
+        {tokenInvalid ? (
+          <>
+            <AuthNotice>That reset link expired or was already used.</AuthNotice>
+            <AuthSwitchLink linkComponent={Link} linkProps={{ to: "/forgot-password" }}>
+              Request a new one
+            </AuthSwitchLink>
+          </>
+        ) : (
+          <>
+            <AuthForm onSubmit={(event) => void handleSubmit(event)}>
+              <TextField
+                label="New password"
+                type="password"
+                name="newPassword"
+                autoComplete="new-password"
+                required
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.currentTarget.value)}
+                error={passwordError}
+                helperText={passwordError ? undefined : PASSWORD_RULES_MESSAGE}
+              />
+              <TextField
+                label="Confirm new password"
+                type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.currentTarget.value)}
+                error={confirmError}
+              />
+              <ErrorMessage message={formError} />
+              <Button type="submit" fullWidth disabled={submitting}>
+                {submitting ? "Saving…" : "Save new password"}
+              </Button>
+            </AuthForm>
 
-        <div className={styles.center}>
-          <div className={styles.card}>
-            <h1 className={styles.heading}>Choose a new password</h1>
-
-            {tokenInvalid ? (
-              <>
-                <p className={styles.body}>That reset link expired or was already used.</p>
-                <Link to="/forgot-password" className={styles.switchLink}>
-                  Request a new one
-                </Link>
-              </>
-            ) : (
-              <>
-                <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
-                  <TextField
-                    label="New password"
-                    type="password"
-                    name="newPassword"
-                    autoComplete="new-password"
-                    required
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.currentTarget.value)}
-                    error={passwordError}
-                    helperText={passwordError ? undefined : PASSWORD_RULES_MESSAGE}
-                  />
-                  <TextField
-                    label="Confirm new password"
-                    type="password"
-                    name="confirmPassword"
-                    autoComplete="new-password"
-                    required
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.currentTarget.value)}
-                    error={confirmError}
-                  />
-                  <ErrorMessage message={formError} />
-                  <Button type="submit" fullWidth disabled={submitting}>
-                    {submitting ? "Saving…" : "Save new password"}
-                  </Button>
-                </form>
-
-                <Link to="/login" className={styles.switchLink}>
-                  Back to sign in
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.footer}>
-          <span>© 2026 Bones</span>
-        </div>
-      </div>
+            <AuthSwitchLink linkComponent={Link} linkProps={{ to: "/login" }}>
+              Back to sign in
+            </AuthSwitchLink>
+          </>
+        )}
+      </AuthPageShell>
     </>
   );
 }
