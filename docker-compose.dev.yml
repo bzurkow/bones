@@ -56,6 +56,37 @@ services:
       interval: 2s
       retries: 10
 
+  ollama:
+    # Local dev only -- production points CHAT_PROVIDER at real Claude on
+    # Amazon Bedrock instead (see backend/src/lib/chat/bedrock-provider.ts).
+    # There's no way to point Anthropic's Bedrock SDK at a local model, so
+    # dev runs an actual small model (Qwen, OLLAMA_MODEL below) here
+    # instead -- ollama-provider.ts talks to its plain HTTP API.
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    # The stock image's entrypoint only runs `ollama serve` -- overridden
+    # here so first boot also pulls OLLAMA_MODEL once the server's up,
+    # rather than requiring a separate manual `docker exec ... ollama pull`
+    # step. The pull itself (a multi-GB download, once, cached in the
+    # ollama-data volume after) can take a few minutes; ollama-provider.ts
+    # simply errors on a chat request until it's done, same as it would
+    # for any other "model not ready yet" condition.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "ollama serve & sleep 2 && ollama pull ${OLLAMA_MODEL:-qwen2.5:7b} && wait"
+    healthcheck:
+      # Liveness only (the server responding), not "model pulled" -- same
+      # `|| exit 0` shape rustfs/mailpit already use above; backend can
+      # start against a live-but-still-pulling Ollama the same way it can
+      # against rustfs before its buckets exist.
+      test: ["CMD-SHELL", "wget -q -O- --spider http://localhost:11434/api/tags || exit 0"]
+      interval: 5s
+      retries: 30
+
   backend:
     build:
       context: .
@@ -77,7 +108,10 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
 
 volumes:
   postgres-data:
   rustfs-data:
+  ollama-data:
