@@ -96,12 +96,6 @@ the same thing later); new items append at the end rather than renumbering.
     dependency in that file, and are currently one patch behind latest.
     Confirm whether that's deliberate (reproducible builds against a
     fast-moving SDK) or an oversight worth aligning to the rest of the file.
-29. **Node version: v26 vs. v24 LTS** — `.node-version` currently pins the
-    latest v26.x, the "Current" release line, not yet Active LTS (graduates
-    to LTS in the next few weeks). v24 is the actual Active LTS today with
-    support into 2028. Explicitly re-confirmed 2026-09-18: staying on v26
-    for now — revisit if that tradeoff ever needs reconsidering.
-
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
 
 - Login page rebuilt to the current design system (item 24, closed
