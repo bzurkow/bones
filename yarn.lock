@@ -1246,6 +1246,13 @@
     "@fastify/forwarded" "^3.0.0"
     ipaddr.js "^2.1.0"
 
+"@fastify/request-context@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@fastify/request-context/-/request-context-7.0.0.tgz#f2237b51f30f61cc66cc1abb214a8480b5bdba41"
+  integrity sha512-SMnQ4VWa1p20qOSONvi+yG32vqyHoZE6LPD4xrIl3RVE11dLrBwiQ7VmK4aTCS7/jB5Tx6fI9JotTNErClPS5A==
+  dependencies:
+    fastify-plugin "^5.0.0"
+
 "@floating-ui/core@^1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.8.0.tgz#d01c0bbea02e4a57f6fd7d5de6fc2c5c7dca40e1"
@@ -2902,6 +2909,11 @@ csstype@^3.2.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.2.3.tgz#ec48c0f3e993e50648c86da559e2610995cf989a"
   integrity sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==
 
+date-fns@^4.1.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-4.4.0.tgz#806539edf45c616b2b76b5f78b88c56ed3c7e036"
+  integrity sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==
+
 debounce-fn@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/debounce-fn/-/debounce-fn-6.0.0.tgz#558169aed853eb3cf3a17c0a2438e1a91a7ba44f"
@@ -3376,6 +3388,11 @@ fast-wrap-ansi@^0.2.0:
   integrity sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q==
   dependencies:
     fast-string-width "^3.0.2"
+
+fastify-plugin@^5.0.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-5.1.0.tgz#7083e039d6418415f9a669f8c25e72fc5bf2d3e7"
+  integrity sha512-FAIDA8eovSt5qcDgcBvDuX/v0Cjz0ohGhENZ/wpc3y+oZCY2afZ9Baqql3g/lC+OHRnciQol4ww7tuthOb9idw==
 
 fastify-plugin@^6.0.0:
   version "6.0.0"
@@ -4554,6 +4571,11 @@ next@^16.3.5:
     "@next/swc-win32-x64-msvc" "16.3.5"
     sharp "^0.35.4"
 
+node-cron@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/node-cron/-/node-cron-4.6.0.tgz#5c854d4aeebade26cf6df79a795e8a4bae47583f"
+  integrity sha512-Si/bzYiKRHOB8/a99T2+SDGN582ONDMSTlJr5oCkT6GtnqPjZ2s10eoQRYkW9ZHwjVxONL+W8Fb+qR0AHMQsdg==
+
 node-releases@^2.0.54:
   version "2.0.55"
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.55.tgz#c52faedb68001dcfe77495b5ed1ac5827a1788fc"
@@ -4779,12 +4801,20 @@ pino-abstract-transport@^3.0.0:
   dependencies:
     split2 "^4.0.0"
 
+pino-roll@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/pino-roll/-/pino-roll-4.0.0.tgz#cae376045fee327753f924215cc67a1515afc04c"
+  integrity sha512-axI1aQaIxXdw1F4OFFli1EDxIrdYNGLowkw/ZoZogX8oCSLHUghzwVVXUS8U+xD/Savwa5IXpiXmsSGKFX/7Sg==
+  dependencies:
+    date-fns "^4.1.0"
+    sonic-boom "^4.0.1"
+
 pino-std-serializers@^7.0.0:
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/pino-std-serializers/-/pino-std-serializers-7.1.0.tgz#a7b0cd65225f29e92540e7853bd73b07479893fc"
   integrity sha512-BndPH67/JxGExRgiX1dX0w1FvZck5Wa4aal9198SrRhZjH3GxKQUKIBnYJTdj2HDN3UQAS06HlfcSbQj2OHmaw==
 
-"pino@^9.14.0 || ^10.1.0":
+pino@^10.1.0, "pino@^9.14.0 || ^10.1.0":
   version "10.3.1"
   resolved "https://registry.yarnpkg.com/pino/-/pino-10.3.1.tgz#6552c8f8d8481844c9e452e7bf0be90bff1939ce"
   integrity sha512-r34yH/GlQpKZbU1BvFFqOjhISRo1MNx1tWYsYvmj6KIRHSPMT2+yHOEb1SG6NMvRoHRF0a07kCOox/9yakl1vg==

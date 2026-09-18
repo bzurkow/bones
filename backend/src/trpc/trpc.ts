@@ -2,6 +2,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { auth } from "../auth.js";
 import { toFetchHeaders } from "../lib/fetch-headers.js";
+import { requestContext } from "../lib/logging/request-context.js";
+import { logTrpcCall } from "../lib/logging/request-log.js";
 import { canUpdateOrg } from "../organization-permissions.js";
 import { hasPermission } from "../permissions.js";
 
@@ -9,8 +11,19 @@ import { hasPermission } from "../permissions.js";
 // pipeline, so procedures ask it directly via auth.api.getSession() (its
 // documented way to read a session outside of its own HTTP handler) using
 // the incoming request's own headers (cookies included).
+//
+// Also the first (and only) point in the pipeline a session is available,
+// which is why it's where userId/userEmail get written into the request
+// log context (request-context.ts) -- register.ts already seeded
+// requestId/ip earlier, at onRequest; this fills in the rest of the same
+// store once it's known, for loggedProcedure below and db-change-logger.ts
+// to both read.
 export async function createContext({ req }: CreateFastifyContextOptions) {
   const session = await auth.api.getSession({ headers: toFetchHeaders(req.headers) });
+  if (session) {
+    requestContext.set("userId", session.user.id);
+    requestContext.set("userEmail", session.user.email);
+  }
   return { session };
 }
 
@@ -22,15 +35,51 @@ export type Context = Awaited<ReturnType<typeof createContext>>;
 const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
 // For tests: calls a router's procedures directly in-process with an
 // injected context, no HTTP/fastify involved. See trpc/routers/*.test.ts.
 export const createCallerFactory = t.createCallerFactory;
 
+// "All requests made by a user get logged," for the tRPC half of this
+// app's traffic (register.ts's onResponse hook covers the raw-HTTP half,
+// including non-tRPC routes) -- one middleware, applied once, right at the
+// base every procedure builder in this file is built from. publicProcedure
+// and protectedProcedure both start from loggedProcedure rather than
+// t.procedure directly, and requirePermission/requireOrganizationPermission/
+// adminProcedure are all in turn built from protectedProcedure -- so any
+// procedure defined anywhere in trpc/routers/*, present or future, is
+// logged without that router file doing anything for it. Sits below the
+// auth check (protectedProcedure's own middleware, added next) rather than
+// above it, so a rejected UNAUTHORIZED/FORBIDDEN call still produces a log
+// line -- that's a request a user made too, arguably the more interesting
+// kind to have on record.
+//
+// The `{ ok, error }` shape read off next()'s result (rather than a
+// try/catch around it) is tRPC's own documented pattern for exactly this:
+// a middleware that wants to observe a downstream failure without turning
+// it into a *different* failure by rethrowing awkwardly.
+const loggedProcedure = t.procedure.use(async ({ path, type, ctx, next, getRawInput }) => {
+  const start = Date.now();
+  const result = await next();
+  logTrpcCall({
+    path,
+    type,
+    durationMs: Date.now() - start,
+    ok: result.ok,
+    errorCode: result.ok ? undefined : result.error.code,
+    requestId: requestContext.get("requestId"),
+    userId: ctx.session?.user.id,
+    userEmail: ctx.session?.user.email,
+    rawInput: await getRawInput().catch(() => undefined),
+  });
+  return result;
+});
+
+export const publicProcedure = loggedProcedure;
+
 // Rejects unauthenticated calls before the procedure body runs, and narrows
 // ctx.session from "session | null" to "session" for everything downstream
 // -- procedures using this never need their own null check.
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const protectedProcedure = loggedProcedure.use(({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }

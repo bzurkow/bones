@@ -5,6 +5,8 @@ import { appRouter } from "./trpc/router.js";
 import { createContext } from "./trpc/trpc.js";
 import { auth } from "./auth.js";
 import { toFetchHeaders } from "./lib/fetch-headers.js";
+import { startLogArchiver } from "./lib/logging/log-archiver.js";
+import { registerRequestLogging } from "./lib/logging/register.js";
 import { trustedOrigins } from "./trusted-origins.js";
 
 // find-my-way's default maxParamLength (100) caps every route param,
@@ -18,6 +20,11 @@ import { trustedOrigins } from "./trusted-origins.js";
 // failing outright client-side. Raised well past anything a realistic
 // batch of procedure names could hit.
 const server = Fastify({ logger: true, maxParamLength: 5000 });
+
+// Registered before anything else -- see registerRequestLogging's own
+// comment on why top-level (not nested inside one of the plugin blocks
+// below) is what makes it apply to every route, tRPC and otherwise.
+await registerRequestLogging(server);
 
 await server.register(cors, { origin: trustedOrigins, credentials: true });
 
@@ -59,6 +66,9 @@ await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: { router: appRouter, createContext },
 });
+
+// No-ops when S3_LOG_BUCKET isn't set -- see log-archiver.ts's own comment.
+startLogArchiver();
 
 const port = Number(process.env.PORT ?? 3000);
 
