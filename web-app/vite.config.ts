@@ -40,6 +40,13 @@ export default defineConfig({
     proxy: {
       "/api": { target: "http://localhost:3000", changeOrigin: true },
       "/trpc": { target: "http://localhost:3000", changeOrigin: true },
+      // POST /chatbot/stream (backend/src/index.ts) -- same same-origin
+      // reasoning as /api and /trpc above, not the OAuth-state-cookie
+      // concern specifically (this route doesn't touch cookies of its
+      // own), but it does read the session cookie those two calls set,
+      // so it needs to be reached at app.localhost too, not bare
+      // localhost:3000.
+      "/chatbot": { target: "http://localhost:3000", changeOrigin: true },
     },
   },
 });

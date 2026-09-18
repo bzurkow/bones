@@ -1,3 +1,5 @@
+import { Chatbot } from "./Chatbot/Chatbot";
+
 export function ApplicationHome() {
-  return <div>Application Home</div>;
+  return <Chatbot />;
 }
