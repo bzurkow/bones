@@ -75,7 +75,12 @@ the same thing later); new items append at the end rather than renumbering.
 20. **Storybook** — `.env`'s `TRUSTED_ORIGINS` already whitelists
     `http://localhost:6006` (Storybook's default port) but nothing's set up
     (no `.storybook/`, no dependency). Would fit developing
-    `shared-ui`/`web-app` components in isolation.
+    `shared-ui`/`web-app` components in isolation. Per an explicit ask
+    (2026-09-18, during the chatbot work, item 25): wants this paired with
+    a real Playwright setup (neither is installed in the dev environment
+    yet — confirmed again while building the chatbot UI, no screenshot-based
+    design review was done for it as a result) as one cohesive pass, not
+    two separate installs later.
 21. **API keys** — scope TBD: personal per-user keys vs. org-level, scoping/
     permissions on a key, rotation/revocation, rate limiting, where they'd
     be issued/managed in the admin UI. Ask what before guessing.
