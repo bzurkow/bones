@@ -85,10 +85,14 @@ the same thing later); new items append at the end rather than renumbering.
 23. **CDN** — scope TBD: static asset delivery for `web-static`/`web-app`'s
     built assets, S3/CloudFront or another provider, whether this ties into
     item 17's productionization work. Ask what before guessing.
-25. **Home (`/`, authenticated)** — still a placeholder, intentionally left
-    alone per explicit ask ("I'll think of something to put there").
-
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
+
+- Home (`/`, authenticated) (item 25, closed 2026-09-18) — an AI chatbot,
+  org-gated (new `chatbot` organization feature, seeded but granted to no
+  role by default — shows up in the existing Permissions tab, no new admin
+  UI), backed by Claude on Amazon Bedrock in prod / local Qwen via Ollama
+  in dev, streamed token-by-token, react-virtuoso-virtualized. Full
+  account in NOTES.md's "Chatbot on Home" entry.
 
 - Backend compute (item 26, closed 2026-09-18) — **AWS App Runner**, over
   EC2 and Fargate. Reasoning and alternatives in NOTES.md's "Hosting
