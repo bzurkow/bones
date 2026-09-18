@@ -1,0 +1,23 @@
+-- Data-only migration -- no schema change (organization_features' shape is
+-- unchanged from 0023), so there's nothing for `drizzle-kit generate` to
+-- diff; this file is hand-written, same escape hatch as
+-- 0013_users_update_status.sql/0020_organization_tab_update_permissions.sql/
+-- 0022_default_organization.sql.
+--
+-- Backfills the `chatbot` organization feature (organization-permissions.ts
+-- doesn't name this one -- it's checked directly via
+-- requireOrganizationPermission("chatbot")/hasOrganizationPermission, see
+-- trpc/routers/chatbot.ts and index.ts's /chatbot/stream route) for every
+-- *existing* organization; trpc/routers/organizations.ts's `create` seeds
+-- the same row for every *new* one.
+--
+-- Deliberately no matching organization_feature_roles insert, unlike
+-- 0020's own four tab-update features -- those auto-grant "admin" because
+-- an org admin needs those permissions the instant the org exists.
+-- Chatbot access is opt-in: every organization gets the feature *available*
+-- (enabled = true, the kill switch is on) but *granted to nobody* until an
+-- org admin explicitly checks a role's box on that org's own Permissions
+-- tab -- "if the feature is not enabled, ask an admin to update your
+-- organization settings" is true from the moment this migration runs.
+INSERT INTO "organization_features" ("organization_id", "key", "label", "enabled")
+SELECT "id", 'chatbot', 'Chatbot', true FROM "organizations";

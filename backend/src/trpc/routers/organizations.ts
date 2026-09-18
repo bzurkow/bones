@@ -10,7 +10,12 @@ import {
   organizations,
   users,
 } from "../../db/schema.js";
-import { ORGANIZATION_TAB_UPDATE_FEATURES, canUpdateOrg, canViewOrg } from "../../organization-permissions.js";
+import {
+  CHATBOT_FEATURE_KEY,
+  ORGANIZATION_TAB_UPDATE_FEATURES,
+  canUpdateOrg,
+  canViewOrg,
+} from "../../organization-permissions.js";
 import { hasPermission } from "../../permissions.js";
 import { AVATAR_BUCKET, getPresignedUploadUrl, resolveAvatarUrl } from "../../storage/index.js";
 import { ALLOWED_AVATAR_CONTENT_TYPES } from "../../user-fields.js";
@@ -318,6 +323,16 @@ export const organizationsRouter = router({
             granted: true,
           })),
         );
+
+        // The chatbot feature (organization-permissions.ts's
+        // CHATBOT_FEATURE_KEY) -- enabled but deliberately ungranted to
+        // any role, unlike the four tab-update features above. Same row
+        // 0024_chatbot_feature_seed.sql backfills for every existing org.
+        await tx.insert(organizationFeatures).values({
+          organizationId: created.id,
+          key: CHATBOT_FEATURE_KEY,
+          label: "Chatbot",
+        });
 
         await tx.insert(organizationUsers).values({
           organizationId: created.id,

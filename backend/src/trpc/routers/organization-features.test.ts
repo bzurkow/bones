@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "../../db/index.js";
 import { organizationFeatures } from "../../db/schema.js";
-import { ORGANIZATION_TAB_UPDATE_FEATURES } from "../../organization-permissions.js";
+import { CHATBOT_FEATURE_KEY, ORGANIZATION_TAB_UPDATE_FEATURES } from "../../organization-permissions.js";
 import { contextFor, createTestUser } from "../../test/context.js";
 import { resetDb } from "../../test/reset-db.js";
 import { createCallerFactory, type Context } from "../trpc.js";
@@ -38,14 +38,27 @@ describe("organizations.features.list", () => {
     await expect(caller.list({ organizationId: org.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("a brand-new organization already has the four seeded tab-update features", async () => {
+  it("a brand-new organization already has the four seeded tab-update features plus chatbot", async () => {
     const org = await createTestOrg();
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
 
     const result = await caller.list({ organizationId: org.id });
 
-    expect(result.map((feature) => feature.key).sort()).toEqual([...ORGANIZATION_TAB_UPDATE_FEATURES].sort());
+    expect(result.map((feature) => feature.key).sort()).toEqual(
+      [...ORGANIZATION_TAB_UPDATE_FEATURES, CHATBOT_FEATURE_KEY].sort(),
+    );
+  });
+
+  it("seeds chatbot enabled but granted to no role", async () => {
+    const org = await createTestOrg();
+    const owner = await createTestUser({ role: "owner" });
+    const caller = createCaller(contextFor(owner));
+
+    const result = await caller.list({ organizationId: org.id });
+
+    const chatbot = result.find((feature) => feature.key === CHATBOT_FEATURE_KEY);
+    expect(chatbot?.enabled).toBe(true);
   });
 });
 

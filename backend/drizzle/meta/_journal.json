@@ -162,6 +162,20 @@
       "when": 1789600500000,
       "tag": "0022_default_organization",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789762379637,
+      "tag": "0023_rainy_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789762400000,
+      "tag": "0024_chatbot_feature_seed",
+      "breakpoints": true
     }
   ]
 }

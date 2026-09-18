@@ -1,6 +1,7 @@
 import { router } from "./trpc.js";
 import { adminRouter } from "./routers/admin.js";
 import { authProtocolsRouter } from "./routers/auth-protocols.js";
+import { chatbotRouter } from "./routers/chatbot.js";
 import { healthRouter } from "./routers/health.js";
 import { dbRouter } from "./routers/db.js";
 import { featureRolesRouter } from "./routers/feature-roles.js";
@@ -23,6 +24,7 @@ export const appRouter = router({
   featureRoles: featureRolesRouter,
   roles: rolesRouter,
   organizations: organizationsRouter,
+  chatbot: chatbotRouter,
 });
 
 export type AppRouter = typeof appRouter;

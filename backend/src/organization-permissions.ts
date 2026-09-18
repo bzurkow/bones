@@ -34,6 +34,18 @@ export const ORGANIZATION_TAB_UPDATE_FEATURES = [
 // ever changes.
 export const DEFAULT_ORGANIZATION_ID = "default";
 
+// The chatbot feature's key, shared by trpc/routers/organizations.ts's
+// `create` (seeds the organization_features row for a new org),
+// drizzle/0024_chatbot_feature_seed.sql (the same row, backfilled for
+// every *existing* org), trpc/routers/chatbot.ts, and index.ts's
+// /chatbot/stream route. Unlike ORGANIZATION_TAB_UPDATE_FEATURES, nothing
+// ever auto-grants this to any role -- it's seeded enabled (the kill
+// switch is on) but ungranted, so "ask an admin to enable this in your
+// organization's settings" (the product's own copy for a member who
+// hasn't been granted it) is true the moment an org exists, until an org
+// admin checks a role's box on that org's Permissions tab.
+export const CHATBOT_FEATURE_KEY = "chatbot";
+
 // Whether this user has any membership row at all in this organization
 // (any role) -- the base building block canViewOrg below and every
 // org-scoped router's own view checks are built on. Lives here, not in
