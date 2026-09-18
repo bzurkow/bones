@@ -87,10 +87,13 @@ the same thing later); new items append at the end rather than renumbering.
     item 17's productionization work. Ask what before guessing.
 25. **Home (`/`, authenticated)** — still a placeholder, intentionally left
     alone per explicit ask ("I'll think of something to put there").
-26. **Backend compute** — decide Fargate vs. App Runner (both AWS, unaffected
-    by the DB-hosting decision already made).
 
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
+
+- Backend compute (item 26, closed 2026-09-18) — **AWS App Runner**, over
+  EC2 and Fargate. Reasoning and alternatives in NOTES.md's "Hosting
+  philosophy" section. No infra code exists yet (no `terraform/`/CDK in
+  the repo) — this closes the decision, not the actual provisioning.
 
 - Formatter (item 27, closed 2026-09-18) — Prettier, set up to mirror
   oxlint's structure exactly: one shared root config (`.prettierrc.json`,
