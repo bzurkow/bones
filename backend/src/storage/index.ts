@@ -51,6 +51,13 @@ const presignClient = new S3Client({
 export const BUCKET = process.env.S3_BUCKET!;
 export const AVATAR_BUCKET = process.env.S3_AVATAR_BUCKET!;
 
+// Unlike BUCKET/AVATAR_BUCKET, optional (no `!`) -- log-archiver.ts treats
+// an unset value as "long-term archival is off, keep rotated logs local
+// only" rather than a hard boot-time requirement. Every environment writes
+// and rotates log files regardless; this only controls whether closed ones
+// also get shipped somewhere durable.
+export const LOG_BUCKET = process.env.S3_LOG_BUCKET;
+
 export function getPresignedUploadUrl(bucket: string, key: string, contentType: string) {
   return getSignedUrl(presignClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }), {
     expiresIn: 300,
@@ -95,11 +102,14 @@ export async function getObjectText(key: string): Promise<string> {
 }
 
 // Dev convenience only -- mirrors "migrations run on every boot" (see
-// backend/Dockerfile's dev CMD): auto-creates both buckets against the
-// local RustFS container so a fresh clone needs zero manual setup. Gated on
-// S3_ENDPOINT being set, i.e. this never runs against real production AWS.
+// backend/Dockerfile's dev CMD): auto-creates every configured bucket
+// against the local RustFS container so a fresh clone needs zero manual
+// setup. LOG_BUCKET only joins this list when it's actually set (unlike
+// BUCKET/AVATAR_BUCKET, log archival is opt-in -- see its own comment
+// above). Gated on S3_ENDPOINT being set, i.e. this never runs against
+// real production AWS.
 if (endpoint) {
-  for (const bucket of [BUCKET, AVATAR_BUCKET]) {
+  for (const bucket of [BUCKET, AVATAR_BUCKET, ...(LOG_BUCKET ? [LOG_BUCKET] : [])]) {
     await s3Client.send(new CreateBucketCommand({ Bucket: bucket })).catch((err) => {
       const name = err instanceof Error ? err.name : undefined;
       if (name !== "BucketAlreadyOwnedByYou" && name !== "BucketAlreadyExists") throw err;

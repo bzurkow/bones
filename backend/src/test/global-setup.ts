@@ -38,6 +38,14 @@ export default async function setup() {
   process.env.S3_AVATAR_BUCKET ??= "avatar";
   process.env.S3_ENDPOINT ??= "http://localhost:9000";
   process.env.S3_FORCE_PATH_STYLE ??= "true";
+  // Points log-archiver.ts's tests at the same dev RustFS as everything
+  // else above, and gives storage/index.ts's own bucket-auto-create loop
+  // a log bucket to create alongside bones-dev/avatar.
+  process.env.S3_LOG_BUCKET ??= "logs";
+  // Isolated from the repo's real ./logs (which a concurrent `yarn dev`
+  // might be writing/rotating at the same time) -- see
+  // log-archiver.test.ts.
+  process.env.LOG_DIR ??= "./logs-test";
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
