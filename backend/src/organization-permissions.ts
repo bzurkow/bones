@@ -18,6 +18,22 @@ export const ORGANIZATION_TAB_UPDATE_FEATURES = [
   "permissions.update",
 ] as const;
 
+// The one organization every fresh database is seeded with (backend/drizzle/
+// 0022_default_organization.sql -- the org row itself, its three
+// organization_roles, and its four ORGANIZATION_TAB_UPDATE_FEATURES rows
+// above, "admin" granted), so Organizations has real content immediately
+// after a from-scratch migration run rather than an empty list. auth.ts's
+// databaseHooks.user.create `after` hook adds whichever user becomes Owner
+// (nextUserRole's existing "first user ever" rule, unchanged) as this
+// organization's own admin member the moment that happens, so it's never
+// left adminless in practice. A plain literal, not a generated id, on
+// purpose -- unlike every app-created organization (crypto.randomUUID()),
+// this one has to be the *same* id on every fresh database for the
+// migration and this constant to agree on which row they mean; there's no
+// compile-time link between the two, so keep both in sync by hand if this
+// ever changes.
+export const DEFAULT_ORGANIZATION_ID = "default";
+
 // Whether this user has any membership row at all in this organization
 // (any role) -- the base building block canViewOrg below and every
 // org-scoped router's own view checks are built on. Lives here, not in

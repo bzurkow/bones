@@ -4,9 +4,10 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession } from "better-auth/plugins";
 import { isAuthProtocolEnabled } from "./auth-protocols.js";
 import { db } from "./db/index.js";
-import { users } from "./db/schema.js";
+import { organizationUsers, users } from "./db/schema.js";
 import { sendEmail } from "./email/index.js";
 import { renderResetPasswordEmail, renderVerificationEmail } from "./email/templates.js";
+import { DEFAULT_ORGANIZATION_ID } from "./organization-permissions.js";
 import { getEnabledFeatures } from "./permissions.js";
 import { resolveAvatarUrl } from "./storage/index.js";
 import { getHasAcceptedTermsAndConditions } from "./terms-and-conditions.js";
@@ -234,6 +235,41 @@ export const auth = betterAuth({
         before: async (user) => {
           const [existing] = await db.select({ id: users.id }).from(users).limit(1);
           return { data: { ...user, role: nextUserRole(Boolean(existing)) } };
+        },
+        // `after`, not folded into `before` above -- `before` only supplies
+        // data for the user row's own insert and runs before that insert
+        // happens at all, so there's no real, FK-satisfying user id yet to
+        // put in an organization_users row. `after` gets the row as it
+        // actually landed, real id included.
+        //
+        // Whoever `before` just made Owner also becomes the seeded default
+        // organization's (DEFAULT_ORGANIZATION_ID, backend/drizzle/
+        // 0022_default_organization.sql) own admin member, the same
+        // instant -- so that organization is never adminless in practice
+        // despite the migration itself seeding it with zero members (see
+        // that migration's own comment on why). `user.role` isn't on
+        // better-auth's own `User` type (a confirmed limitation --
+        // additionalFields are genuinely present at runtime but untyped,
+        // same gap the customSession callback below already casts around)
+        // even though it's genuinely present at runtime, set moments ago by
+        // `before`.
+        //
+        // Wrapped in try/catch, not left to throw: this is a convenience
+        // on top of sign-up succeeding, not a requirement of it -- a
+        // failure here (e.g. a database that predates this migration)
+        // shouldn't turn a successful account creation into a failed one.
+        // onConflictDoNothing guards the same call being harmless if it
+        // somehow ran twice for the same user.
+        after: async (user) => {
+          if ((user as unknown as { role: UserRole }).role !== "owner") return;
+          try {
+            await db
+              .insert(organizationUsers)
+              .values({ organizationId: DEFAULT_ORGANIZATION_ID, userId: user.id, role: "admin", active: true })
+              .onConflictDoNothing();
+          } catch (err) {
+            console.error("[auth] failed to add the new Owner to the default organization:", err);
+          }
         },
       },
     },
