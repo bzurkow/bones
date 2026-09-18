@@ -85,11 +85,6 @@ the same thing later); new items append at the end rather than renumbering.
 23. **CDN** — scope TBD: static asset delivery for `web-static`/`web-app`'s
     built assets, S3/CloudFront or another provider, whether this ties into
     item 17's productionization work. Ask what before guessing.
-24. **Login page rebuilt to the current design system** (Google-only) —
-    deliberately excluded from the design-system adoption pass. Explicitly
-    *not* in scope: Microsoft SSO (app not registered with Microsoft yet),
-    any generic/enterprise SSO or email+password login, and a marketing-copy
-    proof panel.
 25. **Home (`/`, authenticated)** — still a placeholder, intentionally left
     alone per explicit ask ("I'll think of something to put there").
 26. **Backend compute** — decide Fargate vs. App Runner (both AWS, unaffected
@@ -109,6 +104,15 @@ the same thing later); new items append at the end rather than renumbering.
 
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
 
+- Login page rebuilt to the current design system (item 24, closed
+  2026-09-18) — done via `8206702` ("Adopt design system, rebuild Login on
+  Mantine") and kept current since (email+password, verification, password
+  reset, Google added to sign-up, shared auth-page shell hoisted into
+  `shared-ui` 2026-09-17). Ended up broader than the original scope: the
+  item explicitly excluded email+password, but that was added later as its
+  own initiative (see "Email + password auth" in NOTES.md), not as part of
+  this item. Microsoft/generic SSO and a marketing-copy proof panel are
+  still out of scope, per the original note.
 - Backend logging infra (2026-09-18) — see item 12 above; the raw layer is
   done, the customer-facing semantic audit trail is not.
 - Default organization seeding (2026-09-18) — every fresh database now
