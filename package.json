@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "test": "yarn workspace backend test",
-    "install:all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install && yarn --cwd email-templates install",
+    "install-all": "yarn --cwd backend install && yarn --cwd web-app install && yarn --cwd shared-ui install && yarn --cwd web-static install && yarn --cwd email-templates install",
     "initialize-backend": "sh scripts/initialize-backend.sh",
     "backend:dev": "NODE_VERSION=$(cat .node-version) docker compose -f docker-compose.dev.yml up",
     "web-app:dev": "yarn workspace web-app dev",
