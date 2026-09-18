@@ -3,7 +3,16 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
-import { AuthDivider, AuthForm, AuthNotice, AuthPageShell, AuthSwitchLink, Button, ErrorMessage, TextField } from "./components";
+import {
+  AuthDivider,
+  AuthForm,
+  AuthNotice,
+  AuthPageShell,
+  AuthSwitchLink,
+  Button,
+  ErrorMessage,
+  TextField,
+} from "./components";
 import { useAuthProtocols } from "./hooks/useAuthProtocols";
 import styles from "./Login.module.css";
 

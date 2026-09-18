@@ -54,9 +54,11 @@ describe("organizations.features.setEnabled", () => {
     const org = await createTestOrg();
     const standardUser = await createTestUser({ role: "standard" });
     const caller = createCaller(contextFor(standardUser));
-    await expect(caller.setEnabled({ organizationId: org.id, key: "irrelevant", enabled: true })).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
+    await expect(caller.setEnabled({ organizationId: org.id, key: "irrelevant", enabled: true })).rejects.toMatchObject(
+      {
+        code: "FORBIDDEN",
+      },
+    );
   });
 
   it("404s on an unknown feature", async () => {
@@ -78,10 +80,7 @@ describe("organizations.features.setEnabled", () => {
     const result = await caller.setEnabled({ organizationId: org.id, key, enabled: false });
 
     expect(result?.enabled).toBe(false);
-    const [row] = await db
-      .select()
-      .from(organizationFeatures)
-      .where(eq(organizationFeatures.key, key));
+    const [row] = await db.select().from(organizationFeatures).where(eq(organizationFeatures.key, key));
     expect(row?.enabled).toBe(false);
   });
 });

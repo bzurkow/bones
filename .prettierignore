@@ -1,0 +1,26 @@
+# Docs stay hand-formatted, not Prettier's opinions -- TODOS.md in particular
+# depends on its ordered-list numbers staying stable across edits (its own
+# header says so), which Prettier's markdown printer renumbers sequentially.
+*.md
+
+# Mirrors .gitignore's build-output/generated section -- source only, no
+# generated or vendored output.
+dist/
+build/
+storybook-static/
+.next/
+next-env.d.ts
+
+# Owned by their own generators (drizzle-kit / better-auth's CLI), which
+# don't share Prettier's style -- formatting these once just means the next
+# `db:generate`/`db:auth:generate` run immediately drifts back out again.
+backend/drizzle/meta/
+backend/src/db/auth-schema.ts
+
+# design-sync (claude.ai/design import) -- staged scripts, build output, and
+# machine state are regenerated per run, see .design-sync/NOTES.md.
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules

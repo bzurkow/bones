@@ -25,15 +25,11 @@ export const userSettingsRouter = router({
       // updateUser -- these two fields are input: false specifically so
       // this is the only path that can change them (see auth.ts), and
       // `where` is always the caller's own id, never a client-supplied one.
-      const [updated] = await db
-        .update(users)
-        .set(input)
-        .where(eq(users.id, ctx.session.user.id))
-        .returning({
-          inheritViewModeFromBrowser: users.inheritViewModeFromBrowser,
-          viewMode: users.viewMode,
-          showViewModeToggle: users.showViewModeToggle,
-        });
+      const [updated] = await db.update(users).set(input).where(eq(users.id, ctx.session.user.id)).returning({
+        inheritViewModeFromBrowser: users.inheritViewModeFromBrowser,
+        viewMode: users.viewMode,
+        showViewModeToggle: users.showViewModeToggle,
+      });
 
       return updated;
     }),

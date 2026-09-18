@@ -269,7 +269,11 @@ describe("organizations.update", () => {
   it("allows updating an organization's own name to itself (no-op rename)", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
-    const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "Before.", initialAdminUserId: owner.id });
+    const org = await caller.create({
+      name: `test-org-${randomUUID()}`,
+      blurb: "Before.",
+      initialAdminUserId: owner.id,
+    });
 
     const result = await caller.update({ organizationId: org!.id, name: org!.name, blurb: "After." });
 
@@ -279,7 +283,11 @@ describe("organizations.update", () => {
   it("updates name and blurb", async () => {
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
-    const created = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "Before.", initialAdminUserId: owner.id });
+    const created = await caller.create({
+      name: `test-org-${randomUUID()}`,
+      blurb: "Before.",
+      initialAdminUserId: owner.id,
+    });
 
     const updatedName = `test-org-${randomUUID()}`;
     const result = await caller.update({ organizationId: created!.id, name: updatedName, blurb: "After." });
@@ -303,7 +311,11 @@ describe("organizations.update", () => {
     });
     const memberCaller = createCaller(contextFor(member));
 
-    const result = await memberCaller.update({ organizationId: org!.id, name: org!.name, blurb: "Updated by a member." });
+    const result = await memberCaller.update({
+      organizationId: org!.id,
+      name: org!.name,
+      blurb: "Updated by a member.",
+    });
 
     expect(result?.blurb).toBe("Updated by a member.");
   });
@@ -344,9 +356,9 @@ describe("organizations.requestAvatarUpload / confirmAvatarUpload", () => {
     await expect(
       caller.requestAvatarUpload({ organizationId: "irrelevant", contentType: "image/png" }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect(
-      caller.confirmAvatarUpload({ organizationId: "irrelevant", key: "irrelevant" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.confirmAvatarUpload({ organizationId: "irrelevant", key: "irrelevant" })).rejects.toMatchObject(
+      { code: "FORBIDDEN" },
+    );
   });
 
   it("rejects confirming a key that doesn't belong to this organization", async () => {
@@ -450,7 +462,10 @@ describe("organizations.findAddableUserByEmail", () => {
     const caller = createCaller(contextFor(owner));
     const org = await caller.create({ name: `test-org-${randomUUID()}`, blurb: "", initialAdminUserId: owner.id });
 
-    const result = await caller.findAddableUserByEmail({ organizationId: org!.id, email: `${randomUUID()}@example.test` });
+    const result = await caller.findAddableUserByEmail({
+      organizationId: org!.id,
+      email: `${randomUUID()}@example.test`,
+    });
 
     expect(result).toBeNull();
   });

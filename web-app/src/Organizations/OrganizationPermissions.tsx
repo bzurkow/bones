@@ -91,8 +91,8 @@ export function OrganizationPermissions() {
   return (
     <div className={styles.stack}>
       <p className={styles.body}>
-        Every feature this organization has, whether it&apos;s on at all, and which of its roles have access to it.
-        A role with no explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
+        Every feature this organization has, whether it&apos;s on at all, and which of its roles have access to it. A
+        role with no explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
       </p>
 
       <ErrorMessage message={error} />
@@ -132,7 +132,9 @@ export function OrganizationPermissions() {
                             aria-label={`${feature.label} for ${role.name}`}
                             checked={granted}
                             disabled={!canEdit || updatingCell === `${feature.key}:${role.name}`}
-                            onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
+                            onChange={(event) =>
+                              void handleGrantChange(feature.key, role.name, event.currentTarget.checked)
+                            }
                           />
                         </td>
                       );

@@ -66,7 +66,9 @@ describe("organizations.featureRoles.setGranted", () => {
     const caller = createCaller(contextFor(owner));
     const key = `test.feature.${randomUUID()}`;
     await db.insert(organizationFeatures).values({ organizationId: org.id, key, label: "Test" });
-    await db.insert(organizationFeatureRoles).values({ organizationId: org.id, featureKey: key, role: "viewer", granted: true });
+    await db
+      .insert(organizationFeatureRoles)
+      .values({ organizationId: org.id, featureKey: key, role: "viewer", granted: true });
 
     await caller.setGranted({ organizationId: org.id, featureKey: key, role: "viewer", granted: false });
 
@@ -78,7 +80,7 @@ describe("organizations.featureRoles.setGranted", () => {
     expect(rows[0]?.granted).toBe(false);
   });
 
-  it("refuses to revoke admin's grant on any feature -- \"org admin must have all update permissions\"", async () => {
+  it('refuses to revoke admin\'s grant on any feature -- "org admin must have all update permissions"', async () => {
     const org = await createTestOrg();
     const owner = await createTestUser({ role: "owner" });
     const caller = createCaller(contextFor(owner));
@@ -93,7 +95,9 @@ describe("organizations.featureRoles.setGranted", () => {
     // owner-grant guard.
     const key = `test.feature.${randomUUID()}`;
     await db.insert(organizationFeatures).values({ organizationId: org.id, key, label: "Test" });
-    await db.insert(organizationFeatureRoles).values({ organizationId: org.id, featureKey: key, role: "admin", granted: true });
+    await db
+      .insert(organizationFeatureRoles)
+      .values({ organizationId: org.id, featureKey: key, role: "admin", granted: true });
     await expect(
       caller.setGranted({ organizationId: org.id, featureKey: key, role: "admin", granted: false }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -101,7 +105,9 @@ describe("organizations.featureRoles.setGranted", () => {
     const [row] = await db
       .select()
       .from(organizationFeatureRoles)
-      .where(and(eq(organizationFeatureRoles.featureKey, "profile.update"), eq(organizationFeatureRoles.role, "admin")));
+      .where(
+        and(eq(organizationFeatureRoles.featureKey, "profile.update"), eq(organizationFeatureRoles.role, "admin")),
+      );
     expect(row?.granted).toBe(true);
   });
 

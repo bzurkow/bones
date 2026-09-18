@@ -104,9 +104,7 @@ export function TermsAndConditions() {
 
       <div className={alreadyAccepted ? styles.content : `${styles.content} ${styles.contentWithActionBar}`}>
         <h1 className={styles.heading}>Terms &amp; Conditions</h1>
-        {!alreadyAccepted && (
-          <p className={styles.prompt}>Please accept our terms and conditions before proceeding.</p>
-        )}
+        {!alreadyAccepted && <p className={styles.prompt}>Please accept our terms and conditions before proceeding.</p>}
         <MarkdownViewer content={terms.content} />
       </div>
 

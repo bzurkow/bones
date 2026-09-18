@@ -26,8 +26,7 @@ export function ApplicationSettings() {
   const inheritViewModeFromBrowser =
     optimistic?.inheritViewModeFromBrowser ?? session?.user.inheritViewModeFromBrowser ?? true;
   const viewMode = optimistic?.viewMode ?? session?.user.viewMode ?? "light";
-  const showViewModeToggle =
-    optimistic?.showViewModeToggle ?? session?.user.showViewModeToggle ?? true;
+  const showViewModeToggle = optimistic?.showViewModeToggle ?? session?.user.showViewModeToggle ?? true;
 
   async function updateSettings(input: ViewSettingsInput) {
     setError(null);
@@ -52,9 +51,7 @@ export function ApplicationSettings() {
           <Switch
             aria-label="Inherit view mode from browser"
             checked={inheritViewModeFromBrowser}
-            onChange={(event) =>
-              void updateSettings({ inheritViewModeFromBrowser: event.currentTarget.checked })
-            }
+            onChange={(event) => void updateSettings({ inheritViewModeFromBrowser: event.currentTarget.checked })}
           />
         </Row>
 
@@ -63,22 +60,15 @@ export function ApplicationSettings() {
             aria-label="Dark mode"
             checked={viewMode === "dark"}
             disabled={inheritViewModeFromBrowser}
-            onChange={(event) =>
-              void updateSettings({ viewMode: event.currentTarget.checked ? "dark" : "light" })
-            }
+            onChange={(event) => void updateSettings({ viewMode: event.currentTarget.checked ? "dark" : "light" })}
           />
         </Row>
 
-        <Row
-          label="Show view mode toggle"
-          description="Show the light/dark toggle button in the app."
-        >
+        <Row label="Show view mode toggle" description="Show the light/dark toggle button in the app.">
           <Switch
             aria-label="Show view mode toggle"
             checked={showViewModeToggle}
-            onChange={(event) =>
-              void updateSettings({ showViewModeToggle: event.currentTarget.checked })
-            }
+            onChange={(event) => void updateSettings({ showViewModeToggle: event.currentTarget.checked })}
           />
         </Row>
       </RowCard>

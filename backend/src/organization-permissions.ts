@@ -74,7 +74,11 @@ export async function canViewOrg(organizationId: string, userId: string, role: s
 // two halves (features.enabled, feature_roles.granted) permissions.ts's
 // own hasPermission already fails closed on. Not cached, same "an infrequent
 // admin action, correctness over shaving a query" reasoning as that file.
-export async function hasOrganizationPermission(organizationId: string, userId: string, featureKey: string): Promise<boolean> {
+export async function hasOrganizationPermission(
+  organizationId: string,
+  userId: string,
+  featureKey: string,
+): Promise<boolean> {
   const [membership] = await db
     .select({ role: organizationUsers.role })
     .from(organizationUsers)
@@ -137,7 +141,13 @@ export async function getEnabledOrganizationFeatures(organizationId: string, rol
         eq(organizationFeatureRoles.role, role),
       ),
     )
-    .where(and(eq(organizationFeatures.organizationId, organizationId), eq(organizationFeatures.enabled, true), eq(organizationFeatureRoles.granted, true)));
+    .where(
+      and(
+        eq(organizationFeatures.organizationId, organizationId),
+        eq(organizationFeatures.enabled, true),
+        eq(organizationFeatureRoles.granted, true),
+      ),
+    );
 
   return rows.map((row) => row.key);
 }

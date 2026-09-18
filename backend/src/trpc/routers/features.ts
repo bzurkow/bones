@@ -24,7 +24,11 @@ export const featuresRouter = router({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
-      const [updated] = await db.update(features).set({ enabled: input.enabled }).where(eq(features.key, input.key)).returning();
+      const [updated] = await db
+        .update(features)
+        .set({ enabled: input.enabled })
+        .where(eq(features.key, input.key))
+        .returning();
 
       if (!updated) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Unknown feature." });

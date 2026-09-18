@@ -38,12 +38,8 @@ await server.register(async (instance) => {
   // Fastify's built-in "application/json" parser is more specific than a
   // bare wildcard and wins regardless of which scope registers the
   // wildcard, so it needs an explicit override here too, not just "*".
-  instance.addContentTypeParser("application/json", { parseAs: "buffer" }, (_req, body, done) =>
-    done(null, body),
-  );
-  instance.addContentTypeParser("*", { parseAs: "buffer" }, (_req, body, done) =>
-    done(null, body),
-  );
+  instance.addContentTypeParser("application/json", { parseAs: "buffer" }, (_req, body, done) => done(null, body));
+  instance.addContentTypeParser("*", { parseAs: "buffer" }, (_req, body, done) => done(null, body));
 
   instance.all("/api/auth/*", async (request, reply) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
@@ -72,9 +68,7 @@ startLogArchiver();
 
 const port = Number(process.env.PORT ?? 3000);
 
-server
-  .listen({ port, host: "0.0.0.0" })
-  .catch((err) => {
-    server.log.error(err);
-    process.exit(1);
-  });
+server.listen({ port, host: "0.0.0.0" }).catch((err) => {
+  server.log.error(err);
+  process.exit(1);
+});

@@ -30,7 +30,8 @@ export function nextUserRole(hasExistingUsers: boolean): UserRole {
 // a request ever goes out -- backend can't export runtime code to web-app
 // (this package's own exports are types-only, see package.json), so this
 // gets duplicated rather than shared; keep both in sync if either changes.
-export const PASSWORD_RULES_MESSAGE = "Password must be at least 8 characters and include a letter, a number, and a special character.";
+export const PASSWORD_RULES_MESSAGE =
+  "Password must be at least 8 characters and include a letter, a number, and a special character.";
 
 export function isStrongPassword(password: string): boolean {
   return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password) && /[^a-zA-Z0-9]/.test(password);

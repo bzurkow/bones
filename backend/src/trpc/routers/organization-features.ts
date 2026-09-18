@@ -18,14 +18,12 @@ export const organizationFeaturesRouter = router({
   // admin.organizations.update override) -- reading the Permissions tab
   // is a view concern, same split every other read on the org detail
   // page uses.
-  list: protectedProcedure
-    .input(z.object({ organizationId: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
-      if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      return db.select().from(organizationFeatures).where(eq(organizationFeatures.organizationId, input.organizationId));
-    }),
+  list: protectedProcedure.input(z.object({ organizationId: z.string().min(1) })).query(async ({ ctx, input }) => {
+    if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return db.select().from(organizationFeatures).where(eq(organizationFeatures.organizationId, input.organizationId));
+  }),
 
   // The Permissions tab's own update permission -- one gate, not the
   // global features.ts's own enable/disable split (no org-scoped
@@ -36,7 +34,9 @@ export const organizationFeaturesRouter = router({
       const [updated] = await db
         .update(organizationFeatures)
         .set({ enabled: input.enabled })
-        .where(and(eq(organizationFeatures.organizationId, input.organizationId), eq(organizationFeatures.key, input.key)))
+        .where(
+          and(eq(organizationFeatures.organizationId, input.organizationId), eq(organizationFeatures.key, input.key)),
+        )
         .returning();
       if (!updated) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Unknown feature." });

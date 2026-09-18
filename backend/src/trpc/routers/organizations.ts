@@ -2,7 +2,14 @@ import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { organizationFeatureRoles, organizationFeatures, organizationRoles, organizationUsers, organizations, users } from "../../db/schema.js";
+import {
+  organizationFeatureRoles,
+  organizationFeatures,
+  organizationRoles,
+  organizationUsers,
+  organizations,
+  users,
+} from "../../db/schema.js";
 import { ORGANIZATION_TAB_UPDATE_FEATURES, canUpdateOrg, canViewOrg } from "../../organization-permissions.js";
 import { hasPermission } from "../../permissions.js";
 import { AVATAR_BUCKET, getPresignedUploadUrl, resolveAvatarUrl } from "../../storage/index.js";
@@ -195,34 +202,32 @@ export const organizationsRouter = router({
   // update override, or this member's own org-scoped grant for that tab's
   // update key), so the page doesn't need a round-trip per tab just to
   // know what to render.
-  getByName: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
-      const [org] = await db.select().from(organizations).where(byNameCaseInsensitive(input.name));
-      if (!org) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "No organization with that name." });
-      }
+  getByName: protectedProcedure.input(z.object({ name: z.string().min(1) })).query(async ({ ctx, input }) => {
+    const [org] = await db.select().from(organizations).where(byNameCaseInsensitive(input.name));
+    if (!org) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "No organization with that name." });
+    }
 
-      if (!(await canViewOrg(org.id, ctx.session.user.id, ctx.session.user.role))) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
+    if (!(await canViewOrg(org.id, ctx.session.user.id, ctx.session.user.role))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
 
-      const [canUpdateProfile, canUpdateMembers, canUpdateRoles, canUpdatePermissions] = await Promise.all([
-        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "profile.update"),
-        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "members.update"),
-        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "roles.update"),
-        canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "permissions.update"),
-      ]);
+    const [canUpdateProfile, canUpdateMembers, canUpdateRoles, canUpdatePermissions] = await Promise.all([
+      canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "profile.update"),
+      canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "members.update"),
+      canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "roles.update"),
+      canUpdateOrg(org.id, ctx.session.user.id, ctx.session.user.role, "permissions.update"),
+    ]);
 
-      return {
-        ...org,
-        avatarUrl: await resolveAvatarUrl(org.avatarUrl),
-        canUpdateProfile,
-        canUpdateMembers,
-        canUpdateRoles,
-        canUpdatePermissions,
-      };
-    }),
+    return {
+      ...org,
+      avatarUrl: await resolveAvatarUrl(org.avatarUrl),
+      canUpdateProfile,
+      canUpdateMembers,
+      canUpdateRoles,
+      canUpdatePermissions,
+    };
+  }),
 
   // Users matched by name/email, for the Create modal's initial-admin
   // picker -- no organizationId yet (the org doesn't exist until this
@@ -260,7 +265,10 @@ export const organizationsRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const [existing] = await db.select({ id: organizations.id }).from(organizations).where(byNameCaseInsensitive(input.name));
+      const [existing] = await db
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(byNameCaseInsensitive(input.name));
       if (existing) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "An organization with that name already exists." });
       }
@@ -439,7 +447,9 @@ export const organizationsRouter = router({
       const condition = and(
         eq(organizationUsers.organizationId, input.organizationId),
         eq(organizationUsers.active, true),
-        trimmedSearch ? or(ilike(users.name, `%${trimmedSearch}%`), ilike(users.email, `%${trimmedSearch}%`)) : undefined,
+        trimmedSearch
+          ? or(ilike(users.name, `%${trimmedSearch}%`), ilike(users.email, `%${trimmedSearch}%`))
+          : undefined,
       );
       const sortColumn = ORG_MEMBER_SORTABLE_COLUMNS[input.sortBy ?? "name"];
       const order = input.sortDirection === "desc" ? desc(sortColumn) : asc(sortColumn);

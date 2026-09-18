@@ -22,9 +22,7 @@ describe("userSettings.updateUserSettings", () => {
   it("rejects an empty input", async () => {
     const user = await createTestUser();
     const caller = createCaller(contextFor(user));
-    await expect(caller.updateUserSettings({})).rejects.toThrow(
-      "Provide at least one field to update.",
-    );
+    await expect(caller.updateUserSettings({})).rejects.toThrow("Provide at least one field to update.");
   });
 
   it("rejects an invalid viewMode", async () => {

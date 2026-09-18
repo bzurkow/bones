@@ -25,11 +25,23 @@ export default function ResetPasswordEmail({ url }: ResetPasswordEmailProps) {
         <div style={{ display: "none", overflow: "hidden", lineHeight: "1px", opacity: 0, maxHeight: 0, maxWidth: 0 }}>
           Reset your Bones account password.
         </div>
-        <table role="presentation" width="100%" cellPadding={0} cellSpacing={0} style={{ backgroundColor: emailTokens.surface }}>
+        <table
+          role="presentation"
+          width="100%"
+          cellPadding={0}
+          cellSpacing={0}
+          style={{ backgroundColor: emailTokens.surface }}
+        >
           <tbody>
             <tr>
               <td align="center" style={{ padding: "40px 20px" }}>
-                <table role="presentation" width="480" cellPadding={0} cellSpacing={0} style={{ maxWidth: 480, width: "100%" }}>
+                <table
+                  role="presentation"
+                  width="480"
+                  cellPadding={0}
+                  cellSpacing={0}
+                  style={{ maxWidth: 480, width: "100%" }}
+                >
                   <tbody>
                     <tr>
                       <td

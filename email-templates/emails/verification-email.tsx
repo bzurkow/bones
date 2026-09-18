@@ -44,11 +44,23 @@ export default function VerificationEmail({ url }: VerificationEmailProps) {
         <div style={{ display: "none", overflow: "hidden", lineHeight: "1px", opacity: 0, maxHeight: 0, maxWidth: 0 }}>
           Confirm your email address to finish setting up your Bones account.
         </div>
-        <table role="presentation" width="100%" cellPadding={0} cellSpacing={0} style={{ backgroundColor: emailTokens.surface }}>
+        <table
+          role="presentation"
+          width="100%"
+          cellPadding={0}
+          cellSpacing={0}
+          style={{ backgroundColor: emailTokens.surface }}
+        >
           <tbody>
             <tr>
               <td align="center" style={{ padding: "40px 20px" }}>
-                <table role="presentation" width="480" cellPadding={0} cellSpacing={0} style={{ maxWidth: 480, width: "100%" }}>
+                <table
+                  role="presentation"
+                  width="480"
+                  cellPadding={0}
+                  cellSpacing={0}
+                  style={{ maxWidth: 480, width: "100%" }}
+                >
                   <tbody>
                     <tr>
                       <td
@@ -139,4 +151,6 @@ export default function VerificationEmail({ url }: VerificationEmailProps) {
 // convention) renders this component with these props when no real ones
 // are available -- lets the template be edited/previewed without a real
 // backend request in flight.
-VerificationEmail.PreviewProps = { url: "https://app.bones.example/verify?token=preview" } satisfies VerificationEmailProps;
+VerificationEmail.PreviewProps = {
+  url: "https://app.bones.example/verify?token=preview",
+} satisfies VerificationEmailProps;

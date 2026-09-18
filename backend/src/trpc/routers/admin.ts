@@ -69,10 +69,7 @@ export const adminRouter = router({
           .orderBy(order)
           .limit(input.pageSize)
           .offset((input.page - 1) * input.pageSize),
-        db
-          .select({ total: count() })
-          .from(users)
-          .where(condition),
+        db.select({ total: count() }).from(users).where(condition),
       ]);
 
       // Second query, not a join against users -- a user can have more than
@@ -183,7 +180,10 @@ export const adminRouter = router({
       if (!input.active) {
         const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId));
         if (target?.role === "owner") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Owner accounts can't be deactivated -- change their role first." });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Owner accounts can't be deactivated -- change their role first.",
+          });
         }
       }
 

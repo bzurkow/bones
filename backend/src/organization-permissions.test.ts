@@ -63,7 +63,9 @@ describe("getEnabledOrganizationFeatures", () => {
     const org = await createTestOrg();
     const key = `test.feature.${randomUUID()}`;
     await db.insert(organizationFeatures).values({ organizationId: org.id, key, label: "Test", enabled: true });
-    await db.insert(organizationFeatureRoles).values({ organizationId: org.id, featureKey: key, role: "viewer", granted: true });
+    await db
+      .insert(organizationFeatureRoles)
+      .values({ organizationId: org.id, featureKey: key, role: "viewer", granted: true });
 
     expect(await getEnabledOrganizationFeatures(org.id, "viewer")).toEqual([key]);
     expect(await getEnabledOrganizationFeatures(org.id, "standard")).toEqual([]);

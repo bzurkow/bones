@@ -80,8 +80,8 @@ export function AdminPermissions() {
   return (
     <div className={panelStyles.stack}>
       <p className={panelStyles.body}>
-        Every feature in the app, whether it&apos;s on at all, and which roles have access to it. A role with
-        no explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
+        Every feature in the app, whether it&apos;s on at all, and which roles have access to it. A role with no
+        explicit grant has none -- there&apos;s nothing to configure per role until you check a box.
       </p>
 
       <ErrorMessage message={error} />
@@ -134,7 +134,9 @@ export function AdminPermissions() {
                             !canUpdateGrants ||
                             (role.name === "owner" && granted)
                           }
-                          onChange={(event) => void handleGrantChange(feature.key, role.name, event.currentTarget.checked)}
+                          onChange={(event) =>
+                            void handleGrantChange(feature.key, role.name, event.currentTarget.checked)
+                          }
                         />
                       </td>
                     );

@@ -241,7 +241,9 @@ export function AdminUsers() {
               {roles.map((role) => (
                 <Menu.Item
                   key={role.name}
-                  disabled={role.name === user.role || ((role.name === "owner" || user.role === "owner") && !canUpdateOwner)}
+                  disabled={
+                    role.name === user.role || ((role.name === "owner" || user.role === "owner") && !canUpdateOwner)
+                  }
                   onClick={() => void handleRoleChange(user, role.name)}
                 >
                   {role.name}

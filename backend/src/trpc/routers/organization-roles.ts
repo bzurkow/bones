@@ -20,14 +20,12 @@ export const organizationRolesRouter = router({
   // admin.organizations.update override) -- reading the Roles tab is a
   // view concern, same split every other read on the org detail page
   // uses. Also feeds the Members table's own role control.
-  list: protectedProcedure
-    .input(z.object({ organizationId: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
-      if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      return db.select().from(organizationRoles).where(eq(organizationRoles.organizationId, input.organizationId));
-    }),
+  list: protectedProcedure.input(z.object({ organizationId: z.string().min(1) })).query(async ({ ctx, input }) => {
+    if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return db.select().from(organizationRoles).where(eq(organizationRoles.organizationId, input.organizationId));
+  }),
 
   // The Roles tab's own update permission (requireOrganizationPermission)
   // -- the global admin.organizations.update override still works too

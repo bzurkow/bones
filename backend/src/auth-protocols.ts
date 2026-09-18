@@ -21,7 +21,10 @@ export const DEFAULT_ENABLED_AUTH_PROTOCOLS: ReadonlySet<AuthProtocolName> = new
 // (a toggle takes effect on the very next request) matters more here than
 // shaving a query off the auth path.
 export async function isAuthProtocolEnabled(name: AuthProtocolName): Promise<boolean> {
-  const [row] = await db.select({ enabled: authProtocols.enabled }).from(authProtocols).where(eq(authProtocols.name, name));
+  const [row] = await db
+    .select({ enabled: authProtocols.enabled })
+    .from(authProtocols)
+    .where(eq(authProtocols.name, name));
   // Fail open, not closed -- a missing row (seed migration not run yet, or
   // a protocol added here before its seed row exists) should never be able
   // to lock every sign-in path out by itself.

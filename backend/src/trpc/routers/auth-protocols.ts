@@ -28,7 +28,10 @@ export const authProtocolsRouter = router({
         // way left to sign in and turn it back on. See
         // bones-roadmap-notes.md item 3a: this is another ad hoc guard,
         // same as that one, pending the real permissions design.
-        const enabled = await db.select({ name: authProtocols.name }).from(authProtocols).where(eq(authProtocols.enabled, true));
+        const enabled = await db
+          .select({ name: authProtocols.name })
+          .from(authProtocols)
+          .where(eq(authProtocols.enabled, true));
         if (enabled.length === 1 && enabled[0]?.name === input.name) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "At least one sign-in method must stay enabled." });
         }

@@ -114,12 +114,7 @@ export function ApplicationProfile() {
           />
           <span className={styles.email}>{session?.user.email}</span>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!isDirty || saving}
-          onClick={() => void handleSave()}
-        >
+        <Button variant="secondary" size="sm" disabled={!isDirty || saving} onClick={() => void handleSave()}>
           Save
         </Button>
       </div>

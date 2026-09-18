@@ -1,18 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   // Reads the root .env directly instead of needing its own copy of
   // client-safe values like VITE_BACKEND_URL.
-  envDir: '..',
+  envDir: "..",
   server: {
     // Dev convention as of the marketing-site split: this app is reached at
     // app.localhost, not bare localhost, to mirror the eventual
     // apex-domain (web-static) vs. app.-subdomain (this) production split --
     // Vite's default host allowlist doesn't include it otherwise.
-    allowedHosts: ['app.localhost'],
+    allowedHosts: ["app.localhost"],
     // Proxies API/tRPC calls to the backend through this same origin,
     // instead of the browser fetching localhost:3000 directly (a
     // different hostname than app.localhost). This is specifically about
@@ -38,8 +38,8 @@ export default defineConfig({
     // (defaulting its Domain to BETTER_AUTH_URL's "localhost", a valid
     // parent domain of app.localhost) is for.
     proxy: {
-      '/api': { target: 'http://localhost:3000', changeOrigin: true },
-      '/trpc': { target: 'http://localhost:3000', changeOrigin: true },
+      "/api": { target: "http://localhost:3000", changeOrigin: true },
+      "/trpc": { target: "http://localhost:3000", changeOrigin: true },
     },
   },
-})
+});

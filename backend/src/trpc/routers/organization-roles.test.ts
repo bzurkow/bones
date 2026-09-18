@@ -119,10 +119,7 @@ describe("organizations.roles.create", () => {
     const result = await caller.create({ organizationId: org.id, name });
 
     expect(result?.name).toBe(name);
-    const [row] = await db
-      .select()
-      .from(organizationRoles)
-      .where(eq(organizationRoles.name, name));
+    const [row] = await db.select().from(organizationRoles).where(eq(organizationRoles.name, name));
     expect(row).toBeDefined();
   });
 });
@@ -171,10 +168,7 @@ describe("organizations.roles.delete", () => {
 
     await caller.delete({ organizationId: org.id, name });
 
-    const [row] = await db
-      .select()
-      .from(organizationRoles)
-      .where(eq(organizationRoles.name, name));
+    const [row] = await db.select().from(organizationRoles).where(eq(organizationRoles.name, name));
     expect(row).toBeUndefined();
   });
 });

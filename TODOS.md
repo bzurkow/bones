@@ -89,10 +89,31 @@ the same thing later); new items append at the end rather than renumbering.
     alone per explicit ask ("I'll think of something to put there").
 26. **Backend compute** — decide Fargate vs. App Runner (both AWS, unaffected
     by the DB-hosting decision already made).
-27. **Formatter** — none configured yet; oxlint is a linter, not a formatter,
-    doesn't cover code style/whitespace. Prettier or otherwise, undecided.
+
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
 
+- Formatter (item 27, closed 2026-09-18) — Prettier, set up to mirror
+  oxlint's structure exactly: one shared root config (`.prettierrc.json`,
+  only `printWidth: 120` overridden — everything else already matched this
+  codebase's style, since it's already Prettier's own defaults), one root
+  `.prettierignore`, one root-only `prettier` devDependency, root
+  `format`/`format:fix` scripts (bare, like root's `lint`), and a
+  `format`/`format:fix` (where `lint:fix` exists) or just `format` (where
+  it doesn't) pair per workspace pointing at `../.prettierrc.json` +
+  `../.prettierignore` explicitly, same as each workspace's own
+  `lint`/`lint:fix` points at `../.oxlintrc.json`. Scoped to code only —
+  `*.md` is excluded: a first pass formatting docs too renumbered
+  `TODOS.md`'s ordered list sequentially, breaking this file's own "stable
+  numbering, don't renumber" convention, and flipped `*emphasis*` to
+  `_emphasis_` throughout prose; reverted, docs stay hand-formatted.
+  `backend/drizzle/meta/` and `backend/src/db/auth-schema.ts` are excluded
+  too — drizzle-kit's and better-auth's own CLI generators own those
+  files' formatting, not Prettier; formatting them once just drifts back
+  out of sync on the next `db:generate`/`db:auth:generate` run.
+  Ran once repo-wide (`yarn format:fix`) to actually make the repo
+  consistent, not just add unused tooling. Verified: `yarn format`/`yarn
+  lint` clean, backend's full suite (220/220), `web-app`+`web-static`
+  builds both clean.
 - `@aws-sdk/*` version pinning (item 28, closed 2026-09-18) — was an
   oversight, not deliberate. Switched `client-s3`/`client-sesv2`/
   `s3-request-presigner` in `backend/package.json` from exact pins to `^`

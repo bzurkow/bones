@@ -24,7 +24,10 @@ export async function resetDb() {
   // worker. Reset it back to its seed defaults directly instead.
   await Promise.all(
     AUTH_PROTOCOLS.map((name) =>
-      db.update(authProtocols).set({ enabled: DEFAULT_ENABLED_AUTH_PROTOCOLS.has(name) }).where(eq(authProtocols.name, name)),
+      db
+        .update(authProtocols)
+        .set({ enabled: DEFAULT_ENABLED_AUTH_PROTOCOLS.has(name) })
+        .where(eq(authProtocols.name, name)),
     ),
   );
 }

@@ -7,7 +7,8 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start --port 3001",
-    "lint": "oxlint -c ../.oxlintrc.json ."
+    "lint": "oxlint -c ../.oxlintrc.json .",
+    "format": "prettier --check . --config ../.prettierrc.json --ignore-path ../.prettierignore"
   },
   "dependencies": {
     "@mantine/core": "^9.6.0",

@@ -16,7 +16,8 @@ const VARIANT_MAP: Record<ButtonVariant, MantineButtonProps["variant"]> = {
 };
 
 export interface ButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color" | "style" | "size">,
+  extends
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color" | "style" | "size">,
     Omit<MantineButtonProps, "variant" | "size"> {
   variant?: ButtonVariant;
   size?: ButtonSize;

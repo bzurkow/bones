@@ -125,7 +125,11 @@ export function OrganizationProfile() {
               onChange={(event) => void handleAvatarChange(event)}
             />
             <span className={styles.avatarOverlay}>
-              {avatarUploading ? <span className={styles.avatarOverlayLabel}>…</span> : <IconCamera size={20} stroke={1.75} />}
+              {avatarUploading ? (
+                <span className={styles.avatarOverlayLabel}>…</span>
+              ) : (
+                <IconCamera size={20} stroke={1.75} />
+              )}
             </span>
           </label>
         ) : (
@@ -134,7 +138,12 @@ export function OrganizationProfile() {
 
         <div className={styles.identityFields}>
           {canEdit ? (
-            <TextInput aria-label="Name" value={name} disabled={saving} onChange={(event) => setDraftName(event.currentTarget.value)} />
+            <TextInput
+              aria-label="Name"
+              value={name}
+              disabled={saving}
+              onChange={(event) => setDraftName(event.currentTarget.value)}
+            />
           ) : (
             <span className={styles.nameDisplay}>{org.name}</span>
           )}
@@ -162,7 +171,9 @@ export function OrganizationProfile() {
         <Row label="Status">
           <div className={styles.rowEnd}>
             <span className={styles.status}>
-              <span className={`${styles.statusDot} ${org.active ? styles.statusDotActive : styles.statusDotInactive}`} />
+              <span
+                className={`${styles.statusDot} ${org.active ? styles.statusDotActive : styles.statusDotInactive}`}
+              />
               {org.active ? "Active" : "Inactive"}
             </span>
             {canEdit && (

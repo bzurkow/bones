@@ -49,7 +49,12 @@ export async function archiveOnce(): Promise<void> {
     try {
       const body = await readFile(filePath);
       await s3Client.send(
-        new PutObjectCommand({ Bucket: LOG_BUCKET, Key: `logs/${file}`, Body: body, ContentType: "application/x-ndjson" }),
+        new PutObjectCommand({
+          Bucket: LOG_BUCKET,
+          Key: `logs/${file}`,
+          Body: body,
+          ContentType: "application/x-ndjson",
+        }),
       );
       await unlink(filePath);
     } catch (err) {

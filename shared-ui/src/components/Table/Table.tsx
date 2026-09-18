@@ -76,7 +76,17 @@ export interface TableProps<T> {
 // Table just renders it and reports interactions upward. Same
 // presentational/data-wiring split this repo already uses for
 // MarkdownEditor/MarkdownViewer, BrandLockup, ColorSchemeToggleButton.
-export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing here yet.", search, sort, pagination, rowClassName }: TableProps<T>) {
+export function Table<T>({
+  columns,
+  rows,
+  rowKey,
+  loading,
+  emptyLabel = "Nothing here yet.",
+  search,
+  sort,
+  pagination,
+  rowClassName,
+}: TableProps<T>) {
   // Only resized columns get an entry -- an absent key means "still flex
   // (minmax(minWidth, 1fr))," the starting state for every column.
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
@@ -173,11 +183,7 @@ export function Table<T>({ columns, rows, rowKey, loading, emptyLabel = "Nothing
                 className={styles.headerCell}
               >
                 {column.enableSort ? (
-                  <button
-                    type="button"
-                    className={styles.headerSortButton}
-                    onClick={() => sort?.onChange(column.key)}
-                  >
+                  <button type="button" className={styles.headerSortButton} onClick={() => sort?.onChange(column.key)}>
                     <span>{column.header}</span>
                     {isActiveSort ? (
                       sort?.direction === "desc" ? (
@@ -239,7 +245,14 @@ function getPageNumbers(current: number, totalPages: number): (number | "ellipsi
   return result;
 }
 
-function PaginationBar({ page, pageSize, total, pageSizeOptions = [10, 25, 50], onPageChange, onPageSizeChange }: TablePaginationProps) {
+function PaginationBar({
+  page,
+  pageSize,
+  total,
+  pageSizeOptions = [10, 25, 50],
+  onPageChange,
+  onPageSizeChange,
+}: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(total, page * pageSize);

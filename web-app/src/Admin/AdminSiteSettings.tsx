@@ -60,17 +60,14 @@ export function AdminSiteSettings() {
 
   return (
     <div className={styles.stack}>
-      <p className={styles.body}>
-        Site-wide configuration -- name, branding, feature flags -- will live
-        here.
-      </p>
+      <p className={styles.body}>Site-wide configuration -- name, branding, feature flags -- will live here.</p>
 
       {canView && (
         <section>
           <h2 className={styles.sectionTitle}>Authorization Protocols</h2>
           <p className={styles.sectionDescription}>
-            Which sign-up and sign-in methods are available. Disabling one also hides it from the sign-in and
-            sign-up pages.
+            Which sign-up and sign-in methods are available. Disabling one also hides it from the sign-in and sign-up
+            pages.
           </p>
 
           {protocols && (

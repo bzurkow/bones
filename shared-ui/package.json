@@ -13,7 +13,8 @@
     "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
-    "lint": "oxlint -c ../.oxlintrc.json ."
+    "lint": "oxlint -c ../.oxlintrc.json .",
+    "format": "prettier --check . --config ../.prettierrc.json --ignore-path ../.prettierignore"
   },
   "dependencies": {
     "@tabler/icons-react": "^3.46.0",

@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint -c ../.oxlintrc.json .",
     "lint:fix": "oxlint -c ../.oxlintrc.json . --fix",
+    "format": "prettier --check . --config ../.prettierrc.json --ignore-path ../.prettierignore",
+    "format:fix": "prettier --write . --config ../.prettierrc.json --ignore-path ../.prettierignore",
     "preview": "vite preview"
   },
   "dependencies": {

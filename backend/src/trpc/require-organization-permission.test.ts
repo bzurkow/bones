@@ -77,8 +77,12 @@ describe("requireOrganizationPermission", () => {
   it("succeeds for a member whose role has an enabled, granted feature", async () => {
     const { org, owner } = await createTestOrg();
     const member = await addPlainMember(org.id, contextFor(owner));
-    await db.insert(organizationFeatures).values({ organizationId: org.id, key: "test.feature", label: "Test", enabled: true });
-    await db.insert(organizationFeatureRoles).values({ organizationId: org.id, featureKey: "test.feature", role: "standard", granted: true });
+    await db
+      .insert(organizationFeatures)
+      .values({ organizationId: org.id, key: "test.feature", label: "Test", enabled: true });
+    await db
+      .insert(organizationFeatureRoles)
+      .values({ organizationId: org.id, featureKey: "test.feature", role: "standard", granted: true });
     const caller = createCaller(contextFor(member));
 
     await expect(caller.check({ organizationId: org.id })).resolves.toBe("ok");
@@ -87,8 +91,12 @@ describe("requireOrganizationPermission", () => {
   it("fails closed when the feature is globally disabled for the org", async () => {
     const { org, owner } = await createTestOrg();
     const member = await addPlainMember(org.id, contextFor(owner));
-    await db.insert(organizationFeatures).values({ organizationId: org.id, key: "test.feature", label: "Test", enabled: false });
-    await db.insert(organizationFeatureRoles).values({ organizationId: org.id, featureKey: "test.feature", role: "standard", granted: true });
+    await db
+      .insert(organizationFeatures)
+      .values({ organizationId: org.id, key: "test.feature", label: "Test", enabled: false });
+    await db
+      .insert(organizationFeatureRoles)
+      .values({ organizationId: org.id, featureKey: "test.feature", role: "standard", granted: true });
     const caller = createCaller(contextFor(member));
 
     await expect(caller.check({ organizationId: org.id })).rejects.toMatchObject({ code: "FORBIDDEN" });

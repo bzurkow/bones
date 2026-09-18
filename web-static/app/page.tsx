@@ -39,7 +39,8 @@ const STACK_ITEMS: CardGridItem[] = [
   {
     index: "04 · PUBLISH",
     title: "Ship to your cloud",
-    description: "Push to the cloud — with Terraform, a CI pipeline, preview environments per branch, and DNS and TLS handled.",
+    description:
+      "Push to the cloud — with Terraform, a CI pipeline, preview environments per branch, and DNS and TLS handled.",
   },
   {
     index: "05 · OPS",
@@ -168,8 +169,8 @@ export default function Home() {
             <Eyebrow>The output</Eyebrow>
             <h2 className={styles.sectionHeading}>A repository a developer would be happy to inherit.</h2>
             <p className={styles.outputLead}>
-              Most generators hand you a hosted page and a bill. Bones hands you the whole system — application,
-              server, schema, and infrastructure — in files you can read, review, and fork.
+              Most generators hand you a hosted page and a bill. Bones hands you the whole system — application, server,
+              schema, and infrastructure — in files you can read, review, and fork.
             </p>
             <ul className={styles.outputList}>
               {OUTPUT_ROWS.map((row) => (
@@ -185,7 +186,9 @@ export default function Home() {
         <div className={styles.finalCtaInner}>
           <BonesMark size={34} />
           <h2 className={styles.finalCtaHeading}>Start with a sentence. Ship with a stack.</h2>
-          <p className={styles.finalCtaLead}>First project is free, and the export button works before you ever enter a card.</p>
+          <p className={styles.finalCtaLead}>
+            First project is free, and the export button works before you ever enter a card.
+          </p>
           <div className={styles.ctaRow}>
             <Button component="a" href={`${APP_URL}/login`}>
               Generate your first app
@@ -204,7 +207,9 @@ export default function Home() {
               <BonesMark size={20} />
               <span className={styles.footerBrandName}>Bones</span>
             </div>
-            <p className={styles.footerTagline}>Websites and the systems underneath them, generated as source you own.</p>
+            <p className={styles.footerTagline}>
+              Websites and the systems underneath them, generated as source you own.
+            </p>
           </div>
           <div className={styles.footerColumn}>
             <span className={styles.footerColumnHeading}>PRODUCT</span>

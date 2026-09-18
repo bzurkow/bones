@@ -20,6 +20,8 @@
     "db:auth:generate": "better-auth generate --output src/db/auth-schema.ts -y",
     "lint": "oxlint -c ../.oxlintrc.json .",
     "lint:fix": "oxlint -c ../.oxlintrc.json . --fix",
+    "format": "prettier --check . --config ../.prettierrc.json --ignore-path ../.prettierignore",
+    "format:fix": "prettier --write . --config ../.prettierrc.json --ignore-path ../.prettierignore",
     "test": "vitest run",
     "test:watch": "vitest"
   },

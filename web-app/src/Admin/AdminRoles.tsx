@@ -72,8 +72,8 @@ export function AdminRoles() {
   return (
     <div className={styles.stack}>
       <p className={styles.body}>
-        Every role a user can have. Grant a new role access to specific features on the Feature Flags &amp;
-        Permissions tab -- a role starts with none.
+        Every role a user can have. Grant a new role access to specific features on the Feature Flags &amp; Permissions
+        tab -- a role starts with none.
       </p>
 
       <section>

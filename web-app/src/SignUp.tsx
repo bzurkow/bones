@@ -4,7 +4,16 @@ import type { Location } from "react-router-dom";
 import { authClient } from "./AuthHelpers/auth-client";
 import { isStrongPassword, PASSWORD_RULES_MESSAGE } from "./AuthHelpers/password-rules";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
-import { AuthDivider, AuthForm, AuthNotice, AuthPageShell, AuthSwitchLink, Button, ErrorMessage, TextField } from "./components";
+import {
+  AuthDivider,
+  AuthForm,
+  AuthNotice,
+  AuthPageShell,
+  AuthSwitchLink,
+  Button,
+  ErrorMessage,
+  TextField,
+} from "./components";
 import { useAuthProtocols } from "./hooks/useAuthProtocols";
 
 export function SignUp() {

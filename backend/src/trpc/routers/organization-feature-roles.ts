@@ -13,14 +13,15 @@ export const organizationFeatureRolesRouter = router({
   // canViewOrg-gated (member of this org, or the global
   // admin.organizations.update override) -- feeds the Permissions tab's
   // grid.
-  listAll: protectedProcedure
-    .input(z.object({ organizationId: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
-      if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      return db.select().from(organizationFeatureRoles).where(eq(organizationFeatureRoles.organizationId, input.organizationId));
-    }),
+  listAll: protectedProcedure.input(z.object({ organizationId: z.string().min(1) })).query(async ({ ctx, input }) => {
+    if (!(await canViewOrg(input.organizationId, ctx.session.user.id, ctx.session.user.role))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return db
+      .select()
+      .from(organizationFeatureRoles)
+      .where(eq(organizationFeatureRoles.organizationId, input.organizationId));
+  }),
 
   // The Permissions tab's own update permission -- the global
   // admin.organizations.update override still works too. "Org admin must
@@ -54,7 +55,11 @@ export const organizationFeatureRolesRouter = router({
           granted: input.granted,
         })
         .onConflictDoUpdate({
-          target: [organizationFeatureRoles.organizationId, organizationFeatureRoles.featureKey, organizationFeatureRoles.role],
+          target: [
+            organizationFeatureRoles.organizationId,
+            organizationFeatureRoles.featureKey,
+            organizationFeatureRoles.role,
+          ],
           set: { granted: input.granted },
         })
         .returning();
