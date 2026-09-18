@@ -91,13 +91,14 @@ the same thing later); new items append at the end rather than renumbering.
     by the DB-hosting decision already made).
 27. **Formatter** — none configured yet; oxlint is a linter, not a formatter,
     doesn't cover code style/whitespace. Prettier or otherwise, undecided.
-28. **`@aws-sdk/*` version pinning** — the three AWS SDK v3 packages in
-    `backend/package.json` are exact-pinned (no `^`), unlike every other
-    dependency in that file, and are currently one patch behind latest.
-    Confirm whether that's deliberate (reproducible builds against a
-    fast-moving SDK) or an oversight worth aligning to the rest of the file.
 ## Recently resolved (kept briefly for context — see NOTES.md for full accounts)
 
+- `@aws-sdk/*` version pinning (item 28, closed 2026-09-18) — was an
+  oversight, not deliberate. Switched `client-s3`/`client-sesv2`/
+  `s3-request-presigner` in `backend/package.json` from exact pins to `^`
+  (matching the rest of the file's dependencies) and bumped
+  `3.1134.0` → `3.1135.0`, the latest at the time. `yarn lint` (oxlint +
+  syncpack) and backend's full suite (220/220) still green.
 - Login page rebuilt to the current design system (item 24, closed
   2026-09-18) — done via `8206702` ("Adopt design system, rebuild Login on
   Mantine") and kept current since (email+password, verification, password
